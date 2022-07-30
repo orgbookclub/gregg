@@ -1,37 +1,30 @@
-import { readdir, stat } from 'fs/promises';
-import { join } from 'path';
-import { Bot } from '../interfaces/Bot';
-import { Command } from '../interfaces/Command';
-import { logger } from './logHandler';
+import glob from "glob";
 
-const OUT_DIR = 'dist';
+import { Command } from "../interfaces/Command";
+
+import { logger } from "./logHandler";
+
+const OUT_DIR = "dist";
 
 /**
  * Reads the '/commands' directory and dynamically imports the files,
  * then pushes the imported data into an array.
- * @param {Bot} bot the bot instance.
+ *
  * @returns {Command[]} Array of Command objects representing the imported commands.
  */
-export const loadCommands = async (bot: Bot): Promise<Command[]> => {
+export const loadCommands = async (): Promise<Command[]> => {
   try {
     const commands: Command[] = [];
-    const files = await readdir(
-      join(process.cwd(), OUT_DIR, 'commands'),
-      'utf-8',
-    );
+    const files = glob.sync(`./${OUT_DIR}/commands/*.js`, { realpath: true });
     for (const file of files) {
-      const status = await stat(join(process.cwd(), OUT_DIR, 'commands', file));
-      if (status.isDirectory()) {
-        continue;
-      }
-      const name = file.split('.')[0];
-      const mod = await import(join(process.cwd(), OUT_DIR, 'commands', file));
+      const mod = await import(file);
+      const name = file.split("/").at(-1)?.split(".")[0] ?? "";
       commands.push(mod[name] as Command);
-      logger.debug(`Detected command: ${mod[name]}...`);
+      logger.debug(`Detected command: ${name}...`);
     }
     return commands;
   } catch (err) {
-    logger.error('Error while loading commands', err);
+    logger.error(`Error while loading commands: ${err}`);
     return [];
   }
 };

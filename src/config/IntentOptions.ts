@@ -1,4 +1,4 @@
-import { GatewayIntentBits } from 'discord.js';
+import { GatewayIntentBits } from "discord.js";
 
 /**
  * This contains the list of Intent options the bot requests on identify.

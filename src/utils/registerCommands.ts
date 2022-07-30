@@ -1,24 +1,27 @@
-import { REST } from '@discordjs/rest';
+import { REST } from "@discordjs/rest";
 import {
   RESTPostAPIApplicationCommandsJSONBody,
   RESTPostAPIChatInputApplicationCommandsJSONBody,
   Routes,
-} from 'discord-api-types/v10';
-import { Bot } from '../interfaces/Bot';
-import { logger } from './logHandler';
+} from "discord-api-types/v10";
+
+import { Bot } from "../interfaces/Bot";
+
+import { logger } from "./logHandler";
 
 /**
  * Takes the commands, parses the `data` properties as needed,
  * and builds an array of all command data. Then, posts the data to the Discord endpoint
  * for registering commands.
  *
- * Registers command in the home guild
- * @param {Bot} bot the bot instance
+ * Registers command in the home guild.
+ *
+ * @param {Bot} bot The bot instance.
  * @returns {boolean} True if the commands were registered, false on error.
  */
 export const registerCommands = async (bot: Bot): Promise<boolean> => {
   try {
-    const rest = new REST({ version: '10' }).setToken(bot.configs.token);
+    const rest = new REST({ version: "10" }).setToken(bot.configs.token);
     const commandData: (
       | RESTPostAPIApplicationCommandsJSONBody
       | RESTPostAPIChatInputApplicationCommandsJSONBody
@@ -42,7 +45,7 @@ export const registerCommands = async (bot: Bot): Promise<boolean> => {
 
     return true;
   } catch (err) {
-    logger.error('Error registering commands', err);
+    logger.error(`Error registering commands: ${err}`);
     return false;
   }
 };

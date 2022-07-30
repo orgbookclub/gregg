@@ -1,12 +1,15 @@
-import { Interaction } from 'discord.js';
-import { Bot } from '../../interfaces/Bot';
+import { Interaction } from "discord.js";
 
-export const interactionCreate = {
-  name: 'interactionCreate',
-  execute: async (bot: Bot, interaction: Interaction) => {
+import { Bot } from "../../interfaces/Bot";
+import { Event } from "../../interfaces/Event";
+import { logger } from "../../utils/logHandler";
+
+export const interactionCreate: Event = {
+  name: "interactionCreate",
+  run: async (bot: Bot, interaction: Interaction) => {
     try {
       console.log(
-        `${interaction.user.tag} in #${interaction.channel} triggered an interaction.`,
+        `${interaction.user.tag} in #${interaction.channel?.id} triggered an interaction.`,
       );
       if (!interaction.isChatInputCommand()) return;
 
@@ -21,10 +24,12 @@ export const interactionCreate = {
       } catch (error) {
         console.error(error);
         await interaction.reply({
-          content: 'There was an error while executing this command!',
+          content: "There was an error while executing this command!",
           ephemeral: true,
         });
       }
-    } catch (err) {}
+    } catch (err) {
+      logger.error(`Error in interactionCreate: ${err}`);
+    }
   },
 };

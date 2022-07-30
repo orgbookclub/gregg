@@ -1,5 +1,6 @@
-import { Client } from 'discord.js';
-import { Command } from './Command';
+import { Client } from "discord.js";
+
+import { Command } from "./Command";
 
 export interface Bot extends Client {
   commands: Command[];
