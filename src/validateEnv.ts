@@ -1,4 +1,5 @@
 import { Bot } from './interfaces/Bot';
+import { logger } from './utils/logHandler';
 
 export const validateEnv = (bot: Bot): { valid: boolean; message: string } => {
   try {
@@ -21,9 +22,10 @@ export const validateEnv = (bot: Bot): { valid: boolean; message: string } => {
     bot.configs = configs;
     return { valid: true, message: 'Environment variables validated!' };
   } catch (err) {
+    logger.error('Unknown error while validating environment')
     return {
       valid: false,
-      message: 'Unknown error when validating environment',
+      message: 'Unknown error while validating environment',
     };
   }
 };
