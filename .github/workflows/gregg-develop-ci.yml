@@ -9,7 +9,7 @@ on:
 
 jobs:
   ci:
-    name: Build
+    name: Lint / Build
     runs-on: ubuntu-latest
 
     steps:
