@@ -12,6 +12,10 @@ jobs:
     name: Lint / Build
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        node-version: [17.x]
+
     steps:
       - name: Checkout Source Files
         uses: actions/checkout@v3
@@ -21,11 +25,11 @@ jobs:
         with:
           node-version: "17.x"
 
-      - name: Lint Source Files
-        run: yarn lint
-
       - name: Install dependencies
         run: yarn
+
+      - name: Lint Source Files
+        run: yarn lint
 
       - name: Verify Build
         run: yarn build
