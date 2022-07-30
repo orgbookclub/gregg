@@ -10,16 +10,10 @@ import { CommandHandler } from "../interfaces/CommandHandler";
 import { logger } from "../utils/logHandler";
 
 const handlers: { [key: string]: CommandHandler } = {};
-export const goodreads: Command = {
+export const misc: Command = {
   data: new SlashCommandBuilder()
-    .setName("")
-    .setDescription("")
-    .addSubcommand(
-      new SlashCommandSubcommandBuilder().setName("").setDescription(""),
-    )
-    .addSubcommand(
-      new SlashCommandSubcommandBuilder().setName("").setDescription(""),
-    ),
+    .setName("misc")
+    .setDescription("Handles misc commands"),
   run: async (bot: Bot, interaction: ChatInputCommandInteraction) => {
     try {
       const subCommand = interaction.options.getSubcommand();

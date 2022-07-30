@@ -19,7 +19,7 @@ const handlers: { [key: string]: CommandHandler } = {
 export const gregg: Command = {
   data: new SlashCommandBuilder()
     .setName("gregg")
-    .setDescription("Shows information about Gregg.")
+    .setDescription("Handles general commands about the bot")
     .addSubcommand(
       new SlashCommandSubcommandBuilder()
         .setName("ping")
