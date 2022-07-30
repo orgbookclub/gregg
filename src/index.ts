@@ -1,6 +1,6 @@
 import { Client } from 'discord.js';
 import { IntentOptions } from './config/IntentOptions';
-import { handleEvents } from './events/handleEvents';
+import { handleEvents } from './utils/loadEventListeners';
 import { Bot } from './interfaces/Bot';
 import { loadCommands } from './utils/loadCommands';
 import { logger } from './utils/logHandler';

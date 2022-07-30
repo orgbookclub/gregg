@@ -1,9 +1,11 @@
 import { Interaction } from 'discord.js';
 import { Bot } from '../../interfaces/Bot';
+import { Event } from '../../interfaces/Event';
 
-export const interactionCreate = {
+export const interactionCreate: Event = {
   name: 'interactionCreate',
-  execute: async (bot: Bot, interaction: Interaction) => {
+  once: false,
+  run: async (bot: Bot, interaction: Interaction) => {
     try {
       console.log(
         `${interaction.user.tag} in #${interaction.channel} triggered an interaction.`,
