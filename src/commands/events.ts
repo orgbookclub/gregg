@@ -9,26 +9,16 @@ import { Command } from "../interfaces/Command";
 import { CommandHandler } from "../interfaces/CommandHandler";
 import { logger } from "../utils/logHandler";
 
-import { handleAbout } from "./subcommands/gregg/about";
-import { handlePing } from "./subcommands/gregg/ping";
-
-const handlers: { [key: string]: CommandHandler } = {
-  ping: handlePing,
-  about: handleAbout,
-};
-export const gregg: Command = {
+const handlers: { [key: string]: CommandHandler } = {};
+export const goodreads: Command = {
   data: new SlashCommandBuilder()
-    .setName("gregg")
-    .setDescription("Shows information about Gregg.")
+    .setName("")
+    .setDescription("")
     .addSubcommand(
-      new SlashCommandSubcommandBuilder()
-        .setName("ping")
-        .setDescription("Replies with Pong!"),
+      new SlashCommandSubcommandBuilder().setName("").setDescription(""),
     )
     .addSubcommand(
-      new SlashCommandSubcommandBuilder()
-        .setName("about")
-        .setDescription("Shows information about Gregg."),
+      new SlashCommandSubcommandBuilder().setName("").setDescription(""),
     ),
   run: async (bot: Bot, interaction: ChatInputCommandInteraction) => {
     try {
@@ -36,7 +26,7 @@ export const gregg: Command = {
       const handler = handlers[subCommand];
       await handler(bot, interaction);
     } catch (err) {
-      logger.error(`Error processing command gregg: ${err}`);
+      logger.error(`Error processing command <> ${err}`);
     }
   },
 };
