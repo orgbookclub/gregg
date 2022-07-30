@@ -1,23 +1,24 @@
-import { Bot } from '../interfaces/Bot';
-import { Command } from '../interfaces/Command';
-import { logger } from './logHandler';
-import glob from 'glob';
+import glob from "glob";
 
-const OUT_DIR = 'dist';
+import { Command } from "../interfaces/Command";
+
+import { logger } from "./logHandler";
+
+const OUT_DIR = "dist";
 
 /**
  * Reads the '/commands' directory and dynamically imports the files,
  * then pushes the imported data into an array.
- * @param {Bot} bot the bot instance.
+ *
  * @returns {Command[]} Array of Command objects representing the imported commands.
  */
-export const loadCommands = async (bot: Bot): Promise<Command[]> => {
+export const loadCommands = async (): Promise<Command[]> => {
   try {
     const commands: Command[] = [];
     const files = glob.sync(`./${OUT_DIR}/commands/*.js`, { realpath: true });
     for (const file of files) {
       const mod = await import(file);
-      const name = file.split('/').at(-1)?.split('.')[0] ?? '';
+      const name = file.split("/").at(-1)?.split(".")[0] ?? "";
       commands.push(mod[name] as Command);
       logger.debug(`Detected command: ${name}...`);
     }

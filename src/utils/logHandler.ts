@@ -1,12 +1,12 @@
-import pino from 'pino';
+import pino from "pino";
 
 /**
- * Log Handler using pino
+ * Log Handler using pino.
  */
 export const logger = pino({
-  name: 'gregg',
-  level: 'debug',
+  name: "gregg",
+  level: "debug",
   transport: {
-    target: 'pino-pretty',
+    target: "pino-pretty",
   },
 });

@@ -1,9 +1,11 @@
-import { Interaction } from 'discord.js';
-import { Bot } from '../../interfaces/Bot';
-import { Event } from '../../interfaces/Event';
+import { Interaction } from "discord.js";
+
+import { Bot } from "../../interfaces/Bot";
+import { Event } from "../../interfaces/Event";
+import { logger } from "../../utils/logHandler";
 
 export const interactionCreate: Event = {
-  name: 'interactionCreate',
+  name: "interactionCreate",
   run: async (bot: Bot, interaction: Interaction) => {
     try {
       console.log(
@@ -22,10 +24,12 @@ export const interactionCreate: Event = {
       } catch (error) {
         console.error(error);
         await interaction.reply({
-          content: 'There was an error while executing this command!',
+          content: "There was an error while executing this command!",
           ephemeral: true,
         });
       }
-    } catch (err) {}
+    } catch (err) {
+      logger.error(`Error in interactionCreate: ${err}`);
+    }
   },
 };
