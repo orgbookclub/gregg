@@ -1,6 +1,14 @@
 import { Bot } from './interfaces/Bot';
 import { logger } from './utils/logHandler';
 
+/**
+ * Validates that all expected environment variables are set with *some* value.
+ * Does not validate that the values are valid. Constructs a config object and
+ * attaches it to the bot instance.
+ *
+ * @param {BeccaLyria} Bot the bot instance.
+ * @returns {object} Object containing a valid property as boolean, and a message as string.
+ */
 export const validateEnv = (bot: Bot): { valid: boolean; message: string } => {
   try {
     if (!process.env.BOT_TOKEN) {
@@ -22,7 +30,7 @@ export const validateEnv = (bot: Bot): { valid: boolean; message: string } => {
     bot.configs = configs;
     return { valid: true, message: 'Environment variables validated!' };
   } catch (err) {
-    logger.error('Unknown error while validating environment')
+    logger.error('Unknown error while validating environment');
     return {
       valid: false,
       message: 'Unknown error while validating environment',
