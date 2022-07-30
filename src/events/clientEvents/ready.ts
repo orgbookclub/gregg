@@ -1,8 +1,9 @@
 import { Bot } from '../../interfaces/Bot';
+import { logger } from '../../utils/logHandler';
 
 export const ready = {
   name: 'ready',
   execute: async (bot: Bot): Promise<void> => {
-    console.log(`Ready! Logged in as ${bot.user?.tag}`);
+    logger.info(`Ready! Logged in as ${bot.user?.tag}`);
   },
 };
