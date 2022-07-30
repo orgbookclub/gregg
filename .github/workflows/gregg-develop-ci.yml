@@ -9,22 +9,27 @@ on:
 
 jobs:
   ci:
-    name: Build
+    name: Lint / Build
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [17.x]
 
     steps:
       - name: Checkout Source Files
-      - uses: actions/checkout@v3
+        uses: actions/checkout@v3
 
       - name: Use Node.js
         uses: actions/setup-node@v3
         with:
           node-version: "17.x"
-      - name: Lint Source Files
-        run: yarn lint
 
       - name: Install dependencies
         run: yarn
+
+      - name: Lint Source Files
+        run: yarn lint
 
       - name: Verify Build
         run: yarn build
