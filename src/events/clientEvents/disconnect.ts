@@ -2,9 +2,9 @@ import { Bot } from '../../interfaces/Bot';
 import { Event } from '../../interfaces/Event';
 import { logger } from '../../utils/logHandler';
 
-export const ready: Event = {
-  name: 'ready',
+export const disconnect: Event = {
+  name: 'disconnect',
   run: async (bot: Bot) => {
-    logger.info(`Ready! Logged in as ${bot.user?.tag}`);
+    logger.info(`${bot.user?.tag} disconnected`);
   },
 };

@@ -4,11 +4,10 @@ import { Event } from '../../interfaces/Event';
 
 export const interactionCreate: Event = {
   name: 'interactionCreate',
-  once: false,
   run: async (bot: Bot, interaction: Interaction) => {
     try {
       console.log(
-        `${interaction.user.tag} in #${interaction.channel} triggered an interaction.`,
+        `${interaction.user.tag} in #${interaction.channel?.id} triggered an interaction.`,
       );
       if (!interaction.isChatInputCommand()) return;
 

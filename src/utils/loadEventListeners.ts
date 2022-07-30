@@ -1,6 +1,4 @@
 import { Bot } from '../interfaces/Bot';
-import { ready } from '../events/clientEvents/ready';
-import { interactionCreate } from '../events/interactionEvents/interactionCreate';
 import { logger } from './logHandler';
 import glob from 'glob';
 import { Event } from '../interfaces/Event';
@@ -18,12 +16,7 @@ export const handleEvents = async (bot: Bot): Promise<void> => {
       const mod = await import(file);
       const name = file.split('/').at(-1)?.split('.')[0] ?? '';
       const event: Event = mod[name];
-
-      if (event.once) {
-        bot.once(event.name, async (...args) => await event.run(bot, ...args));
-      } else {
-        bot.on(event.name, async (...args) => await event.run(bot, ...args));
-      }
+      bot.on(event.name, async (...args) => await event.run(bot, ...args));
     }
   } catch (err) {
     logger.error(`Error while loading event listeners: ${err}`);
