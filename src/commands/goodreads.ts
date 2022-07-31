@@ -9,7 +9,11 @@ import { Command } from "../interfaces/Command";
 import { CommandHandler } from "../interfaces/CommandHandler";
 import { logger } from "../utils/logHandler";
 
-const handlers: { [key: string]: CommandHandler } = {};
+import { handleSearch } from "./subcommands/goodreads/search";
+
+const handlers: { [key: string]: CommandHandler } = {
+  search: handleSearch,
+};
 export const goodreads: Command = {
   data: new SlashCommandBuilder()
     .setName("goodreads")
@@ -76,6 +80,7 @@ export const goodreads: Command = {
     ),
   run: async (bot: Bot, interaction: ChatInputCommandInteraction) => {
     try {
+      await interaction.deferReply();
       const subCommand = interaction.options.getSubcommand();
       const handler = handlers[subCommand];
       await handler(bot, interaction);

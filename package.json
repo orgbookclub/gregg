@@ -6,7 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "prebuild": "rm -rf ./dist",
+    "prebuild": "rimraf ./dist",
     "build": "tsc",
     "lint": "eslint src --max-warnings 0",
     "start": "node -r dotenv/config ./dist/index.js",
@@ -16,6 +16,7 @@
     "@discordjs/builders": "^1.1.0",
     "@discordjs/rest": "^1.0.1",
     "@types/glob": "^7.2.0",
+    "axios": "^0.27.2",
     "discord-api-types": "^0.37.0",
     "discord.js": "^14.1.1",
     "dotenv": "^16.0.1",
