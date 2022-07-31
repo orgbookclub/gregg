@@ -17,6 +17,7 @@ export const loadCommands = async (): Promise<Command[]> => {
     const commands: Command[] = [];
     const files = glob.sync(`./${OUT_DIR}/commands/*.js`, { realpath: true });
     for (const file of files) {
+      logger.debug(`Looking in file: ${file}`);
       const mod = await import(file);
       const name = file.split("/").at(-1)?.split(".")[0] ?? "";
       commands.push(mod[name] as Command);

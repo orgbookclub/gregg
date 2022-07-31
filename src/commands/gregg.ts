@@ -9,19 +9,17 @@ import { Command } from "../interfaces/Command";
 import { CommandHandler } from "../interfaces/CommandHandler";
 import { logger } from "../utils/logHandler";
 
-const handlePing = async (
-  bot: Bot,
-  interaction: ChatInputCommandInteraction,
-) => {
-  await interaction.reply("Pong!");
-};
+import { handleAbout } from "./subcommands/gregg/about";
+import { handlePing } from "./subcommands/gregg/ping";
+
 const handlers: { [key: string]: CommandHandler } = {
   ping: handlePing,
+  about: handleAbout,
 };
 export const gregg: Command = {
   data: new SlashCommandBuilder()
     .setName("gregg")
-    .setDescription("Shows the help menu for the bot")
+    .setDescription("Handles general commands about the bot")
     .addSubcommand(
       new SlashCommandSubcommandBuilder()
         .setName("ping")
@@ -29,10 +27,10 @@ export const gregg: Command = {
     )
     .addSubcommand(
       new SlashCommandSubcommandBuilder()
-        .setName("help")
-        .setDescription("Shows the help menu for the bot"),
+        .setName("about")
+        .setDescription("Shows information about Gregg."),
     ),
-  run: async (bot: Bot, interaction) => {
+  run: async (bot: Bot, interaction: ChatInputCommandInteraction) => {
     try {
       const subCommand = interaction.options.getSubcommand();
       const handler = handlers[subCommand];
