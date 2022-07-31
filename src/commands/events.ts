@@ -4,6 +4,8 @@ import {
   SlashCommandSubcommandBuilder,
 } from "discord.js";
 
+import { EventStatusOptions } from "../config/EventStatusOptions";
+import { EventTypeOptions } from "../config/EventTypeOptions";
 import { Bot } from "../interfaces/Bot";
 import { Command } from "../interfaces/Command";
 import { CommandHandler } from "../interfaces/CommandHandler";
@@ -13,7 +15,52 @@ const handlers: { [key: string]: CommandHandler } = {};
 export const events: Command = {
   data: new SlashCommandBuilder()
     .setName("events")
-    .setDescription("Handles event-related features"),
+    .setDescription("Handles event-related features")
+    .addSubcommand(
+      new SlashCommandSubcommandBuilder()
+        .setName("request")
+        .setDescription("Request a server reading event")
+        .addStringOption((option) =>
+          option
+            .setName("type")
+            .setDescription("Event Type")
+            .addChoices(...EventTypeOptions)
+            .setRequired(true),
+        ),
+    )
+    .addSubcommand(
+      new SlashCommandSubcommandBuilder()
+        .setName("list")
+        .setDescription("Shows a list of events")
+        .addStringOption((option) =>
+          option
+            .setName("type")
+            .setDescription("Event Type")
+            .addChoices(...EventTypeOptions),
+        )
+        .addStringOption((option) =>
+          option
+            .setName("status")
+            .setDescription("Event Status")
+            .addChoices(...EventStatusOptions),
+        ),
+    )
+    .addSubcommand(
+      new SlashCommandSubcommandBuilder()
+        .setName("broadcast")
+        .setDescription("Notifies all the participants of an event")
+        .addStringOption((option) =>
+          option.setName("id").setDescription("Event ID").setRequired(true),
+        ),
+    )
+    .addSubcommand(
+      new SlashCommandSubcommandBuilder()
+        .setName("info")
+        .setDescription("Shows detailed information for an event")
+        .addStringOption((option) =>
+          option.setName("id").setDescription("Event ID").setRequired(true),
+        ),
+    ),
   run: async (bot: Bot, interaction: ChatInputCommandInteraction) => {
     try {
       const subCommand = interaction.options.getSubcommand();

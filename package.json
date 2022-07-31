@@ -2,7 +2,7 @@
   "name": "gregg",
   "version": "0.1",
   "description": "Discord Bot",
-  "main": "./dist/src/main.js",
+  "main": "./dist/src/index.js",
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
@@ -10,7 +10,8 @@
     "build": "tsc",
     "lint": "eslint src --max-warnings 0",
     "start": "node -r dotenv/config ./dist/index.js",
-    "dev": "tsc && node -r dotenv/config ./dist/index.js"
+    "dev": "tsc && node -r dotenv/config ./dist/index.js",
+    "docs": "yarn typedoc"
   },
   "dependencies": {
     "@discordjs/builders": "^1.1.0",
@@ -27,6 +28,7 @@
     "@typescript-eslint/eslint-plugin": "^5.31.0",
     "@typescript-eslint/parser": "^5.31.0",
     "add": "^2.0.6",
+    "documentation": "^13.2.5",
     "eslint": "^8.20.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-import": "^2.26.0",
