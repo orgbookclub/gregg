@@ -14,70 +14,65 @@ import { handleSearch } from "./subcommands/goodreads/search";
 const handlers: { [key: string]: CommandHandler } = {
   search: handleSearch,
 };
+const goodreadsSearchSubcommand = new SlashCommandSubcommandBuilder()
+  .setName("search")
+  .setDescription("Fetches a list of book links from GR")
+  .addStringOption((option) =>
+    option
+      .setName("query")
+      .setDescription("Book title, author or ISBN")
+      .setRequired(true),
+  )
+  .addIntegerOption((option) =>
+    option
+      .setName("k")
+      .setDescription("Maximum number of results to fetch")
+      .setRequired(false)
+      .setMinValue(1)
+      .setMaxValue(7),
+  );
+const goodreadsLinkSubcommand = new SlashCommandSubcommandBuilder()
+  .setName("link")
+  .setDescription("Fetches the link of a book from GR")
+  .addStringOption((option) =>
+    option
+      .setName("query")
+      .setDescription("Book title, author or ISBN")
+      .setRequired(true),
+  );
+const goodreadsBookSubcommand = new SlashCommandSubcommandBuilder()
+  .setName("book")
+  .setDescription("Fetches the details of a book from GR")
+  .addStringOption((option) =>
+    option
+      .setName("query")
+      .setDescription("Book title, author or ISBN")
+      .setRequired(true),
+  );
+const goodreadsCoverSubcommand = new SlashCommandSubcommandBuilder()
+  .setName("cover")
+  .setDescription("Fetches the cover of a book from GR")
+  .addStringOption((option) =>
+    option
+      .setName("query")
+      .setDescription("Book title, author or ISBN")
+      .setRequired(true),
+  );
+const goodreadsQuoteSubcommand = new SlashCommandSubcommandBuilder()
+  .setName("quote")
+  .setDescription("Fetches a random quote from GR")
+  .addStringOption((option) =>
+    option.setName("query").setDescription("Book title, author or ISBN"),
+  );
 export const goodreads: Command = {
   data: new SlashCommandBuilder()
     .setName("goodreads")
     .setDescription("Handles GR related commands")
-    .addSubcommand(
-      new SlashCommandSubcommandBuilder()
-        .setName("search")
-        .setDescription("Fetches a list of book links from GR")
-        .addStringOption((option) =>
-          option
-            .setName("query")
-            .setDescription("Book title, author or ISBN")
-            .setRequired(true),
-        )
-        .addIntegerOption((option) =>
-          option
-            .setName("k")
-            .setDescription("Maximum number of results to fetch")
-            .setRequired(false)
-            .setMinValue(1)
-            .setMaxValue(7),
-        ),
-    )
-    .addSubcommand(
-      new SlashCommandSubcommandBuilder()
-        .setName("link")
-        .setDescription("Fetches the link of a book from GR")
-        .addStringOption((option) =>
-          option
-            .setName("query")
-            .setDescription("Book title, author or ISBN")
-            .setRequired(true),
-        ),
-    )
-    .addSubcommand(
-      new SlashCommandSubcommandBuilder()
-        .setName("book")
-        .setDescription("Fetches the details of a book from GR")
-        .addStringOption((option) =>
-          option
-            .setName("query")
-            .setDescription("Book title, author or ISBN")
-            .setRequired(true),
-        ),
-    )
-    .addSubcommand(
-      new SlashCommandSubcommandBuilder()
-        .setName("cover")
-        .setDescription("Fetches the cover of a book from GR")
-        .addStringOption((option) =>
-          option
-            .setName("query")
-            .setDescription("Book title, author or ISBN")
-            .setRequired(true),
-        ),
-    )
-    .addSubcommand(
-      new SlashCommandSubcommandBuilder()
-        .setName("quote")
-        .setDescription("Fetches a random quote from GR")
-        .addStringOption((option) =>
-          option.setName("query").setDescription("Book title, author or ISBN"),
-        ),
-    ),
+    .addSubcommand(goodreadsSearchSubcommand)
+    .addSubcommand(goodreadsLinkSubcommand)
+    .addSubcommand(goodreadsBookSubcommand)
+    .addSubcommand(goodreadsCoverSubcommand)
+    .addSubcommand(goodreadsQuoteSubcommand),
   run: async (bot: Bot, interaction: ChatInputCommandInteraction) => {
     try {
       await interaction.deferReply();
