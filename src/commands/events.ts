@@ -56,7 +56,11 @@ export const events: Command = {
     .addSubcommand(eventsRequestSubcommand)
     .addSubcommand(eventsListSubcommand)
     .addSubcommand(eventsBroadcastSubcommand)
-    .addSubcommand(eventsInfoSubcommand),
+    .addSubcommand(eventsInfoSubcommand)
+    .addSubcommand(eventsAnnounceSubcommand)
+    .addSubcommand(eventsEditSubcommand)
+    .addSubcommand(eventsSearchSubcommand)
+    .addSubcommand(eventsPollSubcommand),
   run: async (bot: Bot, interaction: ChatInputCommandInteraction) => {
     try {
       const subCommand = interaction.options.getSubcommand();

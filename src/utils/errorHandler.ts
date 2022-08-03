@@ -1,0 +1,37 @@
+import * as Sentry from "@sentry/node";
+import { CommandInteraction, ContextMenuCommandInteraction } from "discord.js";
+
+import { Bot } from "../interfaces/Bot";
+
+import { logger } from "./logHandler";
+
+/**
+ * Takes the error object generated within the code, passes it to Sentry and logs the
+ * information in the console.
+ *
+ * @param {Bot} bot The bot instance.
+ * @param {string} context The string explaining where this error was thrown.
+ * @param {unknown} err The standard error object (generated in a catch statement).
+ * @param {string} guild The name of the guild that triggered the issue.
+ * @param {message} message Optional message that triggered the issue.
+ * @param {CommandInteraction | ContextMenuCommandInteraction | undefined} interaction  Optional interaction that triggered the issue.
+ */
+export const errorHandler = (
+  bot: Bot,
+  context: string,
+  err: unknown,
+  guild?: string,
+  message?: string,
+  interaction?: CommandInteraction | ContextMenuCommandInteraction,
+) => {
+  const error = err as Error;
+  logger.error({
+    context: context,
+    guild: guild,
+    interaction: interaction?.commandName,
+    message: message,
+    errorMessage: error.message,
+    errorStack: error.stack,
+  });
+  Sentry.captureException(error);
+};

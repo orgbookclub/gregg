@@ -1,6 +1,5 @@
 import axios from "axios";
 
-import { logger } from "../utils/logHandler";
 /**
  * Client for sending requests to OWS.
  */
@@ -14,7 +13,7 @@ export class Client {
    */
   async searchBooks(query: string, k: number) {
     const response = await axios.get(
-      this.BASE_URL + `/goodreads/search?q=${query}`,
+      this.BASE_URL + `/goodreads/search?q=${query}&k=${k}`,
     );
     return response;
   }
