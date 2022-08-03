@@ -10,62 +10,58 @@ import { CommandHandler } from "../interfaces/CommandHandler";
 import { logger } from "../utils/logHandler";
 
 const handlers: { [key: string]: CommandHandler } = {};
+const storygraphSearchSubcommand = new SlashCommandSubcommandBuilder()
+  .setName("search")
+  .setDescription("Fetches a list of book links from SG")
+  .addStringOption((option) =>
+    option
+      .setName("query")
+      .setDescription("Book title, author or ISBN")
+      .setRequired(true),
+  )
+  .addIntegerOption((option) =>
+    option
+      .setName("k")
+      .setDescription("Maximum number of results to fetch")
+      .setRequired(false)
+      .setMinValue(1)
+      .setMaxValue(7),
+  );
+const storygraphLinkSubcommand = new SlashCommandSubcommandBuilder()
+  .setName("link")
+  .setDescription("Fetches the link of a book from SG")
+  .addStringOption((option) =>
+    option
+      .setName("query")
+      .setDescription("Book title, author or ISBN")
+      .setRequired(true),
+  );
+const storygraphBookSubcommand = new SlashCommandSubcommandBuilder()
+  .setName("book")
+  .setDescription("Fetches the details of a book from SG")
+  .addStringOption((option) =>
+    option
+      .setName("query")
+      .setDescription("Book title, author or ISBN")
+      .setRequired(true),
+  );
+const storygraphCoverSubcommand = new SlashCommandSubcommandBuilder()
+  .setName("cover")
+  .setDescription("Fetches the cover of a book from SG")
+  .addStringOption((option) =>
+    option
+      .setName("query")
+      .setDescription("Book title, author or ISBN")
+      .setRequired(true),
+  );
 export const storygraph: Command = {
   data: new SlashCommandBuilder()
     .setName("storygraph")
     .setDescription("Handles SG related commands")
-    .addSubcommand(
-      new SlashCommandSubcommandBuilder()
-        .setName("search")
-        .setDescription("Fetches a list of book links from SG")
-        .addStringOption((option) =>
-          option
-            .setName("query")
-            .setDescription("Book title, author or ISBN")
-            .setRequired(true),
-        )
-        .addIntegerOption((option) =>
-          option
-            .setName("k")
-            .setDescription("Maximum number of results to fetch")
-            .setRequired(false)
-            .setMinValue(1)
-            .setMaxValue(7),
-        ),
-    )
-    .addSubcommand(
-      new SlashCommandSubcommandBuilder()
-        .setName("link")
-        .setDescription("Fetches the link of a book from SG")
-        .addStringOption((option) =>
-          option
-            .setName("query")
-            .setDescription("Book title, author or ISBN")
-            .setRequired(true),
-        ),
-    )
-    .addSubcommand(
-      new SlashCommandSubcommandBuilder()
-        .setName("book")
-        .setDescription("Fetches the details of a book from SG")
-        .addStringOption((option) =>
-          option
-            .setName("query")
-            .setDescription("Book title, author or ISBN")
-            .setRequired(true),
-        ),
-    )
-    .addSubcommand(
-      new SlashCommandSubcommandBuilder()
-        .setName("cover")
-        .setDescription("Fetches the cover of a book from SG")
-        .addStringOption((option) =>
-          option
-            .setName("query")
-            .setDescription("Book title, author or ISBN")
-            .setRequired(true),
-        ),
-    ),
+    .addSubcommand(storygraphSearchSubcommand)
+    .addSubcommand(storygraphLinkSubcommand)
+    .addSubcommand(storygraphBookSubcommand)
+    .addSubcommand(storygraphCoverSubcommand),
   run: async (bot: Bot, interaction: ChatInputCommandInteraction) => {
     try {
       const subCommand = interaction.options.getSubcommand();

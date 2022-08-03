@@ -16,20 +16,18 @@ const handlers: { [key: string]: CommandHandler } = {
   ping: handlePing,
   about: handleAbout,
 };
+const greggPingSubcommand = new SlashCommandSubcommandBuilder()
+  .setName("ping")
+  .setDescription("Replies with Pong!");
+const greggInfoSubcommand = new SlashCommandSubcommandBuilder()
+  .setName("about")
+  .setDescription("Shows information about Gregg.");
 export const gregg: Command = {
   data: new SlashCommandBuilder()
     .setName("gregg")
     .setDescription("Handles general commands about the bot")
-    .addSubcommand(
-      new SlashCommandSubcommandBuilder()
-        .setName("ping")
-        .setDescription("Replies with Pong!"),
-    )
-    .addSubcommand(
-      new SlashCommandSubcommandBuilder()
-        .setName("about")
-        .setDescription("Shows information about Gregg."),
-    ),
+    .addSubcommand(greggPingSubcommand)
+    .addSubcommand(greggInfoSubcommand),
   run: async (bot: Bot, interaction: ChatInputCommandInteraction) => {
     try {
       const subCommand = interaction.options.getSubcommand();
