@@ -49,6 +49,11 @@ const eventsRequestSubcommand = new SlashCommandSubcommandBuilder()
       .addChoices(...EventTypeOptions)
       .setRequired(true),
   );
+// TODO: Replace with actual commands
+const eventsAnnounceSubcommand = new SlashCommandSubcommandBuilder();
+const eventsEditSubcommand = new SlashCommandSubcommandBuilder();
+const eventsSearchSubcommand = new SlashCommandSubcommandBuilder();
+const eventsPollSubcommand = new SlashCommandSubcommandBuilder();
 export const events: Command = {
   data: new SlashCommandBuilder()
     .setName("events")
