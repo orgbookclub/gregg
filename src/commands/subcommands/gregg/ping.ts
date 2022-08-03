@@ -2,6 +2,7 @@ import { ChatInputCommandInteraction } from "discord.js";
 
 import { Bot } from "../../../interfaces/Bot";
 import { CommandHandler } from "../../../interfaces/CommandHandler";
+import { errorHandler } from "../../../utils/errorHandler";
 import { logger } from "../../../utils/logHandler";
 
 /**
@@ -17,6 +18,14 @@ export const handlePing: CommandHandler = async (
   try {
     await interaction.reply("Pong!");
   } catch (err) {
+    await errorHandler(
+      bot,
+      "ping command",
+      err,
+      interaction.guild?.name,
+      undefined,
+      interaction,
+    );
     logger.error(`Error in handlePing: ${err}`);
   }
 };
