@@ -11,22 +11,38 @@ export const interactionCreate: Event = {
       console.log(
         `${interaction.user.tag} in #${interaction.channel?.id} triggered an interaction.`,
       );
-      if (!interaction.isChatInputCommand()) return;
+      if (interaction.isChatInputCommand()) {
+        const command = bot.commands.find(
+          (el) => el.data.name === interaction.commandName,
+        );
 
-      const command = bot.commands.find(
-        (el) => el.data.name === interaction.commandName,
-      );
+        if (!command) return;
 
-      if (!command) return;
+        try {
+          await command.run(bot, interaction);
+        } catch (error) {
+          console.error(error);
+          await interaction.reply({
+            content: "There was an error while executing this command!",
+            ephemeral: true,
+          });
+        }
+      } else if (interaction.isContextMenuCommand()) {
+        const command = bot.contexts.find(
+          (el) => el.data.name === interaction.commandName,
+        );
 
-      try {
-        await command.run(bot, interaction);
-      } catch (error) {
-        console.error(error);
-        await interaction.reply({
-          content: "There was an error while executing this command!",
-          ephemeral: true,
-        });
+        if (!command) return;
+
+        try {
+          await command.run(bot, interaction);
+        } catch (error) {
+          console.error(error);
+          await interaction.reply({
+            content: "There was an error while executing this context command!",
+            ephemeral: true,
+          });
+        }
       }
     } catch (err) {
       logger.error(`Error in interactionCreate: ${err}`);

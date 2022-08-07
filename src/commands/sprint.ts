@@ -31,13 +31,13 @@ const sprintJoinSubcommand = new SlashCommandSubcommandBuilder()
   .setName("join")
   .setDescription("Join the ongoing sprint")
   .addIntegerOption((option) =>
-    option.setName("start count").setDescription("The initial count"),
+    option.setName("k").setDescription("The initial count"),
   );
 const sprintCountSubcommand = new SlashCommandSubcommandBuilder()
   .setName("count")
   .setDescription("Gives your final count to the bot at the end of a sprint.")
   .addIntegerOption((option) =>
-    option.setName("count").setDescription("The final count"),
+    option.setName("k").setDescription("The final count"),
   );
 const sprintStatsSubcommand = new SlashCommandSubcommandBuilder()
   .setName("stats")
@@ -59,7 +59,7 @@ const sprintLeaveSubcommand = new SlashCommandSubcommandBuilder()
 export const sprint: Command = {
   data: new SlashCommandBuilder()
     .setName("sprint")
-    .setDescription("Handles sprint-related commands")
+    .setDescription("Handles sprint related commands")
     .addSubcommand(sprintStartSubcommand)
     .addSubcommand(sprintJoinSubcommand)
     .addSubcommand(sprintCountSubcommand)
@@ -73,7 +73,7 @@ export const sprint: Command = {
       const handler = handlers[subCommand];
       await handler(bot, interaction);
     } catch (err) {
-      logger.error(`Error processing command <> ${err}`);
+      logger.error(`Error processing command sprint ${err}`);
     }
   },
 };

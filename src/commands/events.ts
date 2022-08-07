@@ -50,10 +50,18 @@ const eventsRequestSubcommand = new SlashCommandSubcommandBuilder()
       .setRequired(true),
   );
 // TODO: Replace with actual commands
-const eventsAnnounceSubcommand = new SlashCommandSubcommandBuilder();
-const eventsEditSubcommand = new SlashCommandSubcommandBuilder();
-const eventsSearchSubcommand = new SlashCommandSubcommandBuilder();
-const eventsPollSubcommand = new SlashCommandSubcommandBuilder();
+const eventsAnnounceSubcommand = new SlashCommandSubcommandBuilder()
+  .setName("announce")
+  .setDescription("announces an event");
+const eventsEditSubcommand = new SlashCommandSubcommandBuilder()
+  .setName("edit")
+  .setDescription("edit an event");
+const eventsSearchSubcommand = new SlashCommandSubcommandBuilder()
+  .setName("search")
+  .setDescription("searches for events");
+const eventsPollSubcommand = new SlashCommandSubcommandBuilder()
+  .setName("poll")
+  .setDescription("creates a poll");
 export const events: Command = {
   data: new SlashCommandBuilder()
     .setName("events")
