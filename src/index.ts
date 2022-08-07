@@ -4,7 +4,7 @@ import { Client } from "discord.js";
 import { IntentOptions } from "./config/IntentOptions";
 import { Bot } from "./interfaces/Bot";
 import { errorHandler } from "./utils/errorHandler";
-import { loadCommands } from "./utils/loadCommands";
+import { loadCommands, loadContexts } from "./utils/loadCommands";
 import { handleEvents } from "./utils/loadEventListeners";
 import { logger } from "./utils/logHandler";
 import { registerCommands } from "./utils/registerCommands";
@@ -45,8 +45,10 @@ void (async () => {
 
   logger.debug("Loading Commands...");
   const commands = await loadCommands();
+  const contexts = await loadContexts();
   bot.commands = commands;
-  if (!commands.length) {
+  bot.contexts = contexts;
+  if (!commands.length || !contexts.length) {
     return;
   }
 
