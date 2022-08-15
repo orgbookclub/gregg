@@ -5,7 +5,7 @@ import { CommandHandler } from "../../../interfaces/CommandHandler";
 import { logger } from "../../../utils/logHandler";
 
 /**
- * Replies to the user with 'Pong!'.
+ * Gets the GR book information and returns an embed.
  *
  * @param {Bot} bot The bot instance.
  * @param {ChatInputCommandInteraction} interaction The interaction.
@@ -15,8 +15,10 @@ export const handleBook: CommandHandler = async (
   interaction: ChatInputCommandInteraction,
 ) => {
   try {
-    await interaction.reply("Pong!");
+    const query = interaction.options.getString("query") ?? "";
+    const data = await bot.apiClient.getGoodreadsBook(query);
+    await interaction.editReply(JSON.stringify(data));
   } catch (err) {
-    logger.error(`Error in handlePing: ${err}`);
+    logger.error(`Error in handleBook: ${err}`);
   }
 };

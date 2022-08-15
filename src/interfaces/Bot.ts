@@ -1,5 +1,7 @@
 import { Client } from "discord.js";
 
+import { APIClient } from "../providers/apiClient";
+
 import { Command } from "./Command";
 import { Context } from "./Context";
 
@@ -14,4 +16,5 @@ export interface Bot extends Client {
     clientId: string;
     homeGuildId: string;
   };
+  apiClient: APIClient;
 }
