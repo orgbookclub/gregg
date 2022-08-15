@@ -2,7 +2,6 @@ import { ChatInputCommandInteraction } from "discord.js";
 
 import { Bot } from "../../../interfaces/Bot";
 import { CommandHandler } from "../../../interfaces/CommandHandler";
-import { Client } from "../../../providers/client";
 import { logger } from "../../../utils/logHandler";
 
 /**
@@ -16,13 +15,7 @@ export const handleSearch: CommandHandler = async (
   interaction: ChatInputCommandInteraction,
 ) => {
   try {
-    const owsClient = new Client();
-    const response = await owsClient.searchBooks(
-      interaction.options.getString("query") ?? "",
-      interaction.options.getInteger("k") ?? 1,
-    );
-    logger.debug(response.data);
-    await interaction.editReply(JSON.stringify(response.data));
+    await interaction.editReply("search");
   } catch (err) {
     logger.error(`Error in handleSearch: ${err}`);
   }
