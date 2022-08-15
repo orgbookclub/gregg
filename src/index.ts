@@ -4,6 +4,7 @@ import { Client } from "discord.js";
 import { IntentOptions } from "./config/IntentOptions";
 import { Bot } from "./interfaces/Bot";
 import { errorHandler } from "./utils/errorHandler";
+import { loadApiClient } from "./utils/loadApiClient";
 import { loadCommands, loadContexts } from "./utils/loadCommands";
 import { handleEvents } from "./utils/loadEventListeners";
 import { logger } from "./utils/logHandler";
@@ -61,4 +62,7 @@ void (async () => {
   logger.debug("Attaching event listeners...");
   handleEvents(bot);
   await bot.login(bot.configs.token);
+
+  logger.debug("Initializing API Client...");
+  await loadApiClient(bot);
 })();

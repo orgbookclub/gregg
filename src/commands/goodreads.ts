@@ -9,10 +9,12 @@ import { Command } from "../interfaces/Command";
 import { CommandHandler } from "../interfaces/CommandHandler";
 import { logger } from "../utils/logHandler";
 
+import { handleBook } from "./subcommands/goodreads/book";
 import { handleSearch } from "./subcommands/goodreads/search";
 
 const handlers: { [key: string]: CommandHandler } = {
   search: handleSearch,
+  book: handleBook,
 };
 const goodreadsSearchSubcommand = new SlashCommandSubcommandBuilder()
   .setName("search")
