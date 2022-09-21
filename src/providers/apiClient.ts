@@ -2,9 +2,10 @@
 import axios from "axios";
 import { CronJob } from "cron";
 
-import { BookDto } from "../interfaces/dto/book.dto";
-import { GoodreadsBookDto } from "../interfaces/dto/goodreads-book.dto";
 import { logger } from "../utils/logHandler";
+
+import { BookDto } from "./dto/book.dto";
+import { GoodreadsBookDto } from "./dto/goodreads-book.dto";
 
 /**
  * The API Client for the backend service.

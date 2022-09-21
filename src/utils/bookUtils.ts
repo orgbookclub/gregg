@@ -1,4 +1,4 @@
-import { AuthorDto } from "../interfaces/dto/author.dto";
+import { AuthorDto } from "../providers/dto/author.dto";
 
 /**
  * Processes a list of @see AuthorDto objects and returns a readable string.
