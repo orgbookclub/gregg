@@ -15,8 +15,10 @@ export const handleCover: CommandHandler = async (
   interaction: ChatInputCommandInteraction,
 ) => {
   try {
-    await interaction.reply("Pong!");
+    const query = interaction.options.getString("query") ?? "";
+    const data = await bot.apiClient.getGoodreadsBook(query);
+    await interaction.editReply({ content: data.coverUrl });
   } catch (err) {
-    logger.error(`Error in handlePing: ${err}`);
+    logger.error(`Error in handleCover: ${err}`);
   }
 };

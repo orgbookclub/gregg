@@ -15,8 +15,10 @@ export const handleLink: CommandHandler = async (
   interaction: ChatInputCommandInteraction,
 ) => {
   try {
-    await interaction.reply("Pong!");
+    const query = interaction.options.getString("query") ?? "";
+    const data = await bot.apiClient.searchGoodreadsBooks(query, 1);
+    await interaction.editReply({ content: data[0].url });
   } catch (err) {
-    logger.error(`Error in handlePing: ${err}`);
+    logger.error(`Error in handleLink: ${err}`);
   }
 };
