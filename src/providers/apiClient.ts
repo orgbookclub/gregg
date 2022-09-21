@@ -4,6 +4,9 @@ import { CronJob } from "cron";
 
 import { logger } from "../utils/logHandler";
 
+import { BookDto } from "./dto/book.dto";
+import { GoodreadsBookDto } from "./dto/goodreads-book.dto";
+
 /**
  * The API Client for the backend service.
  * This client will be responsible for all interactions with the backend.
@@ -44,20 +47,39 @@ export class APIClient {
   }
 
   /**
-   * Gets info for a GR book.
+   * Gets info for books from GR.
    *
    * @param {string} query The query string.
+   * @param {number} k The maximum number of search results.
+   * @returns {Promise<BookDto[]>} An array of BookDto object.s.
    */
-  async getGoodreadsBook(query: string) {
+  async searchGoodreadsBooks(query: string, k = 5): Promise<BookDto[]> {
+    const requestConfig = {
+      headers: { Authorization: `Bearer ${this.accessToken}` },
+    };
     const response = await this.httpClient.get(
-      `/api/goodreads/book?q=${query}`,
-      {
-        headers: { Authorization: `Bearer ${this.accessToken}` },
-      },
+      `/api/goodreads/search?q=${query}&k=${k}`,
+      requestConfig,
     );
     return response.data;
   }
 
+  /**
+   * Gets info for a GR book.
+   *
+   * @param {string} query The query string.
+   * @returns {Promise<GoodreadsBookDto>} A GoodreadsBookDto object.
+   */
+  async getGoodreadsBook(query: string): Promise<GoodreadsBookDto> {
+    const requestConfig = {
+      headers: { Authorization: `Bearer ${this.accessToken}` },
+    };
+    const response = await this.httpClient.get(
+      `/api/goodreads/book?q=${query}`,
+      requestConfig,
+    );
+    return response.data;
+  }
   /**
    * Gets the access token from the /auth/token endpoint
    * and sets the class instance variable.

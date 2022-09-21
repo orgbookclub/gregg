@@ -10,11 +10,17 @@ import { CommandHandler } from "../interfaces/CommandHandler";
 import { logger } from "../utils/logHandler";
 
 import { handleBook } from "./subcommands/goodreads/book";
+import { handleCover } from "./subcommands/goodreads/cover";
+import { handleLink } from "./subcommands/goodreads/link";
+import { handleQuote } from "./subcommands/goodreads/quote";
 import { handleSearch } from "./subcommands/goodreads/search";
 
 const handlers: { [key: string]: CommandHandler } = {
   search: handleSearch,
   book: handleBook,
+  cover: handleCover,
+  link: handleLink,
+  quote: handleQuote,
 };
 const goodreadsSearchSubcommand = new SlashCommandSubcommandBuilder()
   .setName("search")

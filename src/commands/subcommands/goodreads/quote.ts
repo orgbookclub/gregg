@@ -17,6 +17,6 @@ export const handleQuote: CommandHandler = async (
   try {
     await interaction.reply("Pong!");
   } catch (err) {
-    logger.error(`Error in handlePing: ${err}`);
+    logger.error(`Error in handleQuote: ${err}`);
   }
 };
