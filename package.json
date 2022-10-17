@@ -16,7 +16,7 @@
   "dependencies": {
     "@discordjs/builders": "^1.1.0",
     "@discordjs/rest": "^1.1.0",
-    "@sentry/node": "^7.13.0",
+    "@sentry/node": "^7.15.0",
     "@sentry/tracing": "^7.13.0",
     "@types/glob": "^8.0.0",
     "axios": "^0.27.2",
