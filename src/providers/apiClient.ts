@@ -80,7 +80,6 @@ export class APIClient {
     );
     return response.data;
   }
-
   /**
    * Returns a quote from GR.
    *
