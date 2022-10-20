@@ -81,6 +81,23 @@ export class APIClient {
     return response.data;
   }
   /**
+   * Returns a quote from GR.
+   *
+   * @param {string?} query The query string.
+   * @returns {Promise<string>} The quote.
+   */
+  async getGoodreadsQuote(query?: string) {
+    const requestConfig = {
+      headers: { Authorization: `Bearer ${this.accessToken}` },
+    };
+    const response = await this.httpClient.get(
+      `/api/goodreads/quotes?k=1` + (query !== "" ? `&q=${query}` : ""),
+      requestConfig,
+    );
+    return response.data[0];
+  }
+
+  /**
    * Gets the access token from the /auth/token endpoint
    * and sets the class instance variable.
    */

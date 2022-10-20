@@ -5,7 +5,7 @@ import { CommandHandler } from "../../../interfaces/CommandHandler";
 import { logger } from "../../../utils/logHandler";
 
 /**
- * Replies to the user with 'Pong!'.
+ * Returns the book cover from GR.
  *
  * @param {Bot} bot The bot instance.
  * @param {ChatInputCommandInteraction} interaction The interaction.
