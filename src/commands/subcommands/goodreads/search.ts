@@ -27,8 +27,9 @@ function getGoodreadsSearchEmbed(
     .setColor(Colors.Aqua);
   return embed;
 }
+
 /**
- * Replies to the user with 'Pong!'.
+ * Gets a list of books from GR and returns an embed.
  *
  * @param {Bot} bot The bot instance.
  * @param {ChatInputCommandInteraction} interaction The interaction.
