@@ -1,5 +1,5 @@
 import { Bot } from "../interfaces/Bot";
-import { APIClient } from "../providers/apiClient";
+import { APIClient } from "../providers/ows/apiClient";
 
 import { logger } from "./logHandler";
 

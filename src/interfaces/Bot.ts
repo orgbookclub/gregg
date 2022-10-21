@@ -1,6 +1,6 @@
 import { Client } from "discord.js";
 
-import { APIClient } from "../providers/apiClient";
+import { APIClient } from "../providers/ows/apiClient";
 
 import { Command } from "./Command";
 import { Context } from "./Context";

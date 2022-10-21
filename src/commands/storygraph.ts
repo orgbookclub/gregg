@@ -9,7 +9,17 @@ import { Command } from "../interfaces/Command";
 import { CommandHandler } from "../interfaces/CommandHandler";
 import { logger } from "../utils/logHandler";
 
-const handlers: { [key: string]: CommandHandler } = {};
+import { handleBook } from "./subcommands/storygraph/book";
+import { handleCover } from "./subcommands/storygraph/cover";
+import { handleLink } from "./subcommands/storygraph/link";
+import { handleSearch } from "./subcommands/storygraph/search";
+
+const handlers: { [key: string]: CommandHandler } = {
+  search: handleSearch,
+  book: handleBook,
+  cover: handleCover,
+  link: handleLink,
+};
 const storygraphSearchSubcommand = new SlashCommandSubcommandBuilder()
   .setName("search")
   .setDescription("Fetches a list of book links from SG")
@@ -64,6 +74,7 @@ export const storygraph: Command = {
     .addSubcommand(storygraphCoverSubcommand),
   run: async (bot: Bot, interaction: ChatInputCommandInteraction) => {
     try {
+      await interaction.deferReply();
       const subCommand = interaction.options.getSubcommand();
       const handler = handlers[subCommand];
       await handler(bot, interaction);

@@ -1,11 +1,12 @@
 /* eslint-disable camelcase */
-import axios from "axios";
+import axios, { AxiosRequestConfig } from "axios";
 import { CronJob } from "cron";
 
-import { logger } from "../utils/logHandler";
+import { logger } from "../../utils/logHandler";
 
 import { BookDto } from "./dto/book.dto";
 import { GoodreadsBookDto } from "./dto/goodreads-book.dto";
+import { StorygraphBookDto } from "./dto/storygraph-book.dto";
 
 /**
  * The API Client for the backend service.
@@ -54,12 +55,9 @@ export class APIClient {
    * @returns {Promise<BookDto[]>} An array of BookDto object.s.
    */
   async searchGoodreadsBooks(query: string, k = 5): Promise<BookDto[]> {
-    const requestConfig = {
-      headers: { Authorization: `Bearer ${this.accessToken}` },
-    };
     const response = await this.httpClient.get(
       `/api/goodreads/search?q=${query}&k=${k}`,
-      requestConfig,
+      this.getRequestConfig(),
     );
     return response.data;
   }
@@ -71,30 +69,65 @@ export class APIClient {
    * @returns {Promise<GoodreadsBookDto>} A GoodreadsBookDto object.
    */
   async getGoodreadsBook(query: string): Promise<GoodreadsBookDto> {
-    const requestConfig = {
-      headers: { Authorization: `Bearer ${this.accessToken}` },
-    };
     const response = await this.httpClient.get(
       `/api/goodreads/book?q=${query}`,
-      requestConfig,
+      this.getRequestConfig(),
     );
     return response.data;
   }
+
   /**
    * Returns a quote from GR.
    *
    * @param {string?} query The query string.
    * @returns {Promise<string>} The quote.
    */
-  async getGoodreadsQuote(query?: string) {
-    const requestConfig = {
-      headers: { Authorization: `Bearer ${this.accessToken}` },
-    };
+  async getGoodreadsQuote(query?: string): Promise<string> {
     const response = await this.httpClient.get(
       `/api/goodreads/quotes?k=1` + (query !== "" ? `&q=${query}` : ""),
-      requestConfig,
+      this.getRequestConfig(),
     );
     return response.data[0];
+  }
+
+  /**
+   * Gets info for books from SG.
+   *
+   * @param {string} query The query string.
+   * @param {number} k The maximum number of search results.
+   * @returns {Promise<BookDto[]>} An array of BookDto object.s.
+   */
+  async searchStorygraphBooks(query: string, k = 5): Promise<BookDto[]> {
+    const response = await this.httpClient.get(
+      `/api/storygraph/search?q=${query}&k=${k}`,
+      this.getRequestConfig(),
+    );
+    return response.data;
+  }
+
+  /**
+   * Gets info for a SG book.
+   *
+   * @param {string} query The query string.
+   * @returns {Promise<StorygraphBookDto>} A GoodreadsBookDto object.
+   */
+  async getStorygraphBook(query: string): Promise<StorygraphBookDto> {
+    const response = await this.httpClient.get(
+      `/api/storygraph/book?q=${query}`,
+      this.getRequestConfig(),
+    );
+    return response.data;
+  }
+
+  /**
+   * Creates a JSON object for the request header.
+   *
+   * @returns {AxiosRequestConfig} Request config object.
+   */
+  private getRequestConfig() {
+    return {
+      headers: { Authorization: `Bearer ${this.accessToken}` },
+    };
   }
 
   /**
