@@ -15,7 +15,7 @@ export const handleList: CommandHandler = async (
   interaction: ChatInputCommandInteraction,
 ) => {
   try {
-    const eventType = interaction.options.getString("type", true);
+    // const eventType = interaction.options.getString("type", true);
     // const data = await bot.apiClient.
     await interaction.editReply({ content: "x" });
   } catch (err) {
