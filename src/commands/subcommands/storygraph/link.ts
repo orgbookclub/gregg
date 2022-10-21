@@ -5,7 +5,7 @@ import { CommandHandler } from "../../../interfaces/CommandHandler";
 import { logger } from "../../../utils/logHandler";
 
 /**
- * Replies to the user with 'Pong!'.
+ * Returns the SG URL of the book.
  *
  * @param {Bot} bot The bot instance.
  * @param {ChatInputCommandInteraction} interaction The interaction.
@@ -15,8 +15,10 @@ export const handleLink: CommandHandler = async (
   interaction: ChatInputCommandInteraction,
 ) => {
   try {
-    await interaction.reply("Pong!");
+    const query = interaction.options.getString("query") ?? "";
+    const data = await bot.apiClient.searchStorygraphBooks(query, 1);
+    await interaction.editReply({ content: data[0].url });
   } catch (err) {
-    logger.error(`Error in handlePing: ${err}`);
+    logger.error(`Error in handleLink: ${err}`);
   }
 };

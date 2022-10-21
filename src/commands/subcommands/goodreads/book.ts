@@ -2,7 +2,7 @@ import { ChatInputCommandInteraction, Colors, EmbedBuilder } from "discord.js";
 
 import { Bot } from "../../../interfaces/Bot";
 import { CommandHandler } from "../../../interfaces/CommandHandler";
-import { GoodreadsBookDto } from "../../../providers/dto/goodreads-book.dto";
+import { GoodreadsBookDto } from "../../../providers/ows/dto/goodreads-book.dto";
 import { getAuthorString } from "../../../utils/bookUtils";
 import { logger } from "../../../utils/logHandler";
 

@@ -5,20 +5,20 @@ import { CommandHandler } from "../../../interfaces/CommandHandler";
 import { logger } from "../../../utils/logHandler";
 
 /**
- * Returns the book cover from SG.
+ * Returns a list of events.
  *
  * @param {Bot} bot The bot instance.
  * @param {ChatInputCommandInteraction} interaction The interaction.
  */
-export const handleCover: CommandHandler = async (
+export const handleList: CommandHandler = async (
   bot: Bot,
   interaction: ChatInputCommandInteraction,
 ) => {
   try {
-    const query = interaction.options.getString("query") ?? "";
-    const data = await bot.apiClient.getStorygraphBook(query);
-    await interaction.editReply({ content: data.coverUrl });
+    const eventType = interaction.options.getString("type", true);
+    // const data = await bot.apiClient.
+    await interaction.editReply({ content: "x" });
   } catch (err) {
-    logger.error(`Error in handleCover: ${err}`);
+    logger.error(`Error in handleList: ${err}`);
   }
 };
