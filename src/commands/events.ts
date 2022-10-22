@@ -11,10 +11,12 @@ import { Command } from "../interfaces/Command";
 import { CommandHandler } from "../interfaces/CommandHandler";
 import { logger } from "../utils/logHandler";
 
+import { handleInfo } from "./subcommands/events/info";
 import { handleList } from "./subcommands/events/list";
 
 const handlers: { [key: string]: CommandHandler } = {
   list: handleList,
+  info: handleInfo,
 };
 const eventsListSubcommand = new SlashCommandSubcommandBuilder()
   .setName("list")

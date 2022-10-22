@@ -45,7 +45,7 @@ export const handleList: CommandHandler = async (
   try {
     const eventType = interaction.options.getString("type", true);
     const eventStatus = interaction.options.getString("status", true);
-    const data = await bot.apiClient.getEventsList(eventType, eventStatus);
+    const data = await bot.apiClient.getEventList(eventType, eventStatus);
     const pageSize = 5;
     const pagedContentManager = new PaginationManager<EventDto>(
       pageSize,

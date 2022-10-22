@@ -2,6 +2,7 @@ import { BookDto } from "./book.dto";
 import { DateRange } from "./date-range.dto";
 import { EventStatus } from "./event-status";
 import { EventType } from "./event-type";
+import { Participant } from "./participant.dto";
 
 /**
  * Dto object which stores info for an event.
@@ -14,9 +15,9 @@ export interface EventDto {
   status: EventStatus;
   type: EventType;
   dates: DateRange;
-  requestedBy: string;
-  interested: string[];
-  readers: string[];
-  leaders: string[];
+  requestedBy: string | Participant;
+  interested: string[] | Participant[];
+  readers: string[] | Participant[];
+  leaders: string[] | Participant[];
   description: string;
 }

@@ -127,7 +127,7 @@ export class APIClient {
    * @param {string} status The status of the event.
    * @returns {Promise<EventDto[]>} A List of events.
    */
-  async getEventsList(type: string, status: string): Promise<EventDto[]> {
+  async getEventList(type: string, status: string): Promise<EventDto[]> {
     const response = await this.httpClient.get(
       `/api/events?type=${type}&status=${status}`,
       this.getRequestConfig(),
@@ -135,6 +135,19 @@ export class APIClient {
     return response.data;
   }
 
+  /**
+   * Returns detailed info for an event.
+   *
+   * @param {string} id The event ID.
+   * @returns {Promise<EventDto>} The event.
+   */
+  async getEventInfo(id: string): Promise<EventDto> {
+    const response = await this.httpClient.get(
+      `/api/events/${id}`,
+      this.getRequestConfig(),
+    );
+    return response.data;
+  }
   /**
    * Creates a JSON object for the request header.
    *
