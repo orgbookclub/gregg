@@ -5,6 +5,7 @@ import { CronJob } from "cron";
 import { logger } from "../../utils/logHandler";
 
 import { BookDto } from "./dto/book.dto";
+import { EventDto } from "./dto/event.dto";
 import { GoodreadsBookDto } from "./dto/goodreads-book.dto";
 import { StorygraphBookDto } from "./dto/storygraph-book.dto";
 
@@ -114,6 +115,21 @@ export class APIClient {
   async getStorygraphBook(query: string): Promise<StorygraphBookDto> {
     const response = await this.httpClient.get(
       `/api/storygraph/book?q=${query}`,
+      this.getRequestConfig(),
+    );
+    return response.data;
+  }
+
+  /**
+   * Gets a list of server events.
+   *
+   * @param {string} type The type of the event.
+   * @param {string} status The status of the event.
+   * @returns {Promise<EventDto[]>} A List of events.
+   */
+  async getEventsList(type: string, status: string): Promise<EventDto[]> {
+    const response = await this.httpClient.get(
+      `/api/events?type=${type}&status=${status}`,
       this.getRequestConfig(),
     );
     return response.data;

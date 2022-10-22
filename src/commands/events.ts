@@ -80,11 +80,12 @@ export const events: Command = {
     .addSubcommand(eventsPollSubcommand),
   run: async (bot: Bot, interaction: ChatInputCommandInteraction) => {
     try {
+      await interaction.deferReply();
       const subCommand = interaction.options.getSubcommand();
       const handler = handlers[subCommand];
       await handler(bot, interaction);
     } catch (err) {
-      logger.error(`Error processing command <> ${err}`);
+      logger.error(`Error processing command events ${err}`);
     }
   },
 };
