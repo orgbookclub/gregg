@@ -80,7 +80,8 @@ export class PaginationManager<T> {
     const selectMenu = new SelectMenuBuilder()
       .setPlaceholder(`On Page ${this.currPageNum}`)
       .setCustomId(this.selectId);
-    for (let i = 1; i <= this.totalPageNum; i++) {
+    const pageGap = Math.ceil(this.totalPageNum / 10);
+    for (let i = 1; i <= this.totalPageNum; i += pageGap) {
       selectMenu.addOptions({ label: `Page ${i}`, value: `${i}` });
     }
     const buttonActionRow = new ActionRowBuilder<ButtonBuilder>().addComponents(

@@ -136,6 +136,28 @@ export class APIClient {
   }
 
   /**
+   * Searches for a list of server events.
+   *
+   * @param {string} query The query string.
+   * @param {string?} type The type of the event.
+   * @param {string?} status The status of the event.
+   * @returns {Promise<EventDto[]>} A List of events.
+   */
+  async searchEvents(
+    query: string,
+    type?: string,
+    status?: string,
+  ): Promise<EventDto[]> {
+    const response = await this.httpClient.get(
+      `/api/events?bookSearchQuery=${query}` +
+        (type ? `&type=${type}` : "") +
+        (status ? `&status=${status}` : ""),
+      this.getRequestConfig(),
+    );
+    return response.data;
+  }
+
+  /**
    * Returns detailed info for an event.
    *
    * @param {string} id The event ID.
@@ -148,6 +170,7 @@ export class APIClient {
     );
     return response.data;
   }
+
   /**
    * Creates a JSON object for the request header.
    *

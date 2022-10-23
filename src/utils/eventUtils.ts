@@ -1,6 +1,31 @@
-import { userMention } from "discord.js";
+import {
+  ChatInputCommandInteraction,
+  Colors,
+  EmbedBuilder,
+  userMention,
+} from "discord.js";
 
+import { Bot } from "../interfaces/Bot";
+import { EventDto } from "../providers/ows/dto/event.dto";
 import { Participant } from "../providers/ows/dto/participant.dto";
+
+import { getAuthorString } from "./bookUtils";
+
+function getEventItemField(event: EventDto) {
+  return {
+    name: `📕 ${event.book.title} - ${getAuthorString(event.book.authors)}`,
+    value:
+      `> [Link](${event.book.url}) | __ID__: \`${event._id}\`` +
+      `\n> __Type__: ${event.type} | __Status__: ${event.status}` +
+      (event.dates.startDate !== undefined
+        ? `\n> __Start__: <t:${getUnixTimestamp(event.dates.startDate)}:D>`
+        : "") +
+      (event.dates.endDate !== undefined
+        ? ` | __End__: <t:${getUnixTimestamp(event.dates.endDate)}:D>`
+        : ""),
+    inline: false,
+  };
+}
 
 /**
  * Converts a javascript date object into unix timestamp.
@@ -45,3 +70,32 @@ export const getUserMentionString = (
   if (participants.length > limit) result += "...";
   return result;
 };
+
+/**
+ * Creates an embed to display a list of events.
+ *
+ * @param {EventDto[]} data Array of events.
+ * @param {Bot} bot The bot instance.
+ * @param {ChatInputCommandInteraction} interaction The interaction instance.
+ * @returns {EmbedBuilder} The embed.
+ */
+export function getEventsListEmbed(
+  data: EventDto[],
+  bot: Bot,
+  interaction: ChatInputCommandInteraction,
+) {
+  const embed = new EmbedBuilder()
+    .setTitle("Events")
+    .setFooter({ text: `Fetched by ${bot.user?.username}` })
+    .setColor(Colors.Red);
+  if (interaction.inGuild()) {
+    embed.setAuthor({
+      name: interaction.guild?.name ?? "Unknown Guild",
+      iconURL: interaction.guild?.iconURL() ?? undefined,
+    });
+  }
+  data.forEach((event: EventDto) => {
+    embed.addFields(getEventItemField(event));
+  });
+  return embed;
+}

@@ -13,10 +13,12 @@ import { logger } from "../utils/logHandler";
 
 import { handleInfo } from "./subcommands/events/info";
 import { handleList } from "./subcommands/events/list";
+import { handleSearch } from "./subcommands/events/search";
 
 const handlers: { [key: string]: CommandHandler } = {
   list: handleList,
   info: handleInfo,
+  search: handleSearch,
 };
 const eventsListSubcommand = new SlashCommandSubcommandBuilder()
   .setName("list")
@@ -25,13 +27,15 @@ const eventsListSubcommand = new SlashCommandSubcommandBuilder()
     option
       .setName("type")
       .setDescription("Event Type")
-      .addChoices(...EventTypeOptions),
+      .addChoices(...EventTypeOptions)
+      .setRequired(true),
   )
   .addStringOption((option) =>
     option
       .setName("status")
       .setDescription("Event Status")
-      .addChoices(...EventStatusOptions),
+      .addChoices(...EventStatusOptions)
+      .setRequired(true),
   );
 const eventsBroadcastSubcommand = new SlashCommandSubcommandBuilder()
   .setName("broadcast")
@@ -64,7 +68,25 @@ const eventsEditSubcommand = new SlashCommandSubcommandBuilder()
   .setDescription("edit an event");
 const eventsSearchSubcommand = new SlashCommandSubcommandBuilder()
   .setName("search")
-  .setDescription("searches for events");
+  .setDescription("searches for events")
+  .addStringOption((option) =>
+    option
+      .setName("query")
+      .setDescription("The query string")
+      .setRequired(true),
+  )
+  .addStringOption((option) =>
+    option
+      .setName("type")
+      .setDescription("Event Type")
+      .addChoices(...EventTypeOptions),
+  )
+  .addStringOption((option) =>
+    option
+      .setName("status")
+      .setDescription("Event Status")
+      .addChoices(...EventStatusOptions),
+  );
 const eventsPollSubcommand = new SlashCommandSubcommandBuilder()
   .setName("poll")
   .setDescription("creates a poll");
