@@ -78,7 +78,7 @@ export class PaginationManager<T> {
       .setCustomId(this.forwardId)
       .setDisabled(this.currPageNum === this.totalPageNum);
     const selectMenu = new SelectMenuBuilder()
-      .setPlaceholder("Select Page number")
+      .setPlaceholder(`On Page ${this.currPageNum}`)
       .setCustomId(this.selectId);
     for (let i = 1; i <= this.totalPageNum; i++) {
       selectMenu.addOptions({ label: `Page ${i}`, value: `${i}` });

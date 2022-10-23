@@ -4,6 +4,7 @@ import { Bot } from "../../../interfaces/Bot";
 import { CommandHandler } from "../../../interfaces/CommandHandler";
 import { EventDto } from "../../../providers/ows/dto/event.dto";
 import { getAuthorString } from "../../../utils/bookUtils";
+import { getUnixTimestamp } from "../../../utils/eventUtils";
 import { logger } from "../../../utils/logHandler";
 import { PaginationManager } from "../../../utils/paginationUtils";
 
@@ -23,13 +24,21 @@ function getEventsListEmbed(
     });
   }
   data.forEach((event: EventDto) => {
-    embed.addFields({
-      name: `📕 ${event.book.title} - ${getAuthorString(event.book.authors)}`,
-      value: `> [Link](${event.book.url}) | ID: ${event._id}`,
-      inline: false,
-    });
+    embed.addFields(getEventItemField(event));
   });
   return embed;
+}
+
+function getEventItemField(event: EventDto) {
+  return {
+    name: `📕 ${event.book.title} - ${getAuthorString(event.book.authors)}`,
+    value:
+      `> [Link](${event.book.url}) | __ID__: \`${event._id}\`` +
+      `\n> __Type__: ${event.type} | __Status__: ${event.status}` +
+      `\n> __Start__: <t:${getUnixTimestamp(event.dates.startDate)}:D>` +
+      ` | __End__: <t:${getUnixTimestamp(event.dates.endDate)}:D>`,
+    inline: false,
+  };
 }
 
 /**
