@@ -5,6 +5,7 @@ import { CronJob } from "cron";
 import { logger } from "../../utils/logHandler";
 
 import { BookDto } from "./dto/book.dto";
+import { EventDto } from "./dto/event.dto";
 import { GoodreadsBookDto } from "./dto/goodreads-book.dto";
 import { StorygraphBookDto } from "./dto/storygraph-book.dto";
 
@@ -114,6 +115,57 @@ export class APIClient {
   async getStorygraphBook(query: string): Promise<StorygraphBookDto> {
     const response = await this.httpClient.get(
       `/api/storygraph/book?q=${query}`,
+      this.getRequestConfig(),
+    );
+    return response.data;
+  }
+
+  /**
+   * Gets a list of server events.
+   *
+   * @param {string} type The type of the event.
+   * @param {string} status The status of the event.
+   * @returns {Promise<EventDto[]>} A List of events.
+   */
+  async getEventList(type: string, status: string): Promise<EventDto[]> {
+    const response = await this.httpClient.get(
+      `/api/events?type=${type}&status=${status}`,
+      this.getRequestConfig(),
+    );
+    return response.data;
+  }
+
+  /**
+   * Searches for a list of server events.
+   *
+   * @param {string} query The query string.
+   * @param {string?} type The type of the event.
+   * @param {string?} status The status of the event.
+   * @returns {Promise<EventDto[]>} A List of events.
+   */
+  async searchEvents(
+    query: string,
+    type?: string,
+    status?: string,
+  ): Promise<EventDto[]> {
+    const response = await this.httpClient.get(
+      `/api/events?bookSearchQuery=${query}` +
+        (type ? `&type=${type}` : "") +
+        (status ? `&status=${status}` : ""),
+      this.getRequestConfig(),
+    );
+    return response.data;
+  }
+
+  /**
+   * Returns detailed info for an event.
+   *
+   * @param {string} id The event ID.
+   * @returns {Promise<EventDto>} The event.
+   */
+  async getEventInfo(id: string): Promise<EventDto> {
+    const response = await this.httpClient.get(
+      `/api/events/${id}`,
       this.getRequestConfig(),
     );
     return response.data;
