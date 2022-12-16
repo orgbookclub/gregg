@@ -1,5 +1,6 @@
 import { Client } from "discord.js";
 
+import SprintManager from "../classes/SprintManager";
 import { APIClient } from "../providers/ows/apiClient";
 
 import { Command } from "./Command";
@@ -17,4 +18,7 @@ export interface Bot extends Client {
     homeGuildId: string;
   };
   apiClient: APIClient;
+  dataCache: {
+    sprintManager: SprintManager;
+  };
 }
