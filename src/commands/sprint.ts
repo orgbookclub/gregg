@@ -9,7 +9,23 @@ import { Command } from "../interfaces/Command";
 import { CommandHandler } from "../interfaces/CommandHandler";
 import { logger } from "../utils/logHandler";
 
-const handlers: { [key: string]: CommandHandler } = {};
+import { handleCancel } from "./subcommands/sprint/cancel";
+import { handleFinish } from "./subcommands/sprint/finish";
+import { handleJoin } from "./subcommands/sprint/join";
+import { handleLeave } from "./subcommands/sprint/leave";
+import { handleStart } from "./subcommands/sprint/start";
+import { handleStatus } from "./subcommands/sprint/status";
+
+const handlers: { [key: string]: CommandHandler } = {
+  start: handleStart,
+  join: handleJoin,
+  leave: handleLeave,
+  cancel: handleCancel,
+  status: handleStatus,
+  finish: handleFinish,
+  // TODO: Handle sprint stats command
+};
+// TODO: Handle cooldown for this command
 const sprintStartSubcommand = new SlashCommandSubcommandBuilder()
   .setName("start")
   .setDescription("Starts a reading sprint")
@@ -18,7 +34,8 @@ const sprintStartSubcommand = new SlashCommandSubcommandBuilder()
       .setName("duration")
       .setDescription("The duration of the sprint in minutes")
       .setMinValue(1)
-      .setMaxValue(60),
+      .setMaxValue(60)
+      .setRequired(true),
   )
   .addIntegerOption((option) =>
     option
@@ -31,13 +48,13 @@ const sprintJoinSubcommand = new SlashCommandSubcommandBuilder()
   .setName("join")
   .setDescription("Join the ongoing sprint")
   .addIntegerOption((option) =>
-    option.setName("k").setDescription("The initial count"),
+    option.setName("count").setDescription("The initial count"),
   );
-const sprintCountSubcommand = new SlashCommandSubcommandBuilder()
-  .setName("count")
+const sprintFinishSubcommand = new SlashCommandSubcommandBuilder()
+  .setName("finish")
   .setDescription("Gives your final count to the bot at the end of a sprint.")
   .addIntegerOption((option) =>
-    option.setName("k").setDescription("The final count"),
+    option.setName("count").setDescription("The final count"),
   );
 const sprintStatsSubcommand = new SlashCommandSubcommandBuilder()
   .setName("stats")
@@ -56,19 +73,21 @@ const sprintCancelSubcommand = new SlashCommandSubcommandBuilder()
 const sprintLeaveSubcommand = new SlashCommandSubcommandBuilder()
   .setName("leave")
   .setDescription("Leave an ongoing sprint in the channel");
+
 export const sprint: Command = {
   data: new SlashCommandBuilder()
     .setName("sprint")
     .setDescription("Handles sprint related commands")
     .addSubcommand(sprintStartSubcommand)
     .addSubcommand(sprintJoinSubcommand)
-    .addSubcommand(sprintCountSubcommand)
+    .addSubcommand(sprintFinishSubcommand)
     .addSubcommand(sprintStatsSubcommand)
     .addSubcommand(sprintStatusSubcommand)
     .addSubcommand(sprintCancelSubcommand)
     .addSubcommand(sprintLeaveSubcommand),
   run: async (bot: Bot, interaction: ChatInputCommandInteraction) => {
     try {
+      await interaction.deferReply();
       const subCommand = interaction.options.getSubcommand();
       const handler = handlers[subCommand];
       await handler(bot, interaction);
