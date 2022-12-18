@@ -114,9 +114,11 @@ export default class Sprint {
   }
 
   /**
+   * Calculates the scores for the sprint participants.
    *
+   * @returns {[string, number][]} A sorted list of tuples, representing the ID and the score of a participant.
    */
-  calculateSprintScores() {
+  calculateSprintScores(): [string, number][] {
     const scores: { [id: string]: number } = {};
     for (const key of this.participants) {
       if (this.endCounts[key] === undefined) continue;
