@@ -1,5 +1,8 @@
 import { uuid4 } from "@sentry/utils";
-import { User } from "discord.js";
+import { User, userMention } from "discord.js";
+
+import { getUserMentionString } from "../utils/eventUtils";
+import { logger } from "../utils/logHandler";
 
 import { SprintStatus } from "./SprintStatus";
 
@@ -27,7 +30,7 @@ export default class Sprint {
     this.id = uuid4();
     this.threadId = threadId;
     this.duration = duration;
-    this.participants = new Set<string>();
+    this.participants = new Set();
     this.startCounts = {};
     this.endCounts = {};
     this.timer = undefined;
@@ -77,13 +80,76 @@ export default class Sprint {
    *
    * @returns {string} The string representing the sprint status.
    */
-  getStatusMessage() {
+  getStatusMessage(): string {
+    logger.debug(Array.from(this.participants.keys()));
     return (
       `**Sprint Status**: ${this.status}` +
       "\n" +
       `**Duration** : ${this.duration} minute(s)` +
       "\n" +
       `**Number of participants**: ${this.participants.size}`
+    );
+  }
+
+  /**
+   * Creates a message for the sprint start announcement.
+   *
+   * @returns {string} The string representing the start announcement.
+   */
+  getStartMessage(): string {
+    return `Sprint started! Duration: ${this.duration} minutes`;
+  }
+
+  /**
+   * Creates a message for the sprint finish announcement.
+   *
+   * @returns {string} The string representing the finish announcement.
+   */
+  getFinishMessage(): string {
+    return (
+      `${getUserMentionString(Array.from(this.participants.keys()))}` +
+      "\n" +
+      `Sprint Finished! Please log your end count`
+    );
+  }
+
+  /**
+   *
+   */
+  calculateSprintScores() {
+    const scores: { [id: string]: number } = {};
+    for (const key of this.participants) {
+      if (this.endCounts[key] === undefined) continue;
+      scores[key] = Math.max(0, this.endCounts[key] - this.startCounts[key]);
+    }
+    const items: [string, number][] = Object.keys(scores).map((key) => [
+      key,
+      scores[key],
+    ]);
+    items.sort((a, b) => b[1] - a[1]);
+    return items;
+  }
+
+  /**
+   * Creates a message for the sprint ending announcement with the stats.
+   *
+   * @returns {string} The string representing the sprint ending stats.
+   */
+  getEndMessage(): string {
+    const scoreStrings = this.calculateSprintScores().map((item, index) => {
+      const readingSpeed = (item[1] / this.duration).toFixed(2);
+      return (
+        `\`${index + 1}\` ${userMention(item[0])} - **${
+          item[1]
+        }** (*${readingSpeed}* per minute)` + "\n"
+      );
+    });
+    return (
+      "Congratulations sprinters!" +
+      "\n" +
+      "**SPRINT STATS**" +
+      "\n" +
+      `${scoreStrings}`
     );
   }
 }

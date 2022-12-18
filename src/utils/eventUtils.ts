@@ -63,6 +63,8 @@ export const getUserMentionString = (
           })`;
         }
         return userMention(participant.user.userId.toString());
+      } else if (typeof participant === "string") {
+        return userMention(participant);
       }
       return null;
     })

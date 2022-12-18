@@ -31,6 +31,7 @@ export const handleCancel: CommandHandler = async (
       await interaction.editReply({
         content: "There are no active sprints to cancel in this thread!",
       });
+      return;
     }
     const sprint = bot.dataCache.sprintManager.getSprint(threadId);
     sprint.cancel();

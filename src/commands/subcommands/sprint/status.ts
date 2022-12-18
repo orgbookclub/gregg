@@ -18,11 +18,11 @@ export const handleStatus: CommandHandler = async (
   try {
     const threadId = interaction.channelId;
     if (
-      bot.dataCache.sprintManager.isSprintPresent(
+      !bot.dataCache.sprintManager.isSprintPresent(
         threadId,
         SprintStatus.Scheduled,
-      ) ||
-      bot.dataCache.sprintManager.isSprintPresent(
+      ) &&
+      !bot.dataCache.sprintManager.isSprintPresent(
         threadId,
         SprintStatus.Ongoing,
       )
@@ -30,6 +30,7 @@ export const handleStatus: CommandHandler = async (
       await interaction.editReply({
         content: "There are no active sprints in this thread!",
       });
+      return;
     }
     const sprint = bot.dataCache.sprintManager.getSprint(threadId);
     await interaction.editReply({

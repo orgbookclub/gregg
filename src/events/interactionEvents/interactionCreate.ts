@@ -8,7 +8,7 @@ export const interactionCreate: Event = {
   name: "interactionCreate",
   run: async (bot: Bot, interaction: Interaction) => {
     try {
-      console.log(
+      logger.debug(
         `${interaction.user.tag} in #${interaction.channel?.id} triggered an interaction.`,
       );
       if (interaction.isChatInputCommand()) {
@@ -21,7 +21,7 @@ export const interactionCreate: Event = {
         try {
           await command.run(bot, interaction);
         } catch (error) {
-          console.error(error);
+          logger.error(error);
           await interaction.reply({
             content: "There was an error while executing this command!",
             ephemeral: true,
@@ -37,7 +37,7 @@ export const interactionCreate: Event = {
         try {
           await command.run(bot, interaction);
         } catch (error) {
-          console.error(error);
+          logger.error(error);
           await interaction.reply({
             content: "There was an error while executing this context command!",
             ephemeral: true,

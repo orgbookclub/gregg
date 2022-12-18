@@ -1,3 +1,5 @@
+import { TextChannel } from "discord.js";
+
 import Sprint from "../../classes/Sprint";
 import { SprintStatus } from "../../classes/SprintStatus";
 import { Bot } from "../../interfaces/Bot";
@@ -16,6 +18,15 @@ export const sprintStart: Event = {
       sprint.timer = setTimeout(() => {
         bot.emit("sprintFinish", sprint);
       }, sprint.duration * 60 * 1000);
+      const threadId = sprint.threadId;
+      const channel = (await bot.channels.fetch(threadId)) as TextChannel;
+      if (channel === null) {
+        logger.error(`Unable to find channel/thread with ID: ${threadId}`);
+        return;
+      }
+      channel.send({
+        content: sprint.getStartMessage(),
+      });
     } catch (err) {
       logger.error(`Error while handling sprintStart event: ${err}`);
     }

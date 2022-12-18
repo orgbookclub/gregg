@@ -28,12 +28,17 @@ export const handleStart: CommandHandler = async (
       bot.dataCache.sprintManager.isSprintPresent(
         threadId,
         SprintStatus.Ongoing,
+      ) ||
+      bot.dataCache.sprintManager.isSprintPresent(
+        threadId,
+        SprintStatus.Finished,
       )
     ) {
       await interaction.editReply({
         content:
           "There is already an active or scheduled sprint in this thread!",
       });
+      return;
     }
     const sprint = new Sprint(duration, delay, threadId);
     bot.dataCache.sprintManager.add(sprint);

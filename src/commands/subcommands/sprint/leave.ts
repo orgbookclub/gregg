@@ -27,11 +27,12 @@ export const handleLeave: CommandHandler = async (
       await interaction.editReply({
         content: "There are no active sprints to leave in this thread!",
       });
+      return;
     }
     const sprint = bot.dataCache.sprintManager.getSprint(threadId);
     sprint.leave(user);
     await interaction.editReply({
-      message: `Successfully left the sprint`,
+      content: `Successfully left the sprint`,
     });
   } catch (err) {
     logger.error(`Error in handleLeave ${err}`);

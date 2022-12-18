@@ -28,11 +28,12 @@ export const handleJoin: CommandHandler = async (
       await interaction.editReply({
         content: "There are no active sprints to join in this thread!",
       });
+      return;
     }
     const sprint = bot.dataCache.sprintManager.getSprint(threadId);
     sprint.join(user, startCount);
     await interaction.editReply({
-      message: `Successfully joined sprint with start count: ${startCount}`,
+      content: `Successfully joined sprint with start count: ${startCount}`,
     });
   } catch (err) {
     logger.error(`Error in handleJoin ${err}`);

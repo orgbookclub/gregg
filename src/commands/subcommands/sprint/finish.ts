@@ -29,11 +29,18 @@ export const handleFinish: CommandHandler = async (
         content:
           "There are no finished sprints to log end counts in this thread!",
       });
+      return;
     }
     const sprint = bot.dataCache.sprintManager.getSprint(threadId);
+    if (!sprint.participants.has(user.id)) {
+      await interaction.editReply({
+        content: "You were not a participant of this sprint!",
+      });
+      return;
+    }
     sprint.finish(user, count);
     await interaction.editReply({
-      message: `Successfully logged end count: ${count}`,
+      content: `Successfully logged end count: ${count}`,
     });
   } catch (err) {
     logger.error(`Error in handleFinish ${err}`);
