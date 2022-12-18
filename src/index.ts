@@ -1,6 +1,7 @@
 import * as Sentry from "@sentry/node";
 import { Client } from "discord.js";
 
+import SprintManager from "./classes/SprintManager";
 import { IntentOptions } from "./config/IntentOptions";
 import { Bot } from "./interfaces/Bot";
 import { errorHandler } from "./utils/errorHandler";
@@ -58,6 +59,9 @@ void (async () => {
   if (!success) {
     return;
   }
+
+  logger.debug("Initializing Cache...");
+  bot.dataCache = { sprintManager: new SprintManager() };
 
   logger.debug("Attaching event listeners...");
   handleEvents(bot);
