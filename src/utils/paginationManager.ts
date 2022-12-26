@@ -7,7 +7,7 @@ import {
   ComponentType,
   EmbedBuilder,
   Message,
-  SelectMenuBuilder,
+  StringSelectMenuBuilder,
   WebhookEditMessageOptions,
 } from "discord.js";
 
@@ -61,10 +61,10 @@ export class PaginationManager<T> {
   /**
    * Creates the Button Action Row and SelectMenuAction Row for a page.
    *
-   * @returns {{selectMenuActionRow: ActionRowBuilder<SelectMenuBuilder>, buttonActionRow: ActionRowBuilder<ButtonBuilder>}} The Action rows.
+   * @returns {{selectMenuActionRow: ActionRowBuilder<StringSelectMenuBuilder>, buttonActionRow: ActionRowBuilder<ButtonBuilder>}} The Action rows.
    */
   createMessageComponentsForPage(): {
-    selectMenuActionRow: ActionRowBuilder<SelectMenuBuilder>;
+    selectMenuActionRow: ActionRowBuilder<StringSelectMenuBuilder>;
     buttonActionRow: ActionRowBuilder<ButtonBuilder>;
   } {
     const backButton = new ButtonBuilder()
@@ -77,7 +77,7 @@ export class PaginationManager<T> {
       .setStyle(ButtonStyle.Secondary)
       .setCustomId(this.forwardId)
       .setDisabled(this.currPageNum === this.totalPageNum);
-    const selectMenu = new SelectMenuBuilder()
+    const selectMenu = new StringSelectMenuBuilder()
       .setPlaceholder(`On Page ${this.currPageNum}`)
       .setCustomId(this.selectId);
     const pageGap = Math.ceil(this.totalPageNum / 10);
@@ -89,7 +89,7 @@ export class PaginationManager<T> {
       forwardButton,
     );
     const selectMenuActionRow =
-      new ActionRowBuilder<SelectMenuBuilder>().addComponents(selectMenu);
+      new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(selectMenu);
     return { selectMenuActionRow, buttonActionRow };
   }
 
@@ -142,7 +142,7 @@ export class PaginationManager<T> {
       time: duration,
     });
     const selectMenuCollector = message.createMessageComponentCollector({
-      componentType: ComponentType.SelectMenu,
+      componentType: ComponentType.StringSelect,
       time: duration,
     });
 
