@@ -176,7 +176,7 @@ export class APIClient {
    *
    * @param createEventDto
    */
-  async createEvent(createEventDto: CreateEventDto) {
+  async createEvent(createEventDto: CreateEventDto): Promise<EventDto> {
     const response = await this.httpClient.post(
       `/api/events/${encodeURIComponent(createEventDto.bookUrl)}`,
       createEventDto,

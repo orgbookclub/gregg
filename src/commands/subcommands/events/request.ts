@@ -12,16 +12,22 @@ import {
 
 import { Bot } from "../../../interfaces/Bot";
 import { CommandHandler } from "../../../interfaces/CommandHandler";
-import { BookDto } from "../../../providers/ows/dto/book.dto";
 import { EventType } from "../../../providers/ows/dto/event-type";
+import { getEventInfoEmbed } from "../../../utils/eventUtils";
 import { logger } from "../../../utils/logHandler";
+
+const EVENT_REQUEST_MODAL_ID = "eventRequestModal";
+const BOOK_LINK_FIELD_ID = "link";
+const START_DATE_FIELD_ID = "startDate";
+const END_DATE_FIELD_ID = "endDate";
+const REQUEST_REASON_FIELD_ID = "reason";
 
 function getEventRequestModal(eventType: string) {
   const modal = new ModalBuilder()
-    .setCustomId("eventRequestModal")
+    .setCustomId(EVENT_REQUEST_MODAL_ID)
     .setTitle(`${eventType} Request`);
   const linkInput = new TextInputBuilder()
-    .setCustomId("link")
+    .setCustomId(BOOK_LINK_FIELD_ID)
     .setLabel("What's the GR or SG link to the book?")
     .setRequired(true)
     .setPlaceholder("https://www.goodreads.com/book/show/xxxxyyy-zzzz")
@@ -34,7 +40,7 @@ function getEventRequestModal(eventType: string) {
 
   if (eventType === EventType.BuddyRead) {
     const startDateInput = new TextInputBuilder()
-      .setCustomId("startDate")
+      .setCustomId(START_DATE_FIELD_ID)
       .setLabel("When do you want the event to start?")
       .setRequired(true)
       .setPlaceholder("YYYY-MM-DD")
@@ -49,7 +55,7 @@ function getEventRequestModal(eventType: string) {
     modal.addComponents(startDateRow);
 
     const endDateInput = new TextInputBuilder()
-      .setCustomId("endDate")
+      .setCustomId(END_DATE_FIELD_ID)
       .setLabel("When do you want the event to end?")
       .setRequired(true)
       .setPlaceholder("YYYY-MM-DD")
@@ -64,7 +70,7 @@ function getEventRequestModal(eventType: string) {
     modal.addComponents(endDateRow);
   }
   const reasonInput = new TextInputBuilder()
-    .setCustomId("reason")
+    .setCustomId(REQUEST_REASON_FIELD_ID)
     .setLabel("Why are you requesting this book?")
     .setRequired(true)
     .setStyle(TextInputStyle.Paragraph);
@@ -74,6 +80,48 @@ function getEventRequestModal(eventType: string) {
     );
   modal.addComponents(reasonActionRow);
   return modal;
+}
+
+function extractFieldsFromModalSubmission(
+  modalSubmitInteraction: ModalSubmitInteraction,
+) {
+  const link =
+    modalSubmitInteraction.fields.getTextInputValue(BOOK_LINK_FIELD_ID);
+  const startDateString =
+    modalSubmitInteraction.fields.getTextInputValue(START_DATE_FIELD_ID);
+  const endDateString =
+    modalSubmitInteraction.fields.getTextInputValue(END_DATE_FIELD_ID);
+  const requestReason = modalSubmitInteraction.fields.getTextInputValue(
+    REQUEST_REASON_FIELD_ID,
+  );
+  return { link, startDateString, endDateString, requestReason };
+}
+
+function validateModalSubmission(
+  startDateString: string,
+  endDateString: string,
+  link: string,
+) {
+  const startTimestamp = Date.parse(startDateString);
+  if (isNaN(startTimestamp)) {
+    throw new Error("Invalid start date");
+  }
+  const startDate = new Date(startTimestamp);
+  if (startDate < new Date()) {
+    throw new Error("Start date cannot be in the past!");
+  }
+  const endTimestamp = Date.parse(endDateString);
+  if (isNaN(endTimestamp)) {
+    throw new Error("Invalid end date");
+  }
+  const endDate = new Date(endTimestamp);
+  if (endDate < startDate) {
+    throw new Error("End date cannot be before the start date!");
+  }
+  if (!link.includes("goodreads.com/") && !link.includes("storygraph.com/")) {
+    throw new Error("Invalid link!");
+  }
+  return { startDate, endDate };
 }
 
 /**
@@ -90,58 +138,42 @@ export const handleRequest: CommandHandler = async (
     const modal = getEventRequestModal(eventType);
     await interaction.showModal(modal);
     const filter = (msInteraction: ModalSubmitInteraction) =>
-      msInteraction.customId === "eventRequestModal";
+      msInteraction.customId === EVENT_REQUEST_MODAL_ID;
     const modalSubmitInteraction = await interaction.awaitModalSubmit({
       filter,
       time: 5 * 60 * 1000,
       // 5 minutes until the modal times out
     });
 
-    // Extract data from modal submission
-    const link = modalSubmitInteraction.fields.getTextInputValue("link");
-    const startDateString =
-      modalSubmitInteraction.fields.getTextInputValue("startDate");
-    const endDateString =
-      modalSubmitInteraction.fields.getTextInputValue("endDate");
-    const requestReason =
-      modalSubmitInteraction.fields.getTextInputValue("reason");
+    const { link, startDateString, endDateString, requestReason } =
+      extractFieldsFromModalSubmission(modalSubmitInteraction);
 
-    // validate data from submission
-    logger.debug(
-      `${link} ${startDateString} ${endDateString} ${requestReason}`,
+    const { startDate, endDate } = validateModalSubmission(
+      startDateString,
+      endDateString,
+      link,
     );
 
-    const startTimestamp = Date.parse(startDateString);
-    if (isNaN(startTimestamp)) {
-      throw new Error("Invalid start date");
-    }
-    const startDate = new Date(startTimestamp);
-    if (startDate < new Date()) {
-      throw new Error("Start date cannot be in the past!");
-    }
-    const endTimestamp = Date.parse(endDateString);
-    if (isNaN(endTimestamp)) {
-      throw new Error("Invalid end date");
-    }
-    const endDate = new Date(endTimestamp);
-    if (endDate < startDate) {
-      throw new Error("End date cannot be before the start date!");
-    }
-    if (!link.includes("goodreads.com/") && !link.includes("storygraph.com/")) {
-      throw new Error("Invalid link!");
-    }
-
     // Perform action on data submitted
-    await bot.apiClient.createEvent({
+    const event = await bot.apiClient.createEvent({
       bookUrl: link,
+      type: EventType[eventType as keyof typeof EventType],
       dates: {
         startDate: startDate,
         endDate: endDate,
       },
+      requestedBy: "x",
+      // TODO: get user id from discord id.
+      leaders: ["x"],
       description: requestReason,
     });
+    await modalSubmitInteraction.reply({
+      content: "Request created!",
+      embeds: [getEventInfoEmbed(event, bot, interaction)],
+      ephemeral: true,
+    });
   } catch (err) {
-    await interaction.followUp({ content: `${err}` });
+    await interaction.followUp({ content: `${err}`, ephemeral: true });
     logger.error(`Error in handleRequest ${err}`);
   }
 };
