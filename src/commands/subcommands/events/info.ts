@@ -88,6 +88,7 @@ export const handleInfo: CommandHandler = async (
   interaction: ChatInputCommandInteraction,
 ) => {
   try {
+    await interaction.deferReply();
     const id = interaction.options.getString("id", true);
     const data = await bot.apiClient.getEventInfo(id);
     const embed = getEventInfoEmbed(data, bot, interaction);

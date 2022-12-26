@@ -5,7 +5,7 @@ import { CommandHandler } from "../../../interfaces/CommandHandler";
 import { EventDto } from "../../../providers/ows/dto/event.dto";
 import { getEventsListEmbed } from "../../../utils/eventUtils";
 import { logger } from "../../../utils/logHandler";
-import { PaginationManager } from "../../../utils/paginationUtils";
+import { PaginationManager } from "../../../utils/paginationManager";
 
 /**
  * Returns a list of events for the given query string.
@@ -18,6 +18,7 @@ export const handleSearch: CommandHandler = async (
   interaction: ChatInputCommandInteraction,
 ) => {
   try {
+    await interaction.deferReply();
     const query = interaction.options.getString("query", true);
     const eventType = interaction.options.getString("type") ?? undefined;
     const eventStatus = interaction.options.getString("status") ?? undefined;

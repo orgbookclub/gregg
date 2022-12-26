@@ -13,12 +13,14 @@ import { logger } from "../utils/logHandler";
 
 import { handleInfo } from "./subcommands/events/info";
 import { handleList } from "./subcommands/events/list";
+import { handleRequest } from "./subcommands/events/request";
 import { handleSearch } from "./subcommands/events/search";
 
 const handlers: { [key: string]: CommandHandler } = {
   list: handleList,
   info: handleInfo,
   search: handleSearch,
+  request: handleRequest,
 };
 const eventsListSubcommand = new SlashCommandSubcommandBuilder()
   .setName("list")
@@ -104,7 +106,6 @@ export const events: Command = {
     .addSubcommand(eventsPollSubcommand),
   run: async (bot: Bot, interaction: ChatInputCommandInteraction) => {
     try {
-      await interaction.deferReply();
       const subCommand = interaction.options.getSubcommand();
       const handler = handlers[subCommand];
       await handler(bot, interaction);
