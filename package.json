@@ -19,7 +19,7 @@
     "@sentry/node": "^7.16.0",
     "@sentry/tracing": "^7.15.0",
     "@types/glob": "^8.0.0",
-    "axios": "^0.27.2",
+    "axios": "^1.2.1",
     "cron": "^2.1.0",
     "discord-api-types": "^0.37.15",
     "discord.js": "^14.7.1",
