@@ -5,6 +5,7 @@ import { CronJob } from "cron";
 import { logger } from "../../utils/logHandler";
 
 import { BookDto } from "./dto/book.dto";
+import { CreateEventDto } from "./dto/create-event.dto";
 import { EventDto } from "./dto/event.dto";
 import { GoodreadsBookDto } from "./dto/goodreads-book.dto";
 import { StorygraphBookDto } from "./dto/storygraph-book.dto";
@@ -166,6 +167,19 @@ export class APIClient {
   async getEventInfo(id: string): Promise<EventDto> {
     const response = await this.httpClient.get(
       `/api/events/${id}`,
+      this.getRequestConfig(),
+    );
+    return response.data;
+  }
+
+  /**
+   *
+   * @param createEventDto
+   */
+  async createEvent(createEventDto: CreateEventDto) {
+    const response = await this.httpClient.post(
+      `/api/events/${encodeURIComponent(createEventDto.bookUrl)}`,
+      createEventDto,
       this.getRequestConfig(),
     );
     return response.data;
