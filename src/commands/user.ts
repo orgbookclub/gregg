@@ -38,7 +38,7 @@ export const user: Command = {
     .addSubcommand(
       new SlashCommandSubcommandBuilder()
         .setName("stats")
-        .setDescription("Shows the user's event stats for the servier")
+        .setDescription("Shows the user's event stats for the server")
         .addUserOption((option) =>
           option.setName("user").setDescription("User for which to fetch info"),
         ),

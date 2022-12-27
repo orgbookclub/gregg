@@ -38,7 +38,7 @@ function getEventInfoEmbed(
   }
   embed.addFields({
     name: "Start Date",
-    value: ` <t:${getUnixTimestamp(data.dates.startDate)}:D>`,
+    value: `<t:${getUnixTimestamp(data.dates.startDate)}:D>`,
     inline: true,
   });
   embed.addFields({

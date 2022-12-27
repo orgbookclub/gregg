@@ -8,7 +8,7 @@ import { logger } from "../../../utils/logHandler";
 import { PaginationManager } from "../../../utils/paginationUtils";
 
 /**
- * Gets the server event stats for a user.
+ * Gets the server event list for a user.
  *
  * @param {Bot} bot The bot instance.
  * @param {ChatInputCommandInteraction} interaction The interaction.
