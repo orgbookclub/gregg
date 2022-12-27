@@ -26,9 +26,10 @@ export class PaginationManager<T> {
   readonly totalPageNum: number;
   readonly data: T[];
   readonly bot: Bot;
+  readonly embedTitle: string;
   readonly customEmbedBuilder: (
+    title: string,
     values: T[],
-    bot: Bot,
     interaction: ChatInputCommandInteraction,
   ) => EmbedBuilder;
 
@@ -39,16 +40,18 @@ export class PaginationManager<T> {
    * @param {T} data An array of objects.
    * @param {Bot} bot The Bot instance.
    * @param {(values: T[], bot: Bot, interaction: ChatInputCommandInteraction) => EmbedBuilder} embedBuilder A function which returns an embed for the given data type.
+   * @param {string} embedTitle The title of the embed.
    */
   constructor(
     pageSize: number,
     data: T[],
     bot: Bot,
     embedBuilder: (
+      title: string,
       values: T[],
-      b: Bot,
       int: ChatInputCommandInteraction,
     ) => EmbedBuilder,
+    embedTitle = "Events",
   ) {
     this.currPageNum = 1;
     this.pageSize = pageSize;
@@ -56,6 +59,7 @@ export class PaginationManager<T> {
     this.data = data;
     this.customEmbedBuilder = embedBuilder;
     this.totalPageNum = Math.ceil(data.length / pageSize);
+    this.embedTitle = embedTitle;
   }
 
   /**
@@ -117,7 +121,11 @@ export class PaginationManager<T> {
     const { selectMenuActionRow, buttonActionRow } =
       this.createMessageComponentsForPage();
     const pageData = this.getPageData();
-    const embed = this.customEmbedBuilder(pageData, this.bot, interaction);
+    const embed = this.customEmbedBuilder(
+      this.embedTitle,
+      pageData,
+      interaction,
+    );
     return {
       content: `Page ${this.currPageNum} out of ${this.totalPageNum}`,
       embeds: [embed],
