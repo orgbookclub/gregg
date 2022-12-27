@@ -6,7 +6,7 @@ import { ProfileDto } from "./profile.dto";
 export interface UserDto {
   _id: string;
 
-  userId: number;
+  userId: string;
 
   name: string;
 

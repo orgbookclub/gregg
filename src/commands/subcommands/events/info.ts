@@ -1,4 +1,9 @@
-import { ChatInputCommandInteraction, Colors, EmbedBuilder } from "discord.js";
+import {
+  ChatInputCommandInteraction,
+  Colors,
+  EmbedBuilder,
+  userMention,
+} from "discord.js";
 
 import { Bot } from "../../../interfaces/Bot";
 import { CommandHandler } from "../../../interfaces/CommandHandler";
@@ -33,7 +38,7 @@ function getEventInfoEmbed(
   }
   embed.addFields({
     name: "Start Date",
-    value: `<t:${getUnixTimestamp(data.dates.startDate)}:D>`,
+    value: ` <t:${getUnixTimestamp(data.dates.startDate)}:D>`,
     inline: true,
   });
   embed.addFields({
@@ -50,7 +55,7 @@ function getEventInfoEmbed(
   }
   embed.addFields({
     name: "Requested By",
-    value: `<@${data.requestedBy}>`,
+    value: `${userMention(data.requestedBy.user.userId)}`,
     inline: false,
   });
   if (data.leaders !== null && data.leaders.length > 0) {

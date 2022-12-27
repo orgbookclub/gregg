@@ -7,7 +7,7 @@ import {
   ComponentType,
   EmbedBuilder,
   Message,
-  SelectMenuBuilder,
+  StringSelectMenuBuilder,
   WebhookEditMessageOptions,
 } from "discord.js";
 
@@ -26,9 +26,10 @@ export class PaginationManager<T> {
   readonly totalPageNum: number;
   readonly data: T[];
   readonly bot: Bot;
+  readonly embedTitle: string;
   readonly customEmbedBuilder: (
+    title: string,
     values: T[],
-    bot: Bot,
     interaction: ChatInputCommandInteraction,
   ) => EmbedBuilder;
 
@@ -39,16 +40,18 @@ export class PaginationManager<T> {
    * @param {T} data An array of objects.
    * @param {Bot} bot The Bot instance.
    * @param {(values: T[], bot: Bot, interaction: ChatInputCommandInteraction) => EmbedBuilder} embedBuilder A function which returns an embed for the given data type.
+   * @param {string} embedTitle The title of the embed.
    */
   constructor(
     pageSize: number,
     data: T[],
     bot: Bot,
     embedBuilder: (
+      title: string,
       values: T[],
-      b: Bot,
       int: ChatInputCommandInteraction,
     ) => EmbedBuilder,
+    embedTitle = "Events",
   ) {
     this.currPageNum = 1;
     this.pageSize = pageSize;
@@ -56,15 +59,16 @@ export class PaginationManager<T> {
     this.data = data;
     this.customEmbedBuilder = embedBuilder;
     this.totalPageNum = Math.ceil(data.length / pageSize);
+    this.embedTitle = embedTitle;
   }
 
   /**
    * Creates the Button Action Row and SelectMenuAction Row for a page.
    *
-   * @returns {{selectMenuActionRow: ActionRowBuilder<SelectMenuBuilder>, buttonActionRow: ActionRowBuilder<ButtonBuilder>}} The Action rows.
+   * @returns {{selectMenuActionRow: ActionRowBuilder<StringSelectMenuBuilder>, buttonActionRow: ActionRowBuilder<ButtonBuilder>}} The Action rows.
    */
   createMessageComponentsForPage(): {
-    selectMenuActionRow: ActionRowBuilder<SelectMenuBuilder>;
+    selectMenuActionRow: ActionRowBuilder<StringSelectMenuBuilder>;
     buttonActionRow: ActionRowBuilder<ButtonBuilder>;
   } {
     const backButton = new ButtonBuilder()
@@ -77,7 +81,7 @@ export class PaginationManager<T> {
       .setStyle(ButtonStyle.Secondary)
       .setCustomId(this.forwardId)
       .setDisabled(this.currPageNum === this.totalPageNum);
-    const selectMenu = new SelectMenuBuilder()
+    const selectMenu = new StringSelectMenuBuilder()
       .setPlaceholder(`On Page ${this.currPageNum}`)
       .setCustomId(this.selectId);
     const pageGap = Math.ceil(this.totalPageNum / 10);
@@ -89,7 +93,7 @@ export class PaginationManager<T> {
       forwardButton,
     );
     const selectMenuActionRow =
-      new ActionRowBuilder<SelectMenuBuilder>().addComponents(selectMenu);
+      new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(selectMenu);
     return { selectMenuActionRow, buttonActionRow };
   }
 
@@ -117,7 +121,11 @@ export class PaginationManager<T> {
     const { selectMenuActionRow, buttonActionRow } =
       this.createMessageComponentsForPage();
     const pageData = this.getPageData();
-    const embed = this.customEmbedBuilder(pageData, this.bot, interaction);
+    const embed = this.customEmbedBuilder(
+      this.embedTitle,
+      pageData,
+      interaction,
+    );
     return {
       content: `Page ${this.currPageNum} out of ${this.totalPageNum}`,
       embeds: [embed],

@@ -76,20 +76,17 @@ export const getUserMentionString = (
 /**
  * Creates an embed to display a list of events.
  *
+ * @param {string} title The title to display in the embed.
  * @param {EventDto[]} data Array of events.
- * @param {Bot} bot The bot instance.
  * @param {ChatInputCommandInteraction} interaction The interaction instance.
  * @returns {EmbedBuilder} The embed.
  */
 export function getEventsListEmbed(
+  title: string,
   data: EventDto[],
-  bot: Bot,
   interaction: ChatInputCommandInteraction,
 ) {
-  const embed = new EmbedBuilder()
-    .setTitle("Events")
-    .setFooter({ text: `Fetched by ${bot.user?.username}` })
-    .setColor(Colors.Red);
+  const embed = new EmbedBuilder().setTitle(title).setColor(Colors.Red);
   if (interaction.inGuild()) {
     embed.setAuthor({
       name: interaction.guild?.name ?? "Unknown Guild",

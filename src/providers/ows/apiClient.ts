@@ -124,15 +124,14 @@ export class APIClient {
   /**
    * Gets a list of server events.
    *
-   * @param {string} type The type of the event.
    * @param {string} status The status of the event.
+   * @param {string} type The type of the event.
    * @returns {Promise<EventDto[]>} A List of events.
    */
-  async getEventList(type: string, status: string): Promise<EventDto[]> {
-    const response = await this.httpClient.get(
-      `/api/events?type=${type}&status=${status}`,
-      this.getRequestConfig(),
-    );
+  async getEventList(status: string, type?: string): Promise<EventDto[]> {
+    let url = `/api/events?status=${status}`;
+    if (type) url += `&type=${type}`;
+    const response = await this.httpClient.get(url, this.getRequestConfig());
     return response.data;
   }
 

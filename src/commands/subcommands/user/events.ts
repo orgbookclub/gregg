@@ -8,31 +8,43 @@ import { logger } from "../../../utils/logHandler";
 import { PaginationManager } from "../../../utils/paginationUtils";
 
 /**
- * Returns a list of events.
+ * Gets the server event stats for a user.
  *
  * @param {Bot} bot The bot instance.
  * @param {ChatInputCommandInteraction} interaction The interaction.
  */
-export const handleList: CommandHandler = async (
+export const handleEvents: CommandHandler = async (
   bot: Bot,
   interaction: ChatInputCommandInteraction,
 ) => {
   try {
+    await interaction.deferReply();
+    const user = interaction.options.getUser("user") ?? interaction.user;
     const eventType = interaction.options.getString("type", true);
     const eventStatus = interaction.options.getString("status", true);
-    const data = await bot.apiClient.getEventList(eventStatus, eventType);
+    const userDto = await bot.apiClient.getUser(user.id);
+    const userEvents = await bot.apiClient.getEventListForUser(
+      userDto._id,
+      eventType,
+      eventStatus,
+    );
+    if (userEvents.length === 0) {
+      await interaction.editReply("No events found for given parameters");
+      return;
+    }
     const pageSize = 5;
     const pagedContentManager = new PaginationManager<EventDto>(
       pageSize,
-      data,
+      userEvents,
       bot,
       getEventsListEmbed,
+      `${user.username}'s Events | ${eventType} | ${eventStatus}`,
     );
     const message = await interaction.editReply(
       pagedContentManager.createMessagePayloadForPage(interaction),
     );
-    pagedContentManager.createCollectors(message, interaction, 120000);
+    pagedContentManager.createCollectors(message, interaction, 5 * 60 * 1000);
   } catch (err) {
-    logger.error(`Error in handleList: ${err}`);
+    logger.error(`Error in handleEvents ${err}`);
   }
 };
