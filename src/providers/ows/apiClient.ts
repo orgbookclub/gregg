@@ -173,16 +173,18 @@ export class APIClient {
   }
 
   /**
+   * Returns the user document for a given user id.
    *
-   * @param id
+   * @param {string} userId The discord user ID.
    */
-  async getUser(id: string): Promise<UserDto> {
+  async getUser(userId: string): Promise<UserDto> {
     const response = await this.httpClient.get(
-      `/api/users/${id}`,
+      `/api/users/${userId}`,
       this.getRequestConfig(),
     );
     return response.data;
   }
+
   /**
    * Creates a JSON object for the request header.
    *
