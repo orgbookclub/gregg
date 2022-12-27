@@ -10,9 +10,11 @@ import { CommandHandler } from "../interfaces/CommandHandler";
 import { logger } from "../utils/logHandler";
 
 import { handleInfo } from "./subcommands/user/info";
+import { handleStats } from "./subcommands/user/stats";
 
 const handlers: { [key: string]: CommandHandler } = {
   info: handleInfo,
+  stats: handleStats,
 };
 
 export const user: Command = {
@@ -29,8 +31,8 @@ export const user: Command = {
     )
     .addSubcommand(
       new SlashCommandSubcommandBuilder()
-        .setName("score")
-        .setDescription("Shows the user's reader points")
+        .setName("stats")
+        .setDescription("Shows the user's event stats for the servier")
         .addUserOption((option) =>
           option.setName("user").setDescription("User for which to fetch info"),
         ),

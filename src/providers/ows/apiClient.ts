@@ -137,6 +137,23 @@ export class APIClient {
   }
 
   /**
+   *
+   * @param id
+   * @param type
+   * @param status
+   */
+  async getEventListForUser(
+    id: string,
+    type?: string,
+    status?: string,
+  ): Promise<EventDto[]> {
+    let url = `/api/events?participantIds=${id}`;
+    if (type) url += `&type=${type}`;
+    if (status) url += `&status=${status}`;
+    const response = await this.httpClient.get(url, this.getRequestConfig());
+    return response.data;
+  }
+  /**
    * Searches for a list of server events.
    *
    * @param {string} query The query string.
