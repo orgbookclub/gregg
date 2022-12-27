@@ -5,7 +5,6 @@ import {
   userMention,
 } from "discord.js";
 
-import { Bot } from "../interfaces/Bot";
 import { EventDto } from "../providers/ows/dto/event.dto";
 import { Participant } from "../providers/ows/dto/participant.dto";
 
