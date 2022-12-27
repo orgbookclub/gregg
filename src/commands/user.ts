@@ -9,7 +9,11 @@ import { Command } from "../interfaces/Command";
 import { CommandHandler } from "../interfaces/CommandHandler";
 import { logger } from "../utils/logHandler";
 
-const handlers: { [key: string]: CommandHandler } = {};
+import { handleInfo } from "./subcommands/user/info";
+
+const handlers: { [key: string]: CommandHandler } = {
+  info: handleInfo,
+};
 
 export const user: Command = {
   data: new SlashCommandBuilder()

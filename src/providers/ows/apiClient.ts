@@ -8,6 +8,7 @@ import { BookDto } from "./dto/book.dto";
 import { EventDto } from "./dto/event.dto";
 import { GoodreadsBookDto } from "./dto/goodreads-book.dto";
 import { StorygraphBookDto } from "./dto/storygraph-book.dto";
+import { UserDto } from "./dto/user.dto";
 
 /**
  * The API Client for the backend service.
@@ -171,6 +172,17 @@ export class APIClient {
     return response.data;
   }
 
+  /**
+   *
+   * @param id
+   */
+  async getUser(id: string): Promise<UserDto> {
+    const response = await this.httpClient.get(
+      `/api/users/${id}`,
+      this.getRequestConfig(),
+    );
+    return response.data;
+  }
   /**
    * Creates a JSON object for the request header.
    *
