@@ -137,10 +137,12 @@ export class APIClient {
   }
 
   /**
+   * Gets a list of server events for a given user.
    *
-   * @param id
-   * @param type
-   * @param status
+   * @param {string} id The object id for the user.
+   * @param {string?} type The type of the event.
+   * @param {string?} status The status of the event.
+   * @returns {Promise<EventDto[]>} A list of events.
    */
   async getEventListForUser(
     id: string,
