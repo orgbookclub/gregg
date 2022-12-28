@@ -192,8 +192,9 @@ export class APIClient {
   }
 
   /**
+   * Creates an event request in the backend.
    *
-   * @param createEventDto
+   * @param {CreateEventDto} createEventDto The DTO for creating an event.
    */
   async createEvent(createEventDto: CreateEventDto): Promise<EventDto> {
     const response = await this.httpClient.post(
