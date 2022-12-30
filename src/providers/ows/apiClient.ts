@@ -8,6 +8,7 @@ import { BookDto } from "./dto/book.dto";
 import { EventDto } from "./dto/event.dto";
 import { GoodreadsBookDto } from "./dto/goodreads-book.dto";
 import { StorygraphBookDto } from "./dto/storygraph-book.dto";
+import { UserDto } from "./dto/user.dto";
 
 /**
  * The API Client for the backend service.
@@ -123,18 +124,36 @@ export class APIClient {
   /**
    * Gets a list of server events.
    *
-   * @param {string} type The type of the event.
    * @param {string} status The status of the event.
+   * @param {string} type The type of the event.
    * @returns {Promise<EventDto[]>} A List of events.
    */
-  async getEventList(type: string, status: string): Promise<EventDto[]> {
-    const response = await this.httpClient.get(
-      `/api/events?type=${type}&status=${status}`,
-      this.getRequestConfig(),
-    );
+  async getEventList(status: string, type?: string): Promise<EventDto[]> {
+    let url = `/api/events?status=${status}`;
+    if (type) url += `&type=${type}`;
+    const response = await this.httpClient.get(url, this.getRequestConfig());
     return response.data;
   }
 
+  /**
+   * Gets a list of server events for a given user.
+   *
+   * @param {string} id The object id for the user.
+   * @param {string?} type The type of the event.
+   * @param {string?} status The status of the event.
+   * @returns {Promise<EventDto[]>} A list of events.
+   */
+  async getEventListForUser(
+    id: string,
+    type?: string,
+    status?: string,
+  ): Promise<EventDto[]> {
+    let url = `/api/events?participantIds=${id}`;
+    if (type) url += `&type=${type}`;
+    if (status) url += `&status=${status}`;
+    const response = await this.httpClient.get(url, this.getRequestConfig());
+    return response.data;
+  }
   /**
    * Searches for a list of server events.
    *
@@ -166,6 +185,19 @@ export class APIClient {
   async getEventInfo(id: string): Promise<EventDto> {
     const response = await this.httpClient.get(
       `/api/events/${id}`,
+      this.getRequestConfig(),
+    );
+    return response.data;
+  }
+
+  /**
+   * Returns the user document for a given user id.
+   *
+   * @param {string} userId The discord user ID.
+   */
+  async getUser(userId: string): Promise<UserDto> {
+    const response = await this.httpClient.get(
+      `/api/users/${userId}`,
       this.getRequestConfig(),
     );
     return response.data;

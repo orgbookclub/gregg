@@ -4,12 +4,24 @@ import {
   SlashCommandSubcommandBuilder,
 } from "discord.js";
 
+import { EventStatusOptions } from "../config/EventStatusOptions";
+import { EventTypeOptions } from "../config/EventTypeOptions";
 import { Bot } from "../interfaces/Bot";
 import { Command } from "../interfaces/Command";
 import { CommandHandler } from "../interfaces/CommandHandler";
 import { logger } from "../utils/logHandler";
 
-const handlers: { [key: string]: CommandHandler } = {};
+import { handleEvents } from "./subcommands/user/events";
+import { handleInfo } from "./subcommands/user/info";
+import { handleReaderboard } from "./subcommands/user/readerboard";
+import { handleStats } from "./subcommands/user/stats";
+
+const handlers: { [key: string]: CommandHandler } = {
+  info: handleInfo,
+  stats: handleStats,
+  events: handleEvents,
+  readerboard: handleReaderboard,
+};
 
 export const user: Command = {
   data: new SlashCommandBuilder()
@@ -25,8 +37,8 @@ export const user: Command = {
     )
     .addSubcommand(
       new SlashCommandSubcommandBuilder()
-        .setName("score")
-        .setDescription("Shows the user's reader points")
+        .setName("stats")
+        .setDescription("Shows the user's event stats for the server")
         .addUserOption((option) =>
           option.setName("user").setDescription("User for which to fetch info"),
         ),
@@ -35,6 +47,20 @@ export const user: Command = {
       new SlashCommandSubcommandBuilder()
         .setName("events")
         .setDescription("Shows the events for a user")
+        .addStringOption((option) =>
+          option
+            .setName("type")
+            .setDescription("Event Type")
+            .addChoices(...EventTypeOptions)
+            .setRequired(true),
+        )
+        .addStringOption((option) =>
+          option
+            .setName("status")
+            .setDescription("Event Status")
+            .addChoices(...EventStatusOptions)
+            .setRequired(true),
+        )
         .addUserOption((option) =>
           option.setName("user").setDescription("User for which to fetch info"),
         ),
