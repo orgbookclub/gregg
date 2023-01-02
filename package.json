@@ -24,7 +24,7 @@
     "discord-api-types": "^0.37.24",
     "discord.js": "^14.7.1",
     "dotenv": "^16.0.3",
-    "pino": "^8.7.0"
+    "pino": "^8.8.0"
   },
   "devDependencies": {
     "@types/cron": "^2.0.0",
