@@ -17,7 +17,7 @@
     "@discordjs/builders": "^1.1.0",
     "@discordjs/rest": "^1.5.0",
     "@sentry/node": "^7.28.1",
-    "@sentry/tracing": "^7.34.0",
+    "@sentry/tracing": "^7.36.0",
     "@types/glob": "^8.0.1",
     "axios": "^1.2.1",
     "cron": "^2.1.0",
