@@ -12,8 +12,8 @@ import {
 
 import { Bot } from "../../../interfaces/Bot";
 import { CommandHandler } from "../../../interfaces/CommandHandler";
+import { CreateEventDto } from "../../../providers/ows/dto/create-event.dto";
 import { EventType } from "../../../providers/ows/dto/event-type";
-import { getEventInfoEmbed } from "../../../utils/eventUtils";
 import { logger } from "../../../utils/logHandler";
 
 const EVENT_REQUEST_MODAL_ID = "eventRequestModal";
@@ -153,23 +153,21 @@ export const handleRequest: CommandHandler = async (
       endDateString,
       link,
     );
-
-    // Perform action on data submitted
-    const event = await bot.apiClient.createEvent({
+    const user = await bot.apiClient.getUser(interaction.user.id);
+    const createEventDto: CreateEventDto = {
       bookUrl: link,
       type: EventType[eventType as keyof typeof EventType],
       dates: {
         startDate: startDate,
         endDate: endDate,
       },
-      requestedBy: "x",
-      // TODO: get user id from discord id.
-      leaders: ["x"],
+      requestedBy: { user: user, points: 0 },
+      leaders: [{ user: user, points: 0 }],
       description: requestReason,
-    });
+    };
+    bot.emit("eventRequest", createEventDto);
     await modalSubmitInteraction.reply({
-      content: "Request created!",
-      embeds: [getEventInfoEmbed(event, bot, interaction)],
+      content: "Your event request has been submitted",
       ephemeral: true,
     });
   } catch (err) {
