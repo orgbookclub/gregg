@@ -67,7 +67,7 @@ export const handleReaderboard: CommandHandler = async (
 ) => {
   try {
     await interaction.deferReply();
-    const response = await bot.apiClient.eventsApi.eventsControllerFind(
+    const response = await bot.api.events.eventsControllerFind(
       undefined,
       undefined,
       undefined,

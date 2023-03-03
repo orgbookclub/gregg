@@ -132,10 +132,10 @@ export const handleStats: CommandHandler = async (
     await interaction.deferReply();
     const user = interaction.options.getUser("user") ?? interaction.user;
     const userResponse =
-      await bot.apiClient.usersApi.usersControllerFindOneByUserId(user.id);
+      await bot.api.users.usersControllerFindOneByUserId(user.id);
     const userDto = userResponse.data;
     const userEventsResponse =
-      await bot.apiClient.eventsApi.eventsControllerFind(
+      await bot.api.events.eventsControllerFind(
         undefined,
         undefined,
         undefined,

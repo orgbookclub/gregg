@@ -42,7 +42,7 @@ export const handleSearch: CommandHandler = async (
     const query = interaction.options.getString("query", true);
     const k = interaction.options.getInteger("k") ?? 5;
     const response =
-      await bot.apiClient.storygraphApi.storygraphControllerSearchBooks(
+      await bot.api.storygraph.storygraphControllerSearchBooks(
         query,
         k,
       );

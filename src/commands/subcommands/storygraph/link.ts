@@ -17,7 +17,7 @@ export const handleLink: CommandHandler = async (
   try {
     const query = interaction.options.getString("query", true);
     const response =
-      await bot.apiClient.storygraphApi.storygraphControllerSearchBooks(
+      await bot.api.storygraph.storygraphControllerSearchBooks(
         query,
         1,
       );

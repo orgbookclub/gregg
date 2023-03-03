@@ -17,7 +17,7 @@ export interface Bot extends Client {
     clientId: string;
     homeGuildId: string;
   };
-  apiClient: OWSClient;
+  api: OWSClient;
   dataCache: {
     sprintManager: SprintManager;
   };

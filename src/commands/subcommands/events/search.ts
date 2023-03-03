@@ -31,7 +31,7 @@ export const handleSearch: CommandHandler = async (
       "status",
       true,
     ) as keyof typeof EventDtoStatusEnum;
-    const response = await bot.apiClient.eventsApi.eventsControllerFind(
+    const response = await bot.api.events.eventsControllerFind(
       undefined,
       query,
       undefined,

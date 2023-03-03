@@ -17,7 +17,7 @@ export const handleCover: CommandHandler = async (
   try {
     const query = interaction.options.getString("query", true);
     const response =
-      await bot.apiClient.storygraphApi.storygraphControllerSearchAndGetBook(
+      await bot.api.storygraph.storygraphControllerSearchAndGetBook(
         query,
       );
     await interaction.editReply({ content: response.data.coverUrl });

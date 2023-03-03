@@ -12,7 +12,7 @@ export const loadApiClient = async (bot: Bot): Promise<void> => {
   try {
     const client = new OWSClient();
     await client.initialize();
-    bot.apiClient = client;
+    bot.api = client;
   } catch (err) {
     logger.error(`Error while loading API Client: ${err}`);
   }

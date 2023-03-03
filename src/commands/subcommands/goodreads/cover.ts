@@ -17,7 +17,7 @@ export const handleCover: CommandHandler = async (
   try {
     const query = interaction.options.getString("query", true);
     const response =
-      await bot.apiClient.goodreadsApi.goodreadsControllerSearchAndGetBook(
+      await bot.api.goodreads.goodreadsControllerSearchAndGetBook(
         query,
       );
     await interaction.editReply({ content: response.data.coverUrl });
