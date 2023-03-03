@@ -32,7 +32,7 @@ function getEventItemField(event: EventDto) {
  * @param {Date} date A JS date object.
  * @returns {string} Unix timestamp.
  */
-export const getUnixTimestamp = (date: Date): string => {
+export const getUnixTimestamp = (date: Date | string): string => {
   return Math.floor(new Date(date).getTime() / 1000).toString();
 };
 
