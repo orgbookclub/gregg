@@ -1,3 +1,4 @@
+import { EventDocument, EventDtoStatusEnum } from "@orgbookclub/ows-client";
 import {
   ChatInputCommandInteraction,
   Colors,
@@ -7,16 +8,13 @@ import {
 
 import { Bot } from "../../../interfaces/Bot";
 import { CommandHandler } from "../../../interfaces/CommandHandler";
-import { EventStatus } from "../../../providers/ows/dto/event-status";
-import { EventDto } from "../../../providers/ows/dto/event.dto";
 import { logger } from "../../../utils/logHandler";
 import { PaginationManager } from "../../../utils/paginationManager";
 
-function calculateReaderboardStats(events: EventDto[]) {
+function calculateReaderboardStats(events: EventDocument[]) {
   const scoreMap = new Map<string, number>();
   for (const event of events) {
     for (const participant of event.readers.concat(event.leaders)) {
-      if (typeof participant.user === "string") continue;
       const userId = participant.user.userId;
       scoreMap.set(
         userId,
@@ -68,7 +66,10 @@ export const handleReaderboard: CommandHandler = async (
 ) => {
   try {
     await interaction.deferReply();
-    const events = await bot.apiClient.getEventList(EventStatus.Completed);
+    const response = await bot.api.events.eventsControllerFind({
+      status: EventDtoStatusEnum.Completed,
+    });
+    const events = response.data;
     if (events.length === 0) {
       await interaction.editReply("No events found, something went wrong! :(");
       return;

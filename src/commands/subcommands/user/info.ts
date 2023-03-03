@@ -1,13 +1,13 @@
 import { EmbedBuilder } from "@discordjs/builders";
+import { UserDocument } from "@orgbookclub/ows-client";
 import { ChatInputCommandInteraction, Colors, User } from "discord.js";
 
 import { Bot } from "../../../interfaces/Bot";
 import { CommandHandler } from "../../../interfaces/CommandHandler";
-import { UserDto } from "../../../providers/ows/dto/user.dto";
 import { logger } from "../../../utils/logHandler";
 
 function getUserInfoEmbed(
-  userDto: UserDto,
+  userDto: UserDocument,
   user: User,
   interaction: ChatInputCommandInteraction,
 ): EmbedBuilder {
@@ -39,7 +39,10 @@ export const handleInfo: CommandHandler = async (
   try {
     await interaction.deferReply();
     const user = interaction.options.getUser("user") ?? interaction.user;
-    const userDto = await bot.apiClient.getUser(user.id);
+    const response = await bot.api.users.usersControllerFindOneByUserId({
+      userid: user.id,
+    });
+    const userDto = response.data;
     const embed = getUserInfoEmbed(userDto, user, interaction);
     await interaction.editReply({ embeds: [embed] });
   } catch (err) {

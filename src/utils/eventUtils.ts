@@ -1,3 +1,4 @@
+import { EventDocument, Participant } from "@orgbookclub/ows-client";
 import {
   ChatInputCommandInteraction,
   Colors,
@@ -6,12 +7,10 @@ import {
 } from "discord.js";
 
 import { Bot } from "../interfaces/Bot";
-import { EventDto } from "../providers/ows/dto/event.dto";
-import { Participant } from "../providers/ows/dto/participant.dto";
 
 import { getAuthorString } from "./bookUtils";
 
-function getEventItemField(event: EventDto) {
+function getEventItemField(event: EventDocument) {
   return {
     name: `📕 ${event.book.title} - ${getAuthorString(event.book.authors)}`,
     value:
@@ -33,7 +32,7 @@ function getEventItemField(event: EventDto) {
  * @param {Date} date A JS date object.
  * @returns {string} Unix timestamp.
  */
-export const getUnixTimestamp = (date: Date): string => {
+export const getUnixTimestamp = (date: Date | string): string => {
   return Math.floor(new Date(date).getTime() / 1000).toString();
 };
 
@@ -53,10 +52,7 @@ export const getUserMentionString = (
   const limitedParticipants = participants.slice(0, limit);
   let result = limitedParticipants
     .map((participant) => {
-      if (
-        typeof participant !== "string" &&
-        typeof participant.user !== "string"
-      ) {
+      if (typeof participant !== "string") {
         if (includePoints) {
           return `${userMention(participant.user.userId.toString())}(${
             participant.points
@@ -77,13 +73,13 @@ export const getUserMentionString = (
  * Creates an embed to display a list of events.
  *
  * @param {string} title The title to display in the embed.
- * @param {EventDto[]} data Array of events.
+ * @param {EventDocument[]} data Array of events.
  * @param {ChatInputCommandInteraction} interaction The interaction instance.
  * @returns {EmbedBuilder} The embed.
  */
 export function getEventsListEmbed(
   title: string,
-  data: EventDto[],
+  data: EventDocument[],
   interaction: ChatInputCommandInteraction,
 ) {
   const embed = new EmbedBuilder().setTitle(title).setColor(Colors.Red);
@@ -93,7 +89,7 @@ export function getEventsListEmbed(
       iconURL: interaction.guild?.iconURL() ?? undefined,
     });
   }
-  data.forEach((event: EventDto) => {
+  data.forEach((event: EventDocument) => {
     embed.addFields(getEventItemField(event));
   });
   return embed;
@@ -102,13 +98,13 @@ export function getEventsListEmbed(
 /**
  * Creates an embed to display details of an event.
  *
- * @param {EventDto} data The event.
+ * @param {EventDocument} data The event.
  * @param {Bot} bot The bot instance.
  * @param {ChatInputCommandInteraction} interaction The interaction instance.
  * @returns {EmbedBuilder} The embed.
  */
 export function getEventInfoEmbed(
-  data: EventDto,
+  data: EventDocument,
   bot: Bot,
   interaction: ChatInputCommandInteraction,
 ) {
