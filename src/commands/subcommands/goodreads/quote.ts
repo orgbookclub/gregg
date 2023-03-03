@@ -15,10 +15,11 @@ export const handleQuote: CommandHandler = async (
   interaction: ChatInputCommandInteraction,
 ) => {
   try {
-    const query = interaction.options.getString("query") ?? "";
-    const data = await bot.apiClient.getGoodreadsQuote(query);
-    logger.debug(data);
-    await interaction.editReply({ content: data });
+    const query = interaction.options.getString("query", true);
+    const response = await bot.api.goodreads.goodreadsControllerGetQuotes({
+      q: query,
+    });
+    await interaction.editReply({ content: response.data[0] });
   } catch (err) {
     logger.error(`Error in handleQuote: ${err}`);
   }

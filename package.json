@@ -16,6 +16,7 @@
   "dependencies": {
     "@discordjs/builders": "^1.1.0",
     "@discordjs/rest": "^1.5.0",
+    "@orgbookclub/ows-client": "^0.1.1",
     "@sentry/node": "^7.38.0",
     "@sentry/tracing": "^7.36.0",
     "@types/glob": "^8.0.1",

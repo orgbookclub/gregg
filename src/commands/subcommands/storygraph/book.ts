@@ -1,8 +1,8 @@
+import { StorygraphBookDto } from "@orgbookclub/ows-client";
 import { ChatInputCommandInteraction, Colors, EmbedBuilder } from "discord.js";
 
 import { Bot } from "../../../interfaces/Bot";
 import { CommandHandler } from "../../../interfaces/CommandHandler";
-import { StorygraphBookDto } from "../../../providers/ows/dto/storygraph-book.dto";
 import { getAuthorString } from "../../../utils/bookUtils";
 import { logger } from "../../../utils/logHandler";
 
@@ -45,9 +45,12 @@ export const handleBook: CommandHandler = async (
   interaction: ChatInputCommandInteraction,
 ) => {
   try {
-    const query = interaction.options.getString("query") ?? "";
-    const data = await bot.apiClient.getStorygraphBook(query);
-    const embed = getStorygraphBookEmbed(data, bot);
+    const query = interaction.options.getString("query", true);
+    const response =
+      await bot.api.storygraph.storygraphControllerSearchAndGetBook({
+        q: query,
+      });
+    const embed = getStorygraphBookEmbed(response.data, bot);
     await interaction.editReply({ embeds: [embed] });
   } catch (err) {
     logger.error(`Error in handleBook: ${err}`);

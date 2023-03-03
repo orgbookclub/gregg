@@ -15,9 +15,12 @@ export const handleLink: CommandHandler = async (
   interaction: ChatInputCommandInteraction,
 ) => {
   try {
-    const query = interaction.options.getString("query") ?? "";
-    const data = await bot.apiClient.searchStorygraphBooks(query, 1);
-    await interaction.editReply({ content: data[0].url });
+    const query = interaction.options.getString("query", true);
+    const response = await bot.api.storygraph.storygraphControllerSearchBooks({
+      q: query,
+      k: 1,
+    });
+    await interaction.editReply({ content: response.data[0].url });
   } catch (err) {
     logger.error(`Error in handleLink: ${err}`);
   }

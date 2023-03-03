@@ -1,8 +1,12 @@
+import {
+  EventDocument,
+  EventDtoStatusEnum,
+  EventDtoTypeEnum,
+} from "@orgbookclub/ows-client";
 import { ChatInputCommandInteraction } from "discord.js";
 
 import { Bot } from "../../../interfaces/Bot";
 import { CommandHandler } from "../../../interfaces/CommandHandler";
-import { EventDto } from "../../../providers/ows/dto/event.dto";
 import { getEventsListEmbed } from "../../../utils/eventUtils";
 import { logger } from "../../../utils/logHandler";
 import { PaginationManager } from "../../../utils/paginationUtils";
@@ -18,13 +22,23 @@ export const handleList: CommandHandler = async (
   interaction: ChatInputCommandInteraction,
 ) => {
   try {
-    const eventType = interaction.options.getString("type", true);
-    const eventStatus = interaction.options.getString("status", true);
-    const data = await bot.apiClient.getEventList(eventStatus, eventType);
+    const eventType = interaction.options.getString(
+      "type",
+      true,
+    ) as keyof typeof EventDtoTypeEnum;
+    const eventStatus = interaction.options.getString(
+      "status",
+      true,
+    ) as keyof typeof EventDtoStatusEnum;
+    const response = await bot.api.events.eventsControllerFind({
+      status: eventStatus,
+      type: eventType,
+    });
+    // const data = await bot.apiClient.getEventList(eventStatus, eventType);
     const pageSize = 5;
-    const pagedContentManager = new PaginationManager<EventDto>(
+    const pagedContentManager = new PaginationManager<EventDocument>(
       pageSize,
-      data,
+      response.data,
       bot,
       getEventsListEmbed,
     );

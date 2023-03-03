@@ -1,3 +1,4 @@
+import { EventDocument, EventDtoStatusEnum } from "@orgbookclub/ows-client";
 import {
   ChatInputCommandInteraction,
   Colors,
@@ -7,8 +8,6 @@ import {
 
 import { Bot } from "../../../interfaces/Bot";
 import { CommandHandler } from "../../../interfaces/CommandHandler";
-import { EventStatus } from "../../../providers/ows/dto/event-status";
-import { EventDto } from "../../../providers/ows/dto/event.dto";
 import { logger } from "../../../utils/logHandler";
 
 interface Stats {
@@ -26,7 +25,7 @@ type UserEventStats = {
   stats: { [key: string]: Stats };
 };
 
-function calculateUserEventStats(id: string, events: EventDto[]) {
+function calculateUserEventStats(id: string, events: EventDocument[]) {
   const userEventStats: UserEventStats = {
     totalScore: 0,
     stats: {},
@@ -52,7 +51,7 @@ function calculateUserEventStats(id: string, events: EventDto[]) {
     if (event.interested.find((x) => x.user._id === id)) {
       userEventStats.stats[eventType].interestedInCount += 1;
     }
-    if (event.requestedBy?.user._id === id) {
+    if (event.requestedBy.user._id === id) {
       userEventStats.stats[eventType].requestedCount += 1;
     }
     if (event.leaders.find((x) => x.user._id === id)) {
@@ -61,7 +60,7 @@ function calculateUserEventStats(id: string, events: EventDto[]) {
     if (event.readers.find((x) => x.user._id === id)) {
       userEventStats.stats[eventType].readCount += 1;
     }
-    if (event.status === EventStatus.Completed) {
+    if (event.status === EventDtoStatusEnum.Completed) {
       userEventStats.stats[eventType].readerPoints += readerPoints;
       userEventStats.stats[eventType].leaderPoints += leaderPoints;
       userEventStats.totalScore += readerPoints + leaderPoints;
@@ -119,8 +118,14 @@ export const handleStats: CommandHandler = async (
   try {
     await interaction.deferReply();
     const user = interaction.options.getUser("user") ?? interaction.user;
-    const userDto = await bot.apiClient.getUser(user.id);
-    const userEvents = await bot.apiClient.getEventListForUser(userDto._id);
+    const userResponse = await bot.api.users.usersControllerFindOneByUserId({
+      userid: user.id,
+    });
+    const userDto = userResponse.data;
+    const userEventsResponse = await bot.api.events.eventsControllerFind({
+      participantIds: [userDto._id],
+    });
+    const userEvents = userEventsResponse.data;
     const stats = calculateUserEventStats(userDto._id, userEvents);
     const embed = getUserEventStatsEmbed(stats, userDto._id, user, interaction);
     await interaction.editReply({ embeds: [embed] });
