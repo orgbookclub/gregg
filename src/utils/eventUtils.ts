@@ -1,3 +1,4 @@
+import { EventDocument, Participant } from "@orgbookclub/ows-client";
 import {
   ChatInputCommandInteraction,
   Colors,
@@ -5,12 +6,9 @@ import {
   userMention,
 } from "discord.js";
 
-import { EventDto } from "../providers/ows/dto/event.dto";
-import { Participant } from "../providers/ows/dto/participant.dto";
-
 import { getAuthorString } from "./bookUtils";
 
-function getEventItemField(event: EventDto) {
+function getEventItemField(event: EventDocument) {
   return {
     name: `📕 ${event.book.title} - ${getAuthorString(event.book.authors)}`,
     value:
@@ -76,13 +74,13 @@ export const getUserMentionString = (
  * Creates an embed to display a list of events.
  *
  * @param {string} title The title to display in the embed.
- * @param {EventDto[]} data Array of events.
+ * @param {EventDocument[]} data Array of events.
  * @param {ChatInputCommandInteraction} interaction The interaction instance.
  * @returns {EmbedBuilder} The embed.
  */
 export function getEventsListEmbed(
   title: string,
-  data: EventDto[],
+  data: EventDocument[],
   interaction: ChatInputCommandInteraction,
 ) {
   const embed = new EmbedBuilder().setTitle(title).setColor(Colors.Red);
@@ -92,7 +90,7 @@ export function getEventsListEmbed(
       iconURL: interaction.guild?.iconURL() ?? undefined,
     });
   }
-  data.forEach((event: EventDto) => {
+  data.forEach((event: EventDocument) => {
     embed.addFields(getEventItemField(event));
   });
   return embed;

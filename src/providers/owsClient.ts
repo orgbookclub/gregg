@@ -95,9 +95,11 @@ export class OWSClient {
   private async refreshAccessToken() {
     logger.debug("Refreshing api client access token...");
     const response = await this.auth.authControllerGetAccessToken({
-      grant_type: "client_credentials",
-      client_id: CLIENT_ID,
-      client_secret: CLIENT_SECRET,
+      clientCredentialsDto: {
+        grant_type: "client_credentials",
+        client_id: CLIENT_ID,
+        client_secret: CLIENT_SECRET,
+      },
     });
     this.accessToken = response.data.access_token;
   }
