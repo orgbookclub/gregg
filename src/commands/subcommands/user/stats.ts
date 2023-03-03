@@ -33,11 +33,9 @@ function calculateUserEventStats(id: string, events: EventDocument[]) {
   for (const event of events) {
     const eventType = event.type;
     const readerPoints =
-      event.readers.find((x) => typeof x.user !== "string" && x.user._id === id)
-        ?.points ?? 0;
+      event.readers.find((x) => x.user._id === id)?.points ?? 0;
     const leaderPoints =
-      event.leaders.find((x) => typeof x.user !== "string" && x.user._id === id)
-        ?.points ?? 0;
+      event.leaders.find((x) => x.user._id === id)?.points ?? 0;
     if (userEventStats.stats[eventType] === undefined) {
       userEventStats.stats[eventType] = {
         totalNumberOfEvents: 0,
@@ -50,27 +48,16 @@ function calculateUserEventStats(id: string, events: EventDocument[]) {
       };
     }
     userEventStats.stats[eventType].totalNumberOfEvents += 1;
-    if (
-      event.interested.find(
-        (x) => typeof x.user !== "string" && x.user._id === id,
-      )
-    ) {
+    if (event.interested.find((x) => x.user._id === id)) {
       userEventStats.stats[eventType].interestedInCount += 1;
     }
-    if (
-      typeof event.requestedBy.user !== "string" &&
-      event.requestedBy.user._id === id
-    ) {
+    if (event.requestedBy.user._id === id) {
       userEventStats.stats[eventType].requestedCount += 1;
     }
-    if (
-      event.leaders.find((x) => typeof x.user !== "string" && x.user._id === id)
-    ) {
+    if (event.leaders.find((x) => x.user._id === id)) {
       userEventStats.stats[eventType].leadCount += 1;
     }
-    if (
-      event.readers.find((x) => typeof x.user !== "string" && x.user._id === id)
-    ) {
+    if (event.readers.find((x) => x.user._id === id)) {
       userEventStats.stats[eventType].readCount += 1;
     }
     if (event.status === EventDtoStatusEnum.Completed) {

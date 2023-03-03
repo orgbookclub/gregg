@@ -56,10 +56,7 @@ function getEventInfoEmbed(
   }
   embed.addFields({
     name: "Requested By",
-    value: `${
-      typeof data.requestedBy.user !== "string" &&
-      userMention(data.requestedBy.user.userId)
-    }`,
+    value: `${userMention(data.requestedBy.user.userId)}`,
     inline: false,
   });
   if (data.leaders !== null && data.leaders.length > 0) {

@@ -15,7 +15,6 @@ function calculateReaderboardStats(events: EventDocument[]) {
   const scoreMap = new Map<string, number>();
   for (const event of events) {
     for (const participant of event.readers.concat(event.leaders)) {
-      if (typeof participant.user === "string") continue;
       const userId = participant.user.userId;
       scoreMap.set(
         userId,

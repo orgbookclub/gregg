@@ -50,10 +50,7 @@ export const getUserMentionString = (
   const limitedParticipants = participants.slice(0, limit);
   let result = limitedParticipants
     .map((participant) => {
-      if (
-        typeof participant !== "string" &&
-        typeof participant.user !== "string"
-      ) {
+      if (typeof participant !== "string") {
         if (includePoints) {
           return `${userMention(participant.user.userId.toString())}(${
             participant.points
