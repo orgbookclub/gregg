@@ -34,17 +34,15 @@ export class OWSClient {
    */
   constructor() {
     this.accessToken = "";
-    this.cronJob = new CronJob("0 * * * *", async () => {
+    this.cronJob = new CronJob("*/1 * * * *", async () => {
       try {
-        await this.refreshAccessToken();
-        this.initializeAPIs();
+        await this.initialize();
       } catch (err) {
         logger.error(`Error refreshing access token with cron job: ${err}`);
       }
     });
-    this.auth = new AuthApi(new Configuration({ basePath: this.baseUrl }));
-    this.initializeAPIs();
 
+    this.auth = new AuthApi(new Configuration({ basePath: this.baseUrl }));
     // Start job
     if (!this.cronJob.running) {
       this.cronJob.start();
@@ -86,6 +84,7 @@ export class OWSClient {
    */
   async initialize() {
     await this.refreshAccessToken();
+    this.initializeAPIs();
   }
 
   /**
