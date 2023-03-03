@@ -1,8 +1,8 @@
+import { GoodreadsBookDto } from "@orgbookclub/ows-client";
 import { ChatInputCommandInteraction, Colors, EmbedBuilder } from "discord.js";
 
 import { Bot } from "../../../interfaces/Bot";
 import { CommandHandler } from "../../../interfaces/CommandHandler";
-import { GoodreadsBookDto } from "../../../providers/ows/dto/goodreads-book.dto";
 import { getAuthorString } from "../../../utils/bookUtils";
 import { logger } from "../../../utils/logHandler";
 
@@ -35,9 +35,12 @@ export const handleBook: CommandHandler = async (
   interaction: ChatInputCommandInteraction,
 ) => {
   try {
-    const query = interaction.options.getString("query") ?? "";
-    const data = await bot.apiClient.getGoodreadsBook(query);
-    const embed = getGoodreadsBookEmbed(data, bot);
+    const query = interaction.options.getString("query", true);
+    const response =
+      await bot.apiClient.goodreadsApi.goodreadsControllerSearchAndGetBook(
+        query,
+      );
+    const embed = getGoodreadsBookEmbed(response.data, bot);
     await interaction.editReply({ embeds: [embed] });
   } catch (err) {
     logger.error(`Error in handleBook: ${err}`);
