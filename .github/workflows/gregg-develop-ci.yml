@@ -11,6 +11,10 @@ jobs:
   ci:
     name: Lint / Build
     runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read
+      packages: read
 
     strategy:
       matrix:
@@ -24,12 +28,13 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: "18.x"
-
+          registry-url: "https://npm.pkg.github.com"
+          
       - name: Install dependencies
         run: yarn
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          
+
       - name: Lint Source Files
         run: yarn lint
 
