@@ -39,8 +39,9 @@ export const handleInfo: CommandHandler = async (
   try {
     await interaction.deferReply();
     const user = interaction.options.getUser("user") ?? interaction.user;
-    const response =
-      await bot.api.users.usersControllerFindOneByUserId(user.id);
+    const response = await bot.api.users.usersControllerFindOneByUserId({
+      userid: user.id,
+    });
     const userDto = response.data;
     const embed = getUserInfoEmbed(userDto, user, interaction);
     await interaction.editReply({ embeds: [embed] });

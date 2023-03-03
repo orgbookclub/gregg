@@ -30,14 +30,10 @@ export const handleList: CommandHandler = async (
       "status",
       true,
     ) as keyof typeof EventDtoStatusEnum;
-    const response = await bot.api.events.eventsControllerFind(
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      eventStatus,
-      eventType,
-    );
+    const response = await bot.api.events.eventsControllerFind({
+      status: eventStatus,
+      type: eventType,
+    });
     // const data = await bot.apiClient.getEventList(eventStatus, eventType);
     const pageSize = 5;
     const pagedContentManager = new PaginationManager<EventDocument>(

@@ -131,23 +131,13 @@ export const handleStats: CommandHandler = async (
   try {
     await interaction.deferReply();
     const user = interaction.options.getUser("user") ?? interaction.user;
-    const userResponse =
-      await bot.api.users.usersControllerFindOneByUserId(user.id);
+    const userResponse = await bot.api.users.usersControllerFindOneByUserId({
+      userid: user.id,
+    });
     const userDto = userResponse.data;
-    const userEventsResponse =
-      await bot.api.events.eventsControllerFind(
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        [userDto._id],
-      );
+    const userEventsResponse = await bot.api.events.eventsControllerFind({
+      participantIds: [userDto._id],
+    });
     const userEvents = userEventsResponse.data;
     const stats = calculateUserEventStats(userDto._id, userEvents);
     const embed = getUserEventStatsEmbed(stats, userDto._id, user, interaction);

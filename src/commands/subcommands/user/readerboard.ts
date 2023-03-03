@@ -67,13 +67,9 @@ export const handleReaderboard: CommandHandler = async (
 ) => {
   try {
     await interaction.deferReply();
-    const response = await bot.api.events.eventsControllerFind(
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      EventDtoStatusEnum.Completed,
-    );
+    const response = await bot.api.events.eventsControllerFind({
+      status: EventDtoStatusEnum.Completed,
+    });
     const events = response.data;
     if (events.length === 0) {
       await interaction.editReply("No events found, something went wrong! :(");

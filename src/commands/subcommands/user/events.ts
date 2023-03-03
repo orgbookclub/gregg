@@ -32,23 +32,15 @@ export const handleEvents: CommandHandler = async (
       "status",
       true,
     ) as keyof typeof EventDtoStatusEnum;
-    const userResponse =
-      await bot.api.users.usersControllerFindOneByUserId(user.id);
+    const userResponse = await bot.api.users.usersControllerFindOneByUserId({
+      userid: user.id,
+    });
     const userDto = userResponse.data;
-    const userEventsResponse =
-      await bot.api.events.eventsControllerFind(
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        eventStatus,
-        eventType,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        [userDto._id],
-      );
+    const userEventsResponse = await bot.api.events.eventsControllerFind({
+      participantIds: [userDto._id],
+      status: eventStatus,
+      type: eventType,
+    });
     const userEvents = userEventsResponse.data;
     if (userEvents.length === 0) {
       await interaction.editReply("No events found for given parameters");

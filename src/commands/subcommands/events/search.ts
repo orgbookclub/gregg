@@ -31,14 +31,11 @@ export const handleSearch: CommandHandler = async (
       "status",
       true,
     ) as keyof typeof EventDtoStatusEnum;
-    const response = await bot.api.events.eventsControllerFind(
-      undefined,
-      query,
-      undefined,
-      undefined,
-      eventStatus,
-      eventType,
-    );
+    const response = await bot.api.events.eventsControllerFind({
+      bookSearchQuery: query,
+      status: eventStatus,
+      type: eventType,
+    });
     const pageSize = 5;
     const pagedContentManager = new PaginationManager<EventDocument>(
       pageSize,

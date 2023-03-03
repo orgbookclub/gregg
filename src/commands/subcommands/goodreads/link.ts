@@ -16,8 +16,10 @@ export const handleLink: CommandHandler = async (
 ) => {
   try {
     const query = interaction.options.getString("query", true);
-    const response =
-      await bot.api.goodreads.goodreadsControllerSearchBooks(query, 1);
+    const response = await bot.api.goodreads.goodreadsControllerSearchBooks({
+      q: query,
+      k: 1,
+    });
     await interaction.editReply({ content: response.data[0].url });
   } catch (err) {
     logger.error(`Error in handleLink: ${err}`);

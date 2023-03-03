@@ -41,11 +41,10 @@ export const handleSearch: CommandHandler = async (
   try {
     const query = interaction.options.getString("query", true);
     const k = interaction.options.getInteger("k") ?? 5;
-    const response =
-      await bot.api.storygraph.storygraphControllerSearchBooks(
-        query,
-        k,
-      );
+    const response = await bot.api.storygraph.storygraphControllerSearchBooks({
+      q: query,
+      k: k,
+    });
     const embed = getStorygraphSearchEmbed(query, response.data, bot);
     await interaction.editReply({ embeds: [embed] });
   } catch (err) {

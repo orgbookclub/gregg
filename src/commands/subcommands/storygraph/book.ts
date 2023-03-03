@@ -47,9 +47,9 @@ export const handleBook: CommandHandler = async (
   try {
     const query = interaction.options.getString("query", true);
     const response =
-      await bot.api.storygraph.storygraphControllerSearchAndGetBook(
-        query,
-      );
+      await bot.api.storygraph.storygraphControllerSearchAndGetBook({
+        q: query,
+      });
     const embed = getStorygraphBookEmbed(response.data, bot);
     await interaction.editReply({ embeds: [embed] });
   } catch (err) {

@@ -41,8 +41,10 @@ export const handleSearch: CommandHandler = async (
   try {
     const query = interaction.options.getString("query", true);
     const k = interaction.options.getInteger("k") ?? 5;
-    const response =
-      await bot.api.goodreads.goodreadsControllerSearchBooks(query, k);
+    const response = await bot.api.goodreads.goodreadsControllerSearchBooks({
+      q: query,
+      k: k,
+    });
     const embed = getGoodreadsSearchEmbed(query, response.data, bot);
     await interaction.editReply({ embeds: [embed] });
   } catch (err) {

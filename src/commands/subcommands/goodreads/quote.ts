@@ -16,8 +16,9 @@ export const handleQuote: CommandHandler = async (
 ) => {
   try {
     const query = interaction.options.getString("query", true);
-    const response =
-      await bot.api.goodreads.goodreadsControllerGetQuotes(query);
+    const response = await bot.api.goodreads.goodreadsControllerGetQuotes({
+      q: query,
+    });
     await interaction.editReply({ content: response.data[0] });
   } catch (err) {
     logger.error(`Error in handleQuote: ${err}`);
