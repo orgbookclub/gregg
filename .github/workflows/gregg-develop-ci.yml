@@ -26,10 +26,10 @@ jobs:
           node-version: "18.x"
 
       - name: Install dependencies
+        run: yarn
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: yarn
-
+          
       - name: Lint Source Files
         run: yarn lint
 
