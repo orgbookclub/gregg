@@ -1,4 +1,6 @@
+import { EventDocument } from "@orgbookclub/ows-client";
 import {
+  channelMention,
   ChatInputCommandInteraction,
   Colors,
   EmbedBuilder,
@@ -7,7 +9,6 @@ import {
 
 import { Bot } from "../../../interfaces/Bot";
 import { CommandHandler } from "../../../interfaces/CommandHandler";
-import { EventDto } from "../../../providers/ows/dto/event.dto";
 import { getAuthorString } from "../../../utils/bookUtils";
 import {
   getUnixTimestamp,
@@ -16,7 +17,7 @@ import {
 import { logger } from "../../../utils/logHandler";
 
 function getEventInfoEmbed(
-  data: EventDto,
+  data: EventDocument,
   bot: Bot,
   interaction: ChatInputCommandInteraction,
 ) {
@@ -49,13 +50,16 @@ function getEventInfoEmbed(
   if (data.threads !== null && data.threads.length > 0) {
     embed.addFields({
       name: "Thread",
-      value: `<#${data.threads[0]}>`,
+      value: `${channelMention(data.threads[0])}`,
       inline: true,
     });
   }
   embed.addFields({
     name: "Requested By",
-    value: `${userMention(data.requestedBy.user.userId)}`,
+    value: `${
+      typeof data.requestedBy.user !== "string" &&
+      userMention(data.requestedBy.user.userId)
+    }`,
     inline: false,
   });
   if (data.leaders !== null && data.leaders.length > 0) {
@@ -94,8 +98,8 @@ export const handleInfo: CommandHandler = async (
 ) => {
   try {
     const id = interaction.options.getString("id", true);
-    const data = await bot.apiClient.getEventInfo(id);
-    const embed = getEventInfoEmbed(data, bot, interaction);
+    const response = await bot.apiClient.eventsApi.eventsControllerFindOne(id);
+    const embed = getEventInfoEmbed(response.data, bot, interaction);
     await interaction.editReply({
       embeds: [embed],
     });
