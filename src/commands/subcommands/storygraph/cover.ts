@@ -15,9 +15,12 @@ export const handleCover: CommandHandler = async (
   interaction: ChatInputCommandInteraction,
 ) => {
   try {
-    const query = interaction.options.getString("query") ?? "";
-    const data = await bot.apiClient.getStorygraphBook(query);
-    await interaction.editReply({ content: data.coverUrl });
+    const query = interaction.options.getString("query", true);
+    const response =
+      await bot.apiClient.storygraphApi.storygraphControllerSearchAndGetBook(
+        query,
+      );
+    await interaction.editReply({ content: response.data.coverUrl });
   } catch (err) {
     logger.error(`Error in handleCover: ${err}`);
   }
