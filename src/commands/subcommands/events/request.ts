@@ -4,6 +4,7 @@ import {
   ModalBuilder,
   TextInputBuilder,
 } from "@discordjs/builders";
+import { CreateEventDto, EventDtoTypeEnum } from "@orgbookclub/ows-client";
 import {
   ChatInputCommandInteraction,
   ModalSubmitInteraction,
@@ -12,8 +13,6 @@ import {
 
 import { Bot } from "../../../interfaces/Bot";
 import { CommandHandler } from "../../../interfaces/CommandHandler";
-import { CreateEventDto } from "../../../providers/ows/dto/create-event.dto";
-import { EventType } from "../../../providers/ows/dto/event-type";
 import { logger } from "../../../utils/logHandler";
 
 const EVENT_REQUEST_MODAL_ID = "eventRequestModal";
@@ -38,7 +37,7 @@ function getEventRequestModal(eventType: string) {
     );
   modal.addComponents(linkActionRow);
 
-  if (eventType === EventType.BuddyRead) {
+  if (eventType === EventDtoTypeEnum.BuddyRead) {
     const startDateInput = new TextInputBuilder()
       .setCustomId(START_DATE_FIELD_ID)
       .setLabel("When do you want the event to start?")
@@ -134,7 +133,10 @@ export const handleRequest: CommandHandler = async (
   interaction: ChatInputCommandInteraction,
 ) => {
   try {
-    const eventType = interaction.options.getString("type", true);
+    const eventType = interaction.options.getString(
+      "type",
+      true,
+    ) as keyof typeof EventDtoTypeEnum;
     const modal = getEventRequestModal(eventType);
     await interaction.showModal(modal);
     const filter = (msInteraction: ModalSubmitInteraction) =>
@@ -153,21 +155,23 @@ export const handleRequest: CommandHandler = async (
       endDateString,
       link,
     );
-    const user = await bot.apiClient.getUser(interaction.user.id);
-    const createEventDto: CreateEventDto = {
-      bookUrl: link,
-      type: EventType[eventType as keyof typeof EventType],
+    const response = await bot.api.users.usersControllerFindOneByUserId({
+      userid: interaction.user.id,
+    });
+    const user = response.data;
+    const eventRequestDto: CreateEventDto = {
+      type: eventType,
       dates: {
-        startDate: startDate,
-        endDate: endDate,
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString(),
       },
-      requestedBy: { user: user, points: 0 },
-      leaders: [{ user: user, points: 0 }],
+      requestedBy: { user: user._id, points: 0 },
+      leaders: [{ user: user._id, points: 0 }],
       description: requestReason,
     };
-    bot.emit("eventRequest", createEventDto);
+    bot.emit("eventRequest", { url: link, createEventDto: eventRequestDto });
     await modalSubmitInteraction.reply({
-      content: "Your event request has been submitted",
+      content: "Your event request has been submitted!",
       ephemeral: true,
     });
   } catch (err) {
