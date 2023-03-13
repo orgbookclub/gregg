@@ -24,10 +24,10 @@ function getEventInfoEmbed(
   const embed = new EmbedBuilder()
     .setTitle(`${data.book.title} - ${getAuthorString(data.book.authors)}`)
     .setURL(data.book.url)
-    .setFooter({ text: `Event ${data._id} fetched by ${bot.user?.username}` })
+    .setFooter({ text: `Event ID: ${data._id}` })
     .setColor(Colors.Gold)
     .setAuthor({
-      name: data.type,
+      name: `${data.status} ${data.type}`,
       iconURL: interaction.guild?.iconURL() ?? undefined,
     });
   if (data.description) {

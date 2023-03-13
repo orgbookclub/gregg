@@ -11,6 +11,7 @@ import { Command } from "../interfaces/Command";
 import { CommandHandler } from "../interfaces/CommandHandler";
 import { logger } from "../utils/logHandler";
 
+import { handleEdit } from "./subcommands/events/edit";
 import { handleInfo } from "./subcommands/events/info";
 import { handleList } from "./subcommands/events/list";
 import { handleRequest } from "./subcommands/events/request";
@@ -21,6 +22,7 @@ const handlers: { [key: string]: CommandHandler } = {
   info: handleInfo,
   search: handleSearch,
   request: handleRequest,
+  edit: handleEdit,
 };
 const eventsListSubcommand = new SlashCommandSubcommandBuilder()
   .setName("list")
@@ -67,7 +69,10 @@ const eventsAnnounceSubcommand = new SlashCommandSubcommandBuilder()
   .setDescription("announces an event");
 const eventsEditSubcommand = new SlashCommandSubcommandBuilder()
   .setName("edit")
-  .setDescription("edit an event");
+  .setDescription("edit an event")
+  .addStringOption((option) =>
+    option.setName("id").setDescription("Event ID").setRequired(true),
+  );
 const eventsSearchSubcommand = new SlashCommandSubcommandBuilder()
   .setName("search")
   .setDescription("searches for events")
@@ -89,9 +94,6 @@ const eventsSearchSubcommand = new SlashCommandSubcommandBuilder()
       .setDescription("Event Status")
       .addChoices(...EventStatusOptions),
   );
-const eventsPollSubcommand = new SlashCommandSubcommandBuilder()
-  .setName("poll")
-  .setDescription("creates a poll");
 export const events: Command = {
   data: new SlashCommandBuilder()
     .setName("events")
@@ -102,8 +104,7 @@ export const events: Command = {
     .addSubcommand(eventsInfoSubcommand)
     .addSubcommand(eventsAnnounceSubcommand)
     .addSubcommand(eventsEditSubcommand)
-    .addSubcommand(eventsSearchSubcommand)
-    .addSubcommand(eventsPollSubcommand),
+    .addSubcommand(eventsSearchSubcommand),
   run: async (bot: Bot, interaction: ChatInputCommandInteraction) => {
     try {
       const subCommand = interaction.options.getSubcommand();
