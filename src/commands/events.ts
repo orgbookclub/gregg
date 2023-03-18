@@ -4,7 +4,6 @@ import {
   SlashCommandSubcommandBuilder,
 } from "discord.js";
 
-import { EventFieldOptions } from "../config/EventFieldOptions";
 import { EventStatusOptions } from "../config/EventStatusOptions";
 import { EventTypeOptions } from "../config/EventTypeOptions";
 import { Bot } from "../interfaces/Bot";
