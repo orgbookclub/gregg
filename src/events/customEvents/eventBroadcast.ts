@@ -13,8 +13,10 @@ export const eventBroadcast: Event = {
   name: "eventBroadcast",
   run: async (bot: Bot, eventBroadcastDto: EventBroadcastDto) => {
     try {
-      logger.debug(`eventBroadcast event.fired: ${eventBroadcastDto}`);
-      const response = await bot.api.events.eventsControllerFindOne({ id: id });
+      logger.debug(`eventBroadcast event fired: ${eventBroadcastDto}`);
+      const response = await bot.api.events.eventsControllerFindOne({
+        id: eventBroadcastDto.id,
+      });
       const eventDoc = response.data;
       let mentionString = "";
       eventDoc.readers.forEach((x) => {

@@ -12,6 +12,7 @@ import { Command } from "../interfaces/Command";
 import { CommandHandler } from "../interfaces/CommandHandler";
 import { logger } from "../utils/logHandler";
 
+import { handleAnnounce } from "./subcommands/events/announce";
 import { handleApprove } from "./subcommands/events/approve";
 import { handleBroadcast } from "./subcommands/events/broadcast";
 import { handleEdit } from "./subcommands/events/edit";
@@ -27,6 +28,7 @@ const handlers: { [key: string]: CommandHandler } = {
   request: handleRequest,
   edit: handleEdit,
   approve: handleApprove,
+  announce: handleAnnounce,
   broadcast: handleBroadcast,
 };
 const eventsListSubcommand = new SlashCommandSubcommandBuilder()
@@ -48,7 +50,7 @@ const eventsListSubcommand = new SlashCommandSubcommandBuilder()
   );
 const eventsBroadcastSubcommand = new SlashCommandSubcommandBuilder()
   .setName("broadcast")
-  .setDescription("Notifies all the participants of an event")
+  .setDescription("Broadcasts a message to all the readers of an event")
   .addStringOption((option) =>
     option.setName("id").setDescription("Event ID").setRequired(true),
   );
@@ -68,21 +70,29 @@ const eventsRequestSubcommand = new SlashCommandSubcommandBuilder()
       .addChoices(...EventTypeOptions)
       .setRequired(true),
   );
-// TODO: Replace with actual commands
 const eventsApproveSubcommand = new SlashCommandSubcommandBuilder()
   .setName("approve")
-  .setDescription("announces an event");
+  .setDescription("approves an event")
+  .addStringOption((option) =>
+    option.setName("id").setDescription("Event ID").setRequired(true),
+  );
+const eventsAnnounceSubcommand = new SlashCommandSubcommandBuilder()
+  .setName("announce")
+  .setDescription("makes an announcement for an approved event")
+  .addStringOption((option) =>
+    option.setName("id").setDescription("Event ID").setRequired(true),
+  )
+  .addChannelOption((option) =>
+    option
+      .setName("thread")
+      .setDescription("The thread for the event, if it already exists")
+      .setRequired(false),
+  );
 const eventsEditSubcommand = new SlashCommandSubcommandBuilder()
   .setName("edit")
   .setDescription("edit an event")
   .addStringOption((option) =>
     option.setName("id").setDescription("Event ID").setRequired(true),
-  )
-  .addStringOption((option) =>
-    option
-      .setName("field")
-      .setDescription("The field which you want to edit")
-      .addChoices(...EventFieldOptions),
   );
 const eventsSearchSubcommand = new SlashCommandSubcommandBuilder()
   .setName("search")
@@ -114,6 +124,7 @@ export const events: Command = {
     .addSubcommand(eventsBroadcastSubcommand)
     .addSubcommand(eventsInfoSubcommand)
     .addSubcommand(eventsApproveSubcommand)
+    .addSubcommand(eventsAnnounceSubcommand)
     .addSubcommand(eventsEditSubcommand)
     .addSubcommand(eventsSearchSubcommand),
   run: async (bot: Bot, interaction: ChatInputCommandInteraction) => {

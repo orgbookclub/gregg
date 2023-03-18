@@ -33,9 +33,10 @@ function getBroadcastModal(id: string) {
   return modal;
 }
 /**
+ * Broadcasts a message to all readers of an event.
  *
- * @param bot
- * @param interaction
+ * @param bot The bot instance.
+ * @param interaction The interaction.
  */
 export const handleBroadcast: CommandHandler = async (
   bot: Bot,
@@ -54,6 +55,9 @@ export const handleBroadcast: CommandHandler = async (
     });
     const messageContent =
       modalSubmitInteraction.fields.getTextInputValue(MESSAGE_FIELD_ID);
+
+    // TODO: Validate the id is of a valid event.
+
     bot.emit("eventBroadcast", { id: id, content: messageContent });
     await modalSubmitInteraction.reply({
       content: "Your broadcast request has been submitted!",

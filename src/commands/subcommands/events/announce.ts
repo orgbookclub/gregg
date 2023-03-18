@@ -8,9 +8,19 @@ import { getAuthorString } from "../../../utils/bookUtils";
 import { logger } from "../../../utils/logHandler";
 
 /**
+ * TODO: Incomplete command. Refactor! Purpose of the command should be the following:
+ * - Validate the event is approved and upcoming within the next n days
+ * - Create a forum post for the event if one doesn't already exist.
+ * - Update the tags on the post if required.
+ * - Update database to link the thread id to the event.
+ * - Create an announcment embed and post in the event announcement channel.
+ */
+
+/**
+ * Announces an approved event.
  *
- * @param bot
- * @param interaction
+ * @param bot The bot instance.
+ * @param interaction The interaction.
  */
 export const handleAnnounce: CommandHandler = async (
   bot: Bot,
@@ -20,6 +30,7 @@ export const handleAnnounce: CommandHandler = async (
     await interaction.deferReply();
     const id = interaction.options.getString("id", true);
     const threadId = interaction.options.getChannel("thread");
+
     if (threadId === null) {
       const eventForum = await bot.channels.fetch(ChannelIds.BRForumChannel);
       if (eventForum === null || eventForum.type !== ChannelType.GuildForum) {

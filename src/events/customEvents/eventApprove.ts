@@ -8,6 +8,10 @@ interface EventApproveDto {
   id: string;
 }
 
+/**
+ * TODO: Remove this file. EventEdit should cover the business logic required here.
+ */
+
 export const eventApprove: Event = {
   name: "eventApprove",
   run: async (bot: Bot, eventApproveDto: EventApproveDto) => {

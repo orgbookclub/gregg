@@ -139,6 +139,13 @@ function validateModalSubmission(modalSubmissions: {
 }
 
 /**
+ * TODO: Refactor this command. Get rid of modals, and keep it simple.
+ * User gives a field name to edit and its value.
+ * Can edit any field in the event, not just the ones supported by this modal.
+ */
+
+/**
+ * Gives ability to edit an event.
  *
  * @param {Bot} bot The bot instance.
  * @param {ChatInputCommandInteraction} interaction The interaction.
