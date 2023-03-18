@@ -4,6 +4,7 @@ import {
   SlashCommandSubcommandBuilder,
 } from "discord.js";
 
+import { EventFieldOptions } from "../config/EventFieldOptions";
 import { EventStatusOptions } from "../config/EventStatusOptions";
 import { EventTypeOptions } from "../config/EventTypeOptions";
 import { Bot } from "../interfaces/Bot";
@@ -11,6 +12,8 @@ import { Command } from "../interfaces/Command";
 import { CommandHandler } from "../interfaces/CommandHandler";
 import { logger } from "../utils/logHandler";
 
+import { handleApprove } from "./subcommands/events/approve";
+import { handleBroadcast } from "./subcommands/events/broadcast";
 import { handleEdit } from "./subcommands/events/edit";
 import { handleInfo } from "./subcommands/events/info";
 import { handleList } from "./subcommands/events/list";
@@ -23,6 +26,8 @@ const handlers: { [key: string]: CommandHandler } = {
   search: handleSearch,
   request: handleRequest,
   edit: handleEdit,
+  approve: handleApprove,
+  broadcast: handleBroadcast,
 };
 const eventsListSubcommand = new SlashCommandSubcommandBuilder()
   .setName("list")
@@ -64,14 +69,20 @@ const eventsRequestSubcommand = new SlashCommandSubcommandBuilder()
       .setRequired(true),
   );
 // TODO: Replace with actual commands
-const eventsAnnounceSubcommand = new SlashCommandSubcommandBuilder()
-  .setName("announce")
+const eventsApproveSubcommand = new SlashCommandSubcommandBuilder()
+  .setName("approve")
   .setDescription("announces an event");
 const eventsEditSubcommand = new SlashCommandSubcommandBuilder()
   .setName("edit")
   .setDescription("edit an event")
   .addStringOption((option) =>
     option.setName("id").setDescription("Event ID").setRequired(true),
+  )
+  .addStringOption((option) =>
+    option
+      .setName("field")
+      .setDescription("The field which you want to edit")
+      .addChoices(...EventFieldOptions),
   );
 const eventsSearchSubcommand = new SlashCommandSubcommandBuilder()
   .setName("search")
@@ -102,7 +113,7 @@ export const events: Command = {
     .addSubcommand(eventsListSubcommand)
     .addSubcommand(eventsBroadcastSubcommand)
     .addSubcommand(eventsInfoSubcommand)
-    .addSubcommand(eventsAnnounceSubcommand)
+    .addSubcommand(eventsApproveSubcommand)
     .addSubcommand(eventsEditSubcommand)
     .addSubcommand(eventsSearchSubcommand),
   run: async (bot: Bot, interaction: ChatInputCommandInteraction) => {
