@@ -9,7 +9,7 @@ import { Bot } from "../../../interfaces/Bot";
 import { CommandHandler } from "../../../interfaces/CommandHandler";
 import { getEventsListEmbed } from "../../../utils/eventUtils";
 import { logger } from "../../../utils/logHandler";
-import { PaginationManager } from "../../../utils/paginationUtils";
+import { PaginationManager } from "../../../utils/paginationManager";
 
 /**
  * Returns a list of events.
@@ -22,6 +22,7 @@ export const handleList: CommandHandler = async (
   interaction: ChatInputCommandInteraction,
 ) => {
   try {
+    await interaction.deferReply();
     const eventType = interaction.options.getString(
       "type",
       true,

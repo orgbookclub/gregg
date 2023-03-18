@@ -9,7 +9,7 @@ import { Bot } from "../../../interfaces/Bot";
 import { CommandHandler } from "../../../interfaces/CommandHandler";
 import { getEventsListEmbed } from "../../../utils/eventUtils";
 import { logger } from "../../../utils/logHandler";
-import { PaginationManager } from "../../../utils/paginationUtils";
+import { PaginationManager } from "../../../utils/paginationManager";
 
 /**
  * Returns a list of events for the given query string.
@@ -22,6 +22,7 @@ export const handleSearch: CommandHandler = async (
   interaction: ChatInputCommandInteraction,
 ) => {
   try {
+    await interaction.deferReply();
     const query = interaction.options.getString("query", true);
     const eventType = interaction.options.getString(
       "type",

@@ -9,7 +9,7 @@ import { Bot } from "../../../interfaces/Bot";
 import { CommandHandler } from "../../../interfaces/CommandHandler";
 import { getEventsListEmbed } from "../../../utils/eventUtils";
 import { logger } from "../../../utils/logHandler";
-import { PaginationManager } from "../../../utils/paginationUtils";
+import { PaginationManager } from "../../../utils/paginationManager";
 
 /**
  * Gets the server event list for a user.

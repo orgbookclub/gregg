@@ -150,7 +150,7 @@ export class PaginationManager<T> {
       time: duration,
     });
     const selectMenuCollector = message.createMessageComponentCollector({
-      componentType: ComponentType.SelectMenu,
+      componentType: ComponentType.StringSelect,
       time: duration,
     });
 

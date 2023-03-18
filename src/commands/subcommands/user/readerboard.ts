@@ -9,7 +9,7 @@ import {
 import { Bot } from "../../../interfaces/Bot";
 import { CommandHandler } from "../../../interfaces/CommandHandler";
 import { logger } from "../../../utils/logHandler";
-import { PaginationManager } from "../../../utils/paginationUtils";
+import { PaginationManager } from "../../../utils/paginationManager";
 
 function calculateReaderboardStats(events: EventDocument[]) {
   const scoreMap = new Map<string, number>();

@@ -24,10 +24,10 @@ function getEventInfoEmbed(
   const embed = new EmbedBuilder()
     .setTitle(`${data.book.title} - ${getAuthorString(data.book.authors)}`)
     .setURL(data.book.url)
-    .setFooter({ text: `Event ${data._id} fetched by ${bot.user?.username}` })
+    .setFooter({ text: `Event ID: ${data._id}` })
     .setColor(Colors.Gold)
     .setAuthor({
-      name: data.type,
+      name: `${data.status} ${data.type}`,
       iconURL: interaction.guild?.iconURL() ?? undefined,
     });
   if (data.description) {
@@ -94,6 +94,7 @@ export const handleInfo: CommandHandler = async (
   interaction: ChatInputCommandInteraction,
 ) => {
   try {
+    await interaction.deferReply();
     const id = interaction.options.getString("id", true);
     const response = await bot.api.events.eventsControllerFindOne({ id: id });
     const embed = getEventInfoEmbed(response.data, bot, interaction);
