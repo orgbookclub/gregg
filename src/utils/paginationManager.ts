@@ -8,7 +8,6 @@ import {
   EmbedBuilder,
   Message,
   StringSelectMenuBuilder,
-  WebhookEditMessageOptions,
 } from "discord.js";
 
 import { Bot } from "../interfaces/Bot";
@@ -113,11 +112,9 @@ export class PaginationManager<T> {
    * Creates the message payload for a page.
    *
    * @param {ChatInputCommandInteraction} interaction The interaction instance.
-   * @returns {WebhookEditMessageOptions} The message payload.
+   * @returns The message payload.
    */
-  createMessagePayloadForPage(
-    interaction: ChatInputCommandInteraction,
-  ): WebhookEditMessageOptions {
+  createMessagePayloadForPage(interaction: ChatInputCommandInteraction) {
     const { selectMenuActionRow, buttonActionRow } =
       this.createMessageComponentsForPage();
     const pageData = this.getPageData();
