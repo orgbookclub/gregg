@@ -80,7 +80,10 @@ export const eventRequest: Event = {
         if (channel === null || !channel.isTextBased()) {
           throw new Error("Unable to post event request in given channel");
         }
-        await (channel as TextChannel).send({ embeds: [embed] });
+        const message = await (channel as TextChannel).send({
+          embeds: [embed],
+        });
+        await message.react("✅");
       }
       // TODO: send DM to event leader with guidelines
     } catch (err) {

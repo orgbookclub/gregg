@@ -9,16 +9,13 @@ import { Bot } from "../../../interfaces/Bot";
 import { CommandHandler } from "../../../interfaces/CommandHandler";
 import { logger } from "../../../utils/logHandler";
 
-async function getValidUserById(
-  bot: Bot,
-  value: string,
-  interaction: ChatInputCommandInteraction,
-) {
+async function getValidUserById(bot: Bot, value: string) {
   const userResponse = await bot.api.users.usersControllerFindOneByUserId({
     userid: value,
   });
-  if (!userResponse) {
-    await interaction.reply(`No user found with user ID: ${value}`);
+  console.log(userResponse);
+  if (!userResponse || !userResponse.data) {
+    return undefined;
   }
   const user = userResponse.data;
   return user;
@@ -50,22 +47,58 @@ export const handleEdit: CommandHandler = async (
     const event = response.data;
     const updateEventDto: UpdateEventDto = {};
     if (field === "status") {
+      if (
+        !Object.values(EventDtoStatusEnum).includes(
+          value as keyof typeof EventDtoStatusEnum,
+        )
+      ) {
+        await interaction.reply({
+          content: "Invalid event status!",
+          ephemeral: true,
+        });
+        return;
+      }
       const status = value as keyof typeof EventDtoStatusEnum;
       updateEventDto.status = status;
     }
     if (field === "type") {
+      if (
+        !Object.values(EventDtoTypeEnum).includes(
+          value as keyof typeof EventDtoTypeEnum,
+        )
+      ) {
+        await interaction.reply({
+          content: "Invalid event type!",
+          ephemeral: true,
+        });
+        return;
+      }
       const type = value as keyof typeof EventDtoTypeEnum;
       updateEventDto.type = type;
     }
     if (field === "dates.startDate") {
+      if (isNaN(Date.parse(value))) {
+        await interaction.reply({
+          content: "Invalid date format!",
+          ephemeral: true,
+        });
+        return;
+      }
       const startDate = new Date(value);
       updateEventDto.dates = event.dates;
       updateEventDto.dates.startDate = startDate.toISOString();
     }
     if (field === "dates.endDate") {
-      const startDate = new Date(value);
+      if (isNaN(Date.parse(value))) {
+        await interaction.reply({
+          content: "Invalid date format!",
+          ephemeral: true,
+        });
+        return;
+      }
+      const endDate = new Date(value);
       updateEventDto.dates = event.dates;
-      updateEventDto.dates.endDate = startDate.toISOString();
+      updateEventDto.dates.endDate = endDate.toISOString();
     }
     if (field === "book") {
       await interaction.reply({
@@ -79,7 +112,11 @@ export const handleEdit: CommandHandler = async (
       updateEventDto.threads = threads;
     }
     if (field === "requestedBy") {
-      const user = await getValidUserById(bot, value, interaction);
+      const user = await getValidUserById(bot, value);
+      if (user === undefined) {
+        await interaction.reply(`No user found with user ID: ${value}`);
+        return;
+      }
       updateEventDto.requestedBy = { ...event.requestedBy, user: user._id };
     }
     if (field === "interested") {
