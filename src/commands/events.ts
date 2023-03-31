@@ -13,7 +13,6 @@ import { CommandHandler } from "../interfaces/CommandHandler";
 import { logger } from "../utils/logHandler";
 
 import { handleAnnounce } from "./subcommands/events/announce";
-import { handleApprove } from "./subcommands/events/approve";
 import { handleBroadcast } from "./subcommands/events/broadcast";
 import { handleEdit } from "./subcommands/events/edit";
 import { handleInfo } from "./subcommands/events/info";
@@ -27,7 +26,6 @@ const handlers: { [key: string]: CommandHandler } = {
   search: handleSearch,
   request: handleRequest,
   edit: handleEdit,
-  approve: handleApprove,
   announce: handleAnnounce,
   broadcast: handleBroadcast,
 };
@@ -69,12 +67,6 @@ const eventsRequestSubcommand = new SlashCommandSubcommandBuilder()
       .setDescription("Event Type")
       .addChoices(...EventTypeOptions)
       .setRequired(true),
-  );
-const eventsApproveSubcommand = new SlashCommandSubcommandBuilder()
-  .setName("approve")
-  .setDescription("approves an event")
-  .addStringOption((option) =>
-    option.setName("id").setDescription("Event ID").setRequired(true),
   );
 const eventsAnnounceSubcommand = new SlashCommandSubcommandBuilder()
   .setName("announce")
@@ -136,7 +128,6 @@ export const events: Command = {
     .addSubcommand(eventsListSubcommand)
     .addSubcommand(eventsBroadcastSubcommand)
     .addSubcommand(eventsInfoSubcommand)
-    .addSubcommand(eventsApproveSubcommand)
     .addSubcommand(eventsAnnounceSubcommand)
     .addSubcommand(eventsEditSubcommand)
     .addSubcommand(eventsSearchSubcommand),
