@@ -1,154 +1,34 @@
 import {
-  ActionRowBuilder,
-  ModalActionRowComponentBuilder,
-  ModalBuilder,
-  TextInputBuilder,
-} from "@discordjs/builders";
-import { EventDtoStatusEnum, UpdateEventDto } from "@orgbookclub/ows-client";
-import {
-  ChatInputCommandInteraction,
-  ModalSubmitInteraction,
-  TextInputStyle,
-} from "discord.js";
+  EventDtoStatusEnum,
+  EventDtoTypeEnum,
+  UpdateEventDto,
+} from "@orgbookclub/ows-client";
+import { ChatInputCommandInteraction } from "discord.js";
 
 import { Bot } from "../../../interfaces/Bot";
 import { CommandHandler } from "../../../interfaces/CommandHandler";
 import { logger } from "../../../utils/logHandler";
 
-const EVENT_EDIT_MODAL_ID = "eventEditModal";
-const STATUS_FIELD_ID = "status";
-const START_DATE_FIELD_ID = "startDate";
-const END_DATE_FIELD_ID = "endDate";
-
-function getEventEditModal(eventId: string) {
-  const modal = new ModalBuilder()
-    .setCustomId(`${EVENT_EDIT_MODAL_ID}`)
-    .setTitle(`Editing Event: ${eventId}`);
-  const statusInput = new TextInputBuilder()
-    .setCustomId(STATUS_FIELD_ID)
-    .setLabel("What should be the status of the event?")
-    .setPlaceholder("Approved")
-    .setRequired(true)
-    .setStyle(TextInputStyle.Short);
-
-  const statusRow =
-    new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
-      statusInput,
-    );
-  modal.addComponents(statusRow);
-
-  const startDateInput = new TextInputBuilder()
-    .setCustomId(START_DATE_FIELD_ID)
-    .setLabel("When do you want the event to start?")
-    .setPlaceholder("YYYY-MM-DD")
-    .setStyle(TextInputStyle.Short)
-    .setRequired(true)
-    .setMaxLength(10)
-    .setMinLength(10);
-
-  const startDateRow =
-    new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
-      startDateInput,
-    );
-  modal.addComponents(startDateRow);
-
-  const endDateInput = new TextInputBuilder()
-    .setCustomId(END_DATE_FIELD_ID)
-    .setLabel("When do you want the event to end?")
-    .setPlaceholder("YYYY-MM-DD")
-    .setStyle(TextInputStyle.Short)
-    .setRequired(true)
-    .setMaxLength(10)
-    .setMinLength(10);
-
-  const endDateRow =
-    new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
-      endDateInput,
-    );
-  modal.addComponents(endDateRow);
-  return modal;
-}
-
-function extractFieldsFromModalSubmission(
-  modalSubmitInteraction: ModalSubmitInteraction,
+async function getValidUserById(
+  bot: Bot,
+  value: string,
+  interaction: ChatInputCommandInteraction,
 ) {
-  const statusString =
-    modalSubmitInteraction.fields.getTextInputValue(STATUS_FIELD_ID);
-  const startDateString =
-    modalSubmitInteraction.fields.getTextInputValue(START_DATE_FIELD_ID);
-  const endDateString =
-    modalSubmitInteraction.fields.getTextInputValue(END_DATE_FIELD_ID);
-  return { statusString, startDateString, endDateString };
+  const userResponse = await bot.api.users.usersControllerFindOneByUserId({
+    userid: value,
+  });
+  if (!userResponse) {
+    await interaction.reply(`No user found with user ID: ${value}`);
+  }
+  const user = userResponse.data;
+  return user;
 }
-
-function validateModalSubmission(modalSubmissions: {
-  statusString: string;
-  startDateString: string;
-  endDateString: string;
-}) {
-  const res: {
-    statusEnum: EventDtoStatusEnum;
-    startDate: Date;
-    endDate: Date;
-  } = {
-    statusEnum: "Requested",
-    startDate: new Date(),
-    endDate: new Date(),
-  };
-  const statusEnum = getStatusEnum();
-  res.statusEnum = statusEnum;
-  const startDate = getStartDate();
-  res.startDate = startDate;
-  const endDate = getEndDate();
-  res.endDate = endDate;
-  return res;
-
-  function getEndDate() {
-    const endTimestamp = Date.parse(modalSubmissions.endDateString);
-    if (isNaN(endTimestamp)) {
-      throw new Error("Invalid end date");
-    }
-    if (new Date(endTimestamp) < startDate) {
-      throw new Error("End date cannot be before the start date!");
-    }
-    return new Date(endTimestamp);
-  }
-
-  function getStartDate() {
-    const startTimestamp = Date.parse(modalSubmissions.startDateString);
-    if (isNaN(startTimestamp)) {
-      throw new Error("Invalid start date");
-    }
-    return new Date(startTimestamp);
-  }
-
-  function getStatusEnum() {
-    if (
-      !Object.values(EventDtoStatusEnum).includes(
-        modalSubmissions.statusString as EventDtoStatusEnum,
-      )
-    ) {
-      throw new Error(
-        `Invalid event status. Event status can be one of the folllowing - ${Object.values(
-          EventDtoStatusEnum,
-        )}`,
-      );
-    }
-    return modalSubmissions.statusString as keyof typeof EventDtoStatusEnum;
-  }
-}
-
-/**
- * TODO: Refactor this command. Get rid of modals, and keep it simple.
- * User gives a field name to edit and its value.
- * Can edit any field in the event, not just the ones supported by this modal.
- */
 
 /**
  * Gives ability to edit an event.
  *
- * @param {Bot} bot The bot instance.
- * @param {ChatInputCommandInteraction} interaction The interaction.
+ * @param bot The bot instance.
+ * @param interaction The interaction.
  */
 export const handleEdit: CommandHandler = async (
   bot: Bot,
@@ -156,29 +36,81 @@ export const handleEdit: CommandHandler = async (
 ) => {
   try {
     const id = interaction.options.getString("id", true);
-    const modal = getEventEditModal(id);
-    await interaction.showModal(modal);
-    const filter = (msInteraction: ModalSubmitInteraction) =>
-      msInteraction.customId === EVENT_EDIT_MODAL_ID;
-    const modalSubmitInteraction = await interaction.awaitModalSubmit({
-      filter,
-      time: 5 * 60 * 1000,
-      // 5 minutes until the modal times out
-    });
+    const field = interaction.options.getString("field", true);
+    const value = interaction.options.getString("value", true);
 
-    const modalSubmissions = extractFieldsFromModalSubmission(
-      modalSubmitInteraction,
-    );
-
-    const validatedModalSubmission = validateModalSubmission(modalSubmissions);
+    const response = await bot.api.events.eventsControllerFindOne({ id: id });
+    if (!response) {
+      await interaction.reply({
+        content: "Invalid event ID! Please try again with a valid event ID.",
+        ephemeral: true,
+      });
+      return;
+    }
+    const event = response.data;
     const updateEventDto: UpdateEventDto = {};
-    updateEventDto.status = validatedModalSubmission.statusEnum;
-    updateEventDto.dates = {
-      startDate: validatedModalSubmission.startDate.toISOString(),
-      endDate: validatedModalSubmission.endDate.toISOString(),
-    };
+    if (field === "status") {
+      const status = value as keyof typeof EventDtoStatusEnum;
+      updateEventDto.status = status;
+    }
+    if (field === "type") {
+      const type = value as keyof typeof EventDtoTypeEnum;
+      updateEventDto.type = type;
+    }
+    if (field === "dates.startDate") {
+      const startDate = new Date(value);
+      updateEventDto.dates = event.dates;
+      updateEventDto.dates.startDate = startDate.toISOString();
+    }
+    if (field === "dates.endDate") {
+      const startDate = new Date(value);
+      updateEventDto.dates = event.dates;
+      updateEventDto.dates.endDate = startDate.toISOString();
+    }
+    if (field === "book") {
+      await interaction.reply({
+        content: "Sorry, editing this field is currently not supported :(",
+        ephemeral: true,
+      });
+      return;
+    }
+    if (field === "threads") {
+      const threads = value.split(",");
+      updateEventDto.threads = threads;
+    }
+    if (field === "requestedBy") {
+      const user = await getValidUserById(bot, value, interaction);
+      updateEventDto.requestedBy = { ...event.requestedBy, user: user._id };
+    }
+    if (field === "interested") {
+      await interaction.reply({
+        content: "Sorry, editing this field is currently not supported :(",
+        ephemeral: true,
+      });
+      return;
+    }
+    if (field === "readers") {
+      await interaction.reply({
+        content: "Sorry, editing this field is currently not supported :(",
+        ephemeral: true,
+      });
+      return;
+    }
+    if (field === "leaders") {
+      await interaction.reply({
+        content: "Sorry, editing this field is currently not supported :(",
+        ephemeral: true,
+      });
+      return;
+    }
+    if (field === "description") {
+      updateEventDto.description = value;
+    }
+    if (field === "name") {
+      updateEventDto.name = value;
+    }
     bot.emit("eventEdit", { id: id, updateEventDto: updateEventDto });
-    await modalSubmitInteraction.reply({
+    await interaction.reply({
       content: "Your event edit request has been submitted!",
       ephemeral: true,
     });

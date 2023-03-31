@@ -4,6 +4,7 @@ import {
   SlashCommandSubcommandBuilder,
 } from "discord.js";
 
+import { EventFieldOptions } from "../config/EventFieldOptions";
 import { EventStatusOptions } from "../config/EventStatusOptions";
 import { EventTypeOptions } from "../config/EventTypeOptions";
 import { Bot } from "../interfaces/Bot";
@@ -92,6 +93,19 @@ const eventsEditSubcommand = new SlashCommandSubcommandBuilder()
   .setDescription("edit an event")
   .addStringOption((option) =>
     option.setName("id").setDescription("Event ID").setRequired(true),
+  )
+  .addStringOption((option) =>
+    option
+      .setName("field")
+      .setDescription("The field which will be edited")
+      .addChoices(...EventFieldOptions)
+      .setRequired(true),
+  )
+  .addStringOption((option) =>
+    option
+      .setName("value")
+      .setDescription("The value which will be set in the field")
+      .setRequired(true),
   );
 const eventsSearchSubcommand = new SlashCommandSubcommandBuilder()
   .setName("search")
