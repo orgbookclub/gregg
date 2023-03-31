@@ -30,7 +30,7 @@
   "devDependencies": {
     "@types/cron": "^2.0.0",
     "@types/node": "^18.15.10",
-    "@typescript-eslint/eslint-plugin": "^5.55.0",
+    "@typescript-eslint/eslint-plugin": "^5.57.0",
     "@typescript-eslint/parser": "^5.38.1",
     "add": "^2.0.6",
     "eslint": "^8.33.0",
