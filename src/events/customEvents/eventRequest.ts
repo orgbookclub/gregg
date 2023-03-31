@@ -29,6 +29,9 @@ async function getEventRequestEmbed(data: EventDocument, bot: Bot) {
       name: data.type,
       iconURL: homeGuild.iconURL() ?? undefined,
     });
+  if (data.book.coverUrl) {
+    embed.setThumbnail(data.book.coverUrl);
+  }
   if (data.description) {
     embed.addFields({
       name: "Request Reason",
