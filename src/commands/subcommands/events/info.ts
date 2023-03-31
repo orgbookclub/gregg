@@ -30,6 +30,9 @@ function getEventInfoEmbed(
       name: `${data.status} ${data.type}`,
       iconURL: interaction.guild?.iconURL() ?? undefined,
     });
+  if (data.book.coverUrl) {
+    embed.setThumbnail(data.book.coverUrl);
+  }
   if (data.description) {
     embed.addFields({
       name: "Description",

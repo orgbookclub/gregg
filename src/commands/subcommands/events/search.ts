@@ -24,18 +24,18 @@ export const handleSearch: CommandHandler = async (
   try {
     await interaction.deferReply();
     const query = interaction.options.getString("query", true);
-    const eventType = interaction.options.getString(
-      "type",
-      true,
-    ) as keyof typeof EventDtoTypeEnum;
-    const eventStatus = interaction.options.getString(
-      "status",
-      true,
-    ) as keyof typeof EventDtoStatusEnum;
+    const eventType = interaction.options.getString("type");
+    const eventStatus = interaction.options.getString("status");
     const response = await bot.api.events.eventsControllerFind({
       bookSearchQuery: query,
-      status: eventStatus,
-      type: eventType,
+      status:
+        eventStatus !== null
+          ? (eventStatus as keyof typeof EventDtoStatusEnum)
+          : undefined,
+      type:
+        eventType !== null
+          ? (eventType as keyof typeof EventDtoTypeEnum)
+          : undefined,
     });
     const pageSize = 5;
     const pagedContentManager = new PaginationManager<EventDocument>(
