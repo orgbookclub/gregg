@@ -34,7 +34,7 @@ export class OWSClient {
    */
   constructor() {
     this.accessToken = "";
-    this.cronJob = new CronJob("*/1 * * * *", async () => {
+    this.cronJob = new CronJob("*/5 * * * *", async () => {
       try {
         await this.initialize();
       } catch (err) {
