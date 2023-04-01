@@ -6,8 +6,8 @@ import {
 import { Colors, EmbedBuilder, TextChannel, userMention } from "discord.js";
 
 import { ChannelIds } from "../../config/ChannelIds";
-import { Bot } from "../../interfaces/Bot";
-import { Event } from "../../interfaces/Event";
+import { Bot } from "../../models/Bot";
+import { Event } from "../../models/Event";
 import { getAuthorString } from "../../utils/bookUtils";
 import { getUnixTimestamp } from "../../utils/eventUtils";
 import { logger } from "../../utils/logHandler";

@@ -7,13 +7,14 @@ import {
 import { EventFieldOptions } from "../config/EventFieldOptions";
 import { EventStatusOptions } from "../config/EventStatusOptions";
 import { EventTypeOptions } from "../config/EventTypeOptions";
-import { Bot } from "../interfaces/Bot";
-import { Command } from "../interfaces/Command";
-import { CommandHandler } from "../interfaces/CommandHandler";
+import { Bot } from "../models/Bot";
+import { Command } from "../models/Command";
+import { CommandHandler } from "../models/CommandHandler";
 import { logger } from "../utils/logHandler";
 
 import { handleAnnounce } from "./subcommands/events/announce";
 import { handleBroadcast } from "./subcommands/events/broadcast";
+import { handleCreateThread } from "./subcommands/events/createThread";
 import { handleEdit } from "./subcommands/events/edit";
 import { handleInfo } from "./subcommands/events/info";
 import { handleList } from "./subcommands/events/list";
@@ -27,6 +28,7 @@ const handlers: { [key: string]: CommandHandler } = {
   request: handleRequest,
   edit: handleEdit,
   announce: handleAnnounce,
+  createthread: handleCreateThread,
   broadcast: handleBroadcast,
 };
 const eventsListSubcommand = new SlashCommandSubcommandBuilder()
@@ -80,6 +82,18 @@ const eventsAnnounceSubcommand = new SlashCommandSubcommandBuilder()
       .setDescription("The thread for the event, if it already exists")
       .setRequired(false),
   );
+const eventsCreateThreadSubcommand = new SlashCommandSubcommandBuilder()
+  .setName("createthread")
+  .setDescription("creates a forum post for an approved event")
+  .addStringOption((option) =>
+    option.setName("id").setDescription("Event ID").setRequired(true),
+  )
+  .addChannelOption((option) =>
+    option
+      .setName("thread")
+      .setDescription("The thread if it already exists")
+      .setRequired(false),
+  );
 const eventsEditSubcommand = new SlashCommandSubcommandBuilder()
   .setName("edit")
   .setDescription("edit an event")
@@ -128,6 +142,7 @@ export const events: Command = {
     .addSubcommand(eventsListSubcommand)
     .addSubcommand(eventsBroadcastSubcommand)
     .addSubcommand(eventsInfoSubcommand)
+    .addSubcommand(eventsCreateThreadSubcommand)
     .addSubcommand(eventsAnnounceSubcommand)
     .addSubcommand(eventsEditSubcommand)
     .addSubcommand(eventsSearchSubcommand),

@@ -5,7 +5,7 @@ import {
   Routes,
 } from "discord-api-types/v10";
 
-import { Bot } from "../interfaces/Bot";
+import { Bot } from "../models/Bot";
 
 import { logger } from "./logHandler";
 

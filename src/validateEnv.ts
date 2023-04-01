@@ -1,4 +1,4 @@
-import { Bot } from "./interfaces/Bot";
+import { Bot } from "./models/Bot";
 import { logger } from "./utils/logHandler";
 
 /**

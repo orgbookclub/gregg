@@ -1,6 +1,6 @@
 import { Client } from "discord.js";
 
-import SprintManager from "../classes/SprintManager";
+import SprintManager from "./SprintManager";
 import { OWSClient } from "../providers/owsClient";
 
 import { Command } from "./Command";

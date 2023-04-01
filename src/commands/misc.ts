@@ -6,9 +6,9 @@ import {
   SlashCommandSubcommandGroupBuilder,
 } from "discord.js";
 
-import { Bot } from "../interfaces/Bot";
-import { Command } from "../interfaces/Command";
-import { CommandHandler } from "../interfaces/CommandHandler";
+import { Bot } from "../models/Bot";
+import { Command } from "../models/Command";
+import { CommandHandler } from "../models/CommandHandler";
 import { logger } from "../utils/logHandler";
 
 const handlers: { [key: string]: CommandHandler } = {};

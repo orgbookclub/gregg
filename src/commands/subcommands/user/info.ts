@@ -2,8 +2,8 @@ import { EmbedBuilder } from "@discordjs/builders";
 import { UserDocument } from "@orgbookclub/ows-client";
 import { ChatInputCommandInteraction, Colors, User } from "discord.js";
 
-import { Bot } from "../../../interfaces/Bot";
-import { CommandHandler } from "../../../interfaces/CommandHandler";
+import { Bot } from "../../../models/Bot";
+import { CommandHandler } from "../../../models/CommandHandler";
 import { logger } from "../../../utils/logHandler";
 
 function getUserInfoEmbed(

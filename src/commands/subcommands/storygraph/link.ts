@@ -1,7 +1,7 @@
 import { ChatInputCommandInteraction } from "discord.js";
 
-import { Bot } from "../../../interfaces/Bot";
-import { CommandHandler } from "../../../interfaces/CommandHandler";
+import { Bot } from "../../../models/Bot";
+import { CommandHandler } from "../../../models/CommandHandler";
 import { logger } from "../../../utils/logHandler";
 
 /**

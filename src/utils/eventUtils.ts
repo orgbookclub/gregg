@@ -6,7 +6,7 @@ import {
   userMention,
 } from "discord.js";
 
-import { Bot } from "../interfaces/Bot";
+import { Bot } from "../models/Bot";
 
 import { getAuthorString } from "./bookUtils";
 
@@ -117,6 +117,9 @@ export function getEventInfoEmbed(
       name: data.type,
       iconURL: interaction.guild?.iconURL() ?? undefined,
     });
+  if (data.book.coverUrl) {
+    embed.setThumbnail(data.book.coverUrl);
+  }
   if (data.description) {
     embed.addFields({
       name: "Description",

@@ -14,8 +14,8 @@ import {
   TextChannel,
 } from "discord.js";
 
-import { Bot } from "../interfaces/Bot";
-import { Context } from "../interfaces/Context";
+import { Bot } from "../models/Bot";
+import { Context } from "../models/Context";
 import { errorHandler } from "../utils/errorHandler";
 
 function createBookmarkEmbed(

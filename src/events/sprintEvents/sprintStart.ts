@@ -1,9 +1,9 @@
 import { TextChannel } from "discord.js";
 
-import Sprint from "../../classes/Sprint";
-import { SprintStatus } from "../../classes/SprintStatus";
-import { Bot } from "../../interfaces/Bot";
-import { Event } from "../../interfaces/Event";
+import { Bot } from "../../models/Bot";
+import { Event } from "../../models/Event";
+import Sprint from "../../models/Sprint";
+import { SprintStatus } from "../../models/SprintStatus";
 import { logger } from "../../utils/logHandler";
 
 export const sprintStart: Event = {

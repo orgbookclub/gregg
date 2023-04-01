@@ -1,8 +1,8 @@
 import { GoodreadsBookDto } from "@orgbookclub/ows-client";
 import { ChatInputCommandInteraction, Colors, EmbedBuilder } from "discord.js";
 
-import { Bot } from "../../../interfaces/Bot";
-import { CommandHandler } from "../../../interfaces/CommandHandler";
+import { Bot } from "../../../models/Bot";
+import { CommandHandler } from "../../../models/CommandHandler";
 import { getAuthorString } from "../../../utils/bookUtils";
 import { logger } from "../../../utils/logHandler";
 
