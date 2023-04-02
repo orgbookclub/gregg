@@ -4,16 +4,17 @@ import {
   SlashCommandSubcommandBuilder,
 } from "discord.js";
 
+import { EventFieldOptions } from "../config/EventFieldOptions";
 import { EventStatusOptions } from "../config/EventStatusOptions";
 import { EventTypeOptions } from "../config/EventTypeOptions";
-import { Bot } from "../interfaces/Bot";
-import { Command } from "../interfaces/Command";
-import { CommandHandler } from "../interfaces/CommandHandler";
+import { Bot } from "../models/Bot";
+import { Command } from "../models/Command";
+import { CommandHandler } from "../models/CommandHandler";
 import { logger } from "../utils/logHandler";
 
 import { handleAnnounce } from "./subcommands/events/announce";
-import { handleApprove } from "./subcommands/events/approve";
 import { handleBroadcast } from "./subcommands/events/broadcast";
+import { handleCreateThread } from "./subcommands/events/createThread";
 import { handleEdit } from "./subcommands/events/edit";
 import { handleInfo } from "./subcommands/events/info";
 import { handleList } from "./subcommands/events/list";
@@ -26,8 +27,8 @@ const handlers: { [key: string]: CommandHandler } = {
   search: handleSearch,
   request: handleRequest,
   edit: handleEdit,
-  approve: handleApprove,
   announce: handleAnnounce,
+  createthread: handleCreateThread,
   broadcast: handleBroadcast,
 };
 const eventsListSubcommand = new SlashCommandSubcommandBuilder()
@@ -69,12 +70,6 @@ const eventsRequestSubcommand = new SlashCommandSubcommandBuilder()
       .addChoices(...EventTypeOptions)
       .setRequired(true),
   );
-const eventsApproveSubcommand = new SlashCommandSubcommandBuilder()
-  .setName("approve")
-  .setDescription("approves an event")
-  .addStringOption((option) =>
-    option.setName("id").setDescription("Event ID").setRequired(true),
-  );
 const eventsAnnounceSubcommand = new SlashCommandSubcommandBuilder()
   .setName("announce")
   .setDescription("makes an announcement for an approved event")
@@ -87,11 +82,36 @@ const eventsAnnounceSubcommand = new SlashCommandSubcommandBuilder()
       .setDescription("The thread for the event, if it already exists")
       .setRequired(false),
   );
+const eventsCreateThreadSubcommand = new SlashCommandSubcommandBuilder()
+  .setName("createthread")
+  .setDescription("creates a forum post for an approved event")
+  .addStringOption((option) =>
+    option.setName("id").setDescription("Event ID").setRequired(true),
+  )
+  .addChannelOption((option) =>
+    option
+      .setName("thread")
+      .setDescription("The thread if it already exists")
+      .setRequired(false),
+  );
 const eventsEditSubcommand = new SlashCommandSubcommandBuilder()
   .setName("edit")
   .setDescription("edit an event")
   .addStringOption((option) =>
     option.setName("id").setDescription("Event ID").setRequired(true),
+  )
+  .addStringOption((option) =>
+    option
+      .setName("field")
+      .setDescription("The field which will be edited")
+      .addChoices(...EventFieldOptions)
+      .setRequired(true),
+  )
+  .addStringOption((option) =>
+    option
+      .setName("value")
+      .setDescription("The value which will be set in the field")
+      .setRequired(true),
   );
 const eventsSearchSubcommand = new SlashCommandSubcommandBuilder()
   .setName("search")
@@ -122,7 +142,7 @@ export const events: Command = {
     .addSubcommand(eventsListSubcommand)
     .addSubcommand(eventsBroadcastSubcommand)
     .addSubcommand(eventsInfoSubcommand)
-    .addSubcommand(eventsApproveSubcommand)
+    .addSubcommand(eventsCreateThreadSubcommand)
     .addSubcommand(eventsAnnounceSubcommand)
     .addSubcommand(eventsEditSubcommand)
     .addSubcommand(eventsSearchSubcommand),

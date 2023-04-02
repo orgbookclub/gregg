@@ -6,9 +6,9 @@ import {
 
 import { EventStatusOptions } from "../config/EventStatusOptions";
 import { EventTypeOptions } from "../config/EventTypeOptions";
-import { Bot } from "../interfaces/Bot";
-import { Command } from "../interfaces/Command";
-import { CommandHandler } from "../interfaces/CommandHandler";
+import { Bot } from "../models/Bot";
+import { Command } from "../models/Command";
+import { CommandHandler } from "../models/CommandHandler";
 import { logger } from "../utils/logHandler";
 
 import { handleEvents } from "./subcommands/user/events";

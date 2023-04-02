@@ -6,8 +6,8 @@ import {
 import { Colors, EmbedBuilder, TextChannel, userMention } from "discord.js";
 
 import { ChannelIds } from "../../config/ChannelIds";
-import { Bot } from "../../interfaces/Bot";
-import { Event } from "../../interfaces/Event";
+import { Bot } from "../../models/Bot";
+import { Event } from "../../models/Event";
 import { getAuthorString } from "../../utils/bookUtils";
 import { getUnixTimestamp } from "../../utils/eventUtils";
 import { logger } from "../../utils/logHandler";
@@ -29,6 +29,9 @@ async function getEventRequestEmbed(data: EventDocument, bot: Bot) {
       name: data.type,
       iconURL: homeGuild.iconURL() ?? undefined,
     });
+  if (data.book.coverUrl) {
+    embed.setThumbnail(data.book.coverUrl);
+  }
   if (data.description) {
     embed.addFields({
       name: "Request Reason",
@@ -77,7 +80,10 @@ export const eventRequest: Event = {
         if (channel === null || !channel.isTextBased()) {
           throw new Error("Unable to post event request in given channel");
         }
-        await (channel as TextChannel).send({ embeds: [embed] });
+        const message = await (channel as TextChannel).send({
+          embeds: [embed],
+        });
+        await message.react("✅");
       }
       // TODO: send DM to event leader with guidelines
     } catch (err) {

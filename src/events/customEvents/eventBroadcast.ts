@@ -1,7 +1,7 @@
 import { TextChannel, userMention } from "discord.js";
 
-import { Bot } from "../../interfaces/Bot";
-import { Event } from "../../interfaces/Event";
+import { Bot } from "../../models/Bot";
+import { Event } from "../../models/Event";
 import { logger } from "../../utils/logHandler";
 
 interface EventBroadcastDto {
@@ -13,7 +13,9 @@ export const eventBroadcast: Event = {
   name: "eventBroadcast",
   run: async (bot: Bot, eventBroadcastDto: EventBroadcastDto) => {
     try {
-      logger.debug(`eventBroadcast event fired: ${eventBroadcastDto}`);
+      logger.debug(
+        `eventBroadcast event fired: ${JSON.stringify(eventBroadcastDto)}`,
+      );
       const response = await bot.api.events.eventsControllerFindOne({
         id: eventBroadcastDto.id,
       });
@@ -28,7 +30,10 @@ export const eventBroadcast: Event = {
       if (channel === null || !channel.isTextBased()) {
         throw new Error("Unable to post event request in given channel");
       }
-      await (channel as TextChannel).send({ content: mentionString });
+      if (mentionString.length !== 0) {
+        await (channel as TextChannel).send({ content: mentionString });
+      }
+
       await (channel as TextChannel).send({
         content: eventBroadcastDto.content,
       });

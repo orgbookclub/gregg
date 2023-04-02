@@ -1,6 +1,6 @@
-import Sprint from "../../classes/Sprint";
-import { Bot } from "../../interfaces/Bot";
-import { Event } from "../../interfaces/Event";
+import { Bot } from "../../models/Bot";
+import { Event } from "../../models/Event";
+import Sprint from "../../models/Sprint";
 import { logger } from "../../utils/logHandler";
 
 export const sprintSchedule: Event = {

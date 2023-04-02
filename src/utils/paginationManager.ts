@@ -10,7 +10,7 @@ import {
   StringSelectMenuBuilder,
 } from "discord.js";
 
-import { Bot } from "../interfaces/Bot";
+import { Bot } from "../models/Bot";
 
 /**
  * Handles all pagination related for a given array of data.

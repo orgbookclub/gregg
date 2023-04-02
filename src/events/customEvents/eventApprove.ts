@@ -1,7 +1,7 @@
 import { EventDtoStatusEnum } from "@orgbookclub/ows-client";
 
-import { Bot } from "../../interfaces/Bot";
-import { Event } from "../../interfaces/Event";
+import { Bot } from "../../models/Bot";
+import { Event } from "../../models/Event";
 import { logger } from "../../utils/logHandler";
 
 interface EventApproveDto {

@@ -1,4 +1,4 @@
-import { Bot } from "../interfaces/Bot";
+import { Bot } from "../models/Bot";
 import { OWSClient } from "../providers/owsClient";
 
 import { logger } from "./logHandler";

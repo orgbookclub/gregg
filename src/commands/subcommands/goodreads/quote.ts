@@ -1,7 +1,7 @@
 import { ChatInputCommandInteraction } from "discord.js";
 
-import { Bot } from "../../../interfaces/Bot";
-import { CommandHandler } from "../../../interfaces/CommandHandler";
+import { Bot } from "../../../models/Bot";
+import { CommandHandler } from "../../../models/CommandHandler";
 import { logger } from "../../../utils/logHandler";
 
 /**
@@ -19,7 +19,11 @@ export const handleQuote: CommandHandler = async (
     const response = await bot.api.goodreads.goodreadsControllerGetQuotes({
       q: query,
     });
-    await interaction.editReply({ content: response.data[0] });
+    let quote = response.data[0];
+    if (quote.length >= 2000) {
+      quote = quote.substring(0, 1995) + "...";
+    }
+    await interaction.editReply({ content: quote });
   } catch (err) {
     logger.error(`Error in handleQuote: ${err}`);
   }

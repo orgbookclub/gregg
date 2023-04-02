@@ -1,9 +1,9 @@
 import { ChatInputCommandInteraction } from "discord.js";
 
-import Sprint from "../../../classes/Sprint";
-import { SprintStatus } from "../../../classes/SprintStatus";
-import { Bot } from "../../../interfaces/Bot";
-import { CommandHandler } from "../../../interfaces/CommandHandler";
+import { Bot } from "../../../models/Bot";
+import { CommandHandler } from "../../../models/CommandHandler";
+import Sprint from "../../../models/Sprint";
+import { SprintStatus } from "../../../models/SprintStatus";
 import { logger } from "../../../utils/logHandler";
 
 /**

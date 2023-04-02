@@ -7,8 +7,8 @@ import {
   userMention,
 } from "discord.js";
 
-import { Bot } from "../../../interfaces/Bot";
-import { CommandHandler } from "../../../interfaces/CommandHandler";
+import { Bot } from "../../../models/Bot";
+import { CommandHandler } from "../../../models/CommandHandler";
 import { getAuthorString } from "../../../utils/bookUtils";
 import {
   getUnixTimestamp,
@@ -30,6 +30,9 @@ function getEventInfoEmbed(
       name: `${data.status} ${data.type}`,
       iconURL: interaction.guild?.iconURL() ?? undefined,
     });
+  if (data.book.coverUrl) {
+    embed.setThumbnail(data.book.coverUrl);
+  }
   if (data.description) {
     embed.addFields({
       name: "Description",

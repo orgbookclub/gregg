@@ -1,7 +1,7 @@
 import * as Sentry from "@sentry/node";
 import { CommandInteraction, ContextMenuCommandInteraction } from "discord.js";
 
-import { Bot } from "../interfaces/Bot";
+import { Bot } from "../models/Bot";
 
 import { logger } from "./logHandler";
 

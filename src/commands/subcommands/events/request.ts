@@ -11,8 +11,8 @@ import {
   TextInputStyle,
 } from "discord.js";
 
-import { Bot } from "../../../interfaces/Bot";
-import { CommandHandler } from "../../../interfaces/CommandHandler";
+import { Bot } from "../../../models/Bot";
+import { CommandHandler } from "../../../models/CommandHandler";
 import { logger } from "../../../utils/logHandler";
 
 const EVENT_REQUEST_MODAL_ID = "eventRequestModal";
@@ -158,7 +158,20 @@ export const handleRequest: CommandHandler = async (
     const response = await bot.api.users.usersControllerFindOneByUserId({
       userid: interaction.user.id,
     });
-    const user = response.data;
+    let user = response.data;
+    if (!user) {
+      const userCreateResponse = await bot.api.users.usersControllerCreate({
+        createUserDto: {
+          userId: interaction.user.id,
+          name: interaction.user.username,
+          joinDate: new Date().toISOString(),
+          profile: {
+            bio: "",
+          },
+        },
+      });
+      user = userCreateResponse.data;
+    }
     const eventRequestDto: CreateEventDto = {
       type: eventType,
       dates: {
