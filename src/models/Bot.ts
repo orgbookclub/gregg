@@ -1,10 +1,10 @@
 import { Client } from "discord.js";
 
-import SprintManager from "./SprintManager";
 import { OWSClient } from "../providers/owsClient";
 
 import { Command } from "./Command";
 import { Context } from "./Context";
+import SprintManager from "./SprintManager";
 
 /**
  * An Instance of a Discord Client.

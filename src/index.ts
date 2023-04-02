@@ -1,9 +1,9 @@
 import * as Sentry from "@sentry/node";
 import { Client } from "discord.js";
 
-import SprintManager from "./models/SprintManager";
 import { IntentOptions } from "./config/IntentOptions";
 import { Bot } from "./models/Bot";
+import SprintManager from "./models/SprintManager";
 import { errorHandler } from "./utils/errorHandler";
 import { loadApiClient } from "./utils/loadApiClient";
 import { loadCommands, loadContexts } from "./utils/loadCommands";
