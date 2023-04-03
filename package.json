@@ -14,7 +14,7 @@
     "docs": "yarn typedoc"
   },
   "dependencies": {
-    "@discordjs/builders": "^1.5.0",
+    "@discordjs/builders": "^1.6.1",
     "@discordjs/rest": "^1.6.0",
     "@orgbookclub/ows-client": "^0.1.1",
     "@sentry/node": "^7.46.0",
