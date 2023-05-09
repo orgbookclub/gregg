@@ -1,17 +1,27 @@
 {
   "name": "gregg",
-  "version": "0.1",
+  "author": "ravsodhi",
+  "version": "0.1.0",
   "description": "Discord Bot",
   "main": "./dist/src/index.js",
   "private": true,
   "license": "UNLICENSED",
+  "keywords": [
+    "discordjs",
+    "discord",
+    "bot",
+    "orgbookclub"
+  ],
+  "repository": "https://github.com/orgbookclub/gregg",
+  "bugs": {
+    "url": "https://github.com/orgbookclub/gregg/issues"
+  },
   "scripts": {
     "prebuild": "rimraf ./dist",
     "build": "tsc",
     "lint": "eslint src --max-warnings 0",
     "start": "node -r dotenv/config ./dist/index.js",
-    "dev": "tsc && node -r dotenv/config ./dist/index.js",
-    "docs": "yarn typedoc"
+    "dev": "tsc && node -r dotenv/config ./dist/index.js"
   },
   "dependencies": {
     "@discordjs/builders": "^1.5.0",
