@@ -21,7 +21,7 @@
     "@sentry/tracing": "^7.51.2",
     "@types/glob": "^8.0.1",
     "axios": "^1.4.0",
-    "cron": "^2.1.0",
+    "cron": "^2.3.1",
     "discord-api-types": "^0.37.38",
     "discord.js": "^14.9.0",
     "dotenv": "^16.0.3",
