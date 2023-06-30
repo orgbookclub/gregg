@@ -16,6 +16,18 @@ jobs:
       with:
           node-version: 18.x
           
+    - name: .npmrc registry login
+      # You may pin to the exact commit or the version.
+      # uses: healthplace/npmrc-registry-login-action@ce8f579b4800f2eacb3077d11c53a697bf79375f
+      uses: healthplace/npmrc-registry-login-action@v1.0.9
+      with:
+        # The registry scope (e.g. @acmeorg)
+        scope: '@orgbookclub'
+        # The registry domain (e.g. https://npm.pkg.github.com)
+        registry: https://npm.pkg.github.com
+        # The registry auth token
+        auth-token: ${{ secrets.OWS_PACKAGE_READER_PAT }}
+        
     - name: Install packages
       run: yarn install --frozen-lockfile
     
