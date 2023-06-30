@@ -22,6 +22,7 @@ const handlers: { [key: string]: CommandHandler } = {
   link: handleLink,
   quote: handleQuote,
 };
+
 const goodreadsSearchSubcommand = new SlashCommandSubcommandBuilder()
   .setName("search")
   .setDescription("Fetches a list of book links from GR")
@@ -72,6 +73,7 @@ const goodreadsQuoteSubcommand = new SlashCommandSubcommandBuilder()
   .addStringOption((option) =>
     option.setName("query").setDescription("Book title, author or ISBN"),
   );
+
 export const goodreads: Command = {
   data: new SlashCommandBuilder()
     .setName("goodreads")
@@ -88,7 +90,7 @@ export const goodreads: Command = {
       const handler = handlers[subCommand];
       await handler(bot, interaction);
     } catch (err) {
-      logger.error(`Error processing command goodreads ${err}`);
+      logger.error(`Error processing command goodreads: ${err}`);
     }
   },
 };

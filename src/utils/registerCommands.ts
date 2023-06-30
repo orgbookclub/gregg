@@ -14,18 +14,17 @@ import { logger } from "./logHandler";
  * and builds an array of all command data. Then, posts the data to the Discord endpoint
  * for registering commands.
  *
- * Registers commands in the home guild.
- *
- * @param {Bot} bot The bot instance.
- * @returns {boolean} True if the commands were registered, false on error.
+ * @param bot The bot instance.
+ * @returns True if the commands were registered, false on error.
  */
 export const registerCommands = async (bot: Bot): Promise<boolean> => {
   try {
-    const rest = new REST({ version: "10" }).setToken(bot.configs.token);
+    const rest = new REST().setToken(bot.configs.token);
     const commandData: (
       | RESTPostAPIApplicationCommandsJSONBody
       | RESTPostAPIChatInputApplicationCommandsJSONBody
     )[] = [];
+
     bot.commands.forEach((command) => {
       const data =
         command.data.toJSON() as RESTPostAPIApplicationCommandsJSONBody;
@@ -33,7 +32,9 @@ export const registerCommands = async (bot: Bot): Promise<boolean> => {
 
       commandData.push(data);
     });
+
     bot.contexts.forEach((context) => commandData.push(context.data));
+
     logger.debug(`Registering commands in guild: ${bot.configs.homeGuildId}`);
     await rest.put(
       Routes.applicationGuildCommands(

@@ -1,5 +1,5 @@
 import * as Sentry from "@sentry/node";
-import { Client } from "discord.js";
+import { ActivityType, Client } from "discord.js";
 
 import { IntentOptions } from "./config/IntentOptions";
 import { Bot } from "./models/Bot";
@@ -18,6 +18,7 @@ Sentry.init({
   // of transactions for performance monitoring.
   // We recommend adjusting this value in production
   tracesSampleRate: 1.0,
+  release: `gregg@v${process.env.npm_package_version}`,
   environment: "development",
 });
 
@@ -30,6 +31,7 @@ void (async () => {
   logger.debug("Validating environment variables...");
   const validatedEnvironment = validateEnv(bot);
   if (!validatedEnvironment.valid) {
+    logger.error(validatedEnvironment.message);
     return;
   }
 
@@ -37,12 +39,12 @@ void (async () => {
    * Fallthrough error handlers. These fire in rare cases where something throws
    * in a way that our standard catch block cannot see it.
    */
-  process.on("unhandledRejection", async (error: Error) => {
-    await errorHandler(bot, "Unhandled Rejection Error", error);
+  process.on("unhandledRejection", (error: Error) => {
+    errorHandler(bot, "Unhandled Rejection Error", error);
   });
 
-  process.on("uncaughtException", async (error) => {
-    await errorHandler(bot, "Uncaught Exception Error", error);
+  process.on("uncaughtException", (error) => {
+    errorHandler(bot, "Uncaught Exception Error", error);
   });
 
   logger.debug("Loading Commands...");
@@ -51,6 +53,7 @@ void (async () => {
   bot.commands = commands;
   bot.contexts = contexts;
   if (!commands.length || !contexts.length) {
+    logger.error("Failed to import commands");
     return;
   }
 
@@ -65,8 +68,16 @@ void (async () => {
 
   logger.debug("Attaching event listeners...");
   handleEvents(bot);
-  await bot.login(bot.configs.token);
 
   logger.debug("Initializing API Client...");
   await loadApiClient(bot);
+
+  logger.debug("Connecting to Discord...");
+  await bot.login(bot.configs.token);
+
+  logger.debug("Setting activity...");
+  bot.user?.setActivity({
+    name: "discord.gg/BookClubs",
+    type: ActivityType.Watching,
+  });
 })();

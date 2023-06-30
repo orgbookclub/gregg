@@ -9,12 +9,12 @@ import { logger } from "./logHandler";
  * Takes the error object generated within the code, passes it to Sentry and logs the
  * information in the console.
  *
- * @param {Bot} bot The bot instance.
- * @param {string} context The string explaining where this error was thrown.
- * @param {unknown} err The standard error object (generated in a catch statement).
- * @param {string} guild The name of the guild that triggered the issue.
- * @param {message} message Optional message that triggered the issue.
- * @param {CommandInteraction | ContextMenuCommandInteraction | undefined} interaction  Optional interaction that triggered the issue.
+ * @param bot The bot instance.
+ * @param context The string explaining where this error was thrown.
+ * @param err The standard error object (generated in a catch statement).
+ * @param guild The name of the guild that triggered the issue.
+ * @param message Optional message that triggered the issue.
+ * @param interaction  Optional interaction that triggered the issue.
  */
 export const errorHandler = (
   bot: Bot,
@@ -33,5 +33,6 @@ export const errorHandler = (
     errorMessage: error.message,
     errorStack: error.stack,
   });
+
   Sentry.captureException(error);
 };

@@ -1,0 +1,28 @@
+name: Gregg Deploy to Railway
+on: 
+  workflow_dispatch: 
+
+jobs: 
+  deploy:
+    name: Deploy to Railway
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3.5.3
+    
+    - name: Setup Node.js environment
+      uses: actions/setup-node@v2.5.2
+      with:
+          node-version: 18.x
+          
+    - name: Install packages
+      run: yarn install --frozen-lockfile
+    
+    - name: Install Railway
+      run: npm i -g @railway/cli
+
+    - name: Deploy
+      run: railway up --service gregg
+      env:
+        RAILWAY_TOKEN: ${{ secrets.GREGG_DEV_RAILWAY_TOKEN }}

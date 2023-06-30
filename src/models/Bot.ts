@@ -16,6 +16,8 @@ export interface Bot extends Client {
     token: string;
     clientId: string;
     homeGuildId: string;
+    owsUrl: string;
+    clientSecret: string;
   };
   api: OWSClient;
   dataCache: {
