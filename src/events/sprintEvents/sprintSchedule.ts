@@ -17,7 +17,7 @@ export const sprintSchedule: Event = {
         bot.emit("sprintStart", sprint);
       }, delayBy * 60 * 1000);
     } catch (err) {
-      logger.error(`Error while handling sprintSchedule event ${err}`);
+      logger.error(err, `Error while handling sprintSchedule event`);
     }
   },
 };

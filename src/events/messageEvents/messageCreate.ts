@@ -23,7 +23,7 @@ export const messageCreate: Event = {
         `Guild ${guild.id}: ${author.tag}(${author.id}) sent message ${message.id}`,
       );
     } catch (err) {
-      logger.error(`Error in messageCreate: ${err}`);
+      logger.error(err, `Error while handling messageCreate event`);
     }
   },
 };

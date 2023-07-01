@@ -16,7 +16,7 @@ export const memberAdd: Event = {
       }
       logger.info(`${user.tag} (${user.id}) joined guild ${guild.id}`);
     } catch (err) {
-      logger.error(`Error while handling memberAdd event: ${err}`);
+      logger.error(err, `Error while handling memberAdd event`);
     }
   },
 };

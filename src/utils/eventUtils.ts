@@ -10,6 +10,8 @@ import { Bot } from "../models/Bot";
 
 import { getAuthorString } from "./bookUtils";
 
+const HOME_GUILD_ID = process.env.HOME_GUILD_ID ?? "";
+
 /**
  * Converts a javascript date object into unix timestamp.
  *
@@ -164,5 +166,51 @@ export function getEventInfoEmbed(
       inline: false,
     });
   }
+  return embed;
+}
+
+/**
+ * Creates an embed to display an event request.
+ *
+ * @param data The event document.
+ * @param bot The bot instance.
+ * @returns The embed.
+ */
+export async function getEventRequestEmbed(data: EventDocument, bot: Bot) {
+  const homeGuild = await bot.guilds.fetch(HOME_GUILD_ID);
+  const embed = new EmbedBuilder()
+    .setTitle(`${data.book.title} - ${getAuthorString(data.book.authors)}`)
+    .setURL(data.book.url)
+    .setFooter({ text: `Event Request: ${data._id}` })
+    .setColor(Colors.DarkGold)
+    .setAuthor({
+      name: data.type,
+      iconURL: homeGuild.iconURL() ?? undefined,
+    });
+  if (data.book.coverUrl) {
+    embed.setThumbnail(data.book.coverUrl);
+  }
+  if (data.description) {
+    embed.addFields({
+      name: "Request Reason",
+      value: data.description,
+      inline: false,
+    });
+  }
+  embed.addFields({
+    name: "Start Date",
+    value: `<t:${getUnixTimestamp(data.dates.startDate)}:D>`,
+    inline: true,
+  });
+  embed.addFields({
+    name: "End Date",
+    value: `<t:${getUnixTimestamp(data.dates.endDate)}:D>`,
+    inline: true,
+  });
+  embed.addFields({
+    name: "Requested By",
+    value: `${userMention(data.requestedBy.user.userId)}`,
+    inline: false,
+  });
   return embed;
 }

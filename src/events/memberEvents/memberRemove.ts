@@ -16,7 +16,7 @@ export const memberRemove: Event = {
       }
       logger.info(`${user.tag} (${user.id}) left guild ${guild.id}`);
     } catch (err) {
-      logger.error(`Error while handling memberRemove event: ${err}`);
+      logger.error(err, `Error while handling memberRemove event`);
     }
   },
 };

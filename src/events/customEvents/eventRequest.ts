@@ -1,65 +1,20 @@
-import {
-  CreateEventDto,
-  EventDocument,
-  EventDocumentTypeEnum,
-} from "@orgbookclub/ows-client";
-import { Colors, EmbedBuilder, TextChannel, userMention } from "discord.js";
+import { CreateEventDto, EventDocumentTypeEnum } from "@orgbookclub/ows-client";
+import { TextChannel } from "discord.js";
 
 import { ChannelIds } from "../../config/ChannelIds";
 import { Bot } from "../../models/Bot";
 import { Event } from "../../models/Event";
-import { getAuthorString } from "../../utils/bookUtils";
-import { getUnixTimestamp } from "../../utils/eventUtils";
+import { getEventRequestEmbed } from "../../utils/eventUtils";
 import { logger } from "../../utils/logHandler";
 
-const HOME_GUILD_ID = process.env.HOME_GUILD_ID ?? "";
-interface EventRequestDto {
+interface EventRequestEventDto {
   url: string;
   createEventDto: CreateEventDto;
 }
 
-async function getEventRequestEmbed(data: EventDocument, bot: Bot) {
-  const homeGuild = await bot.guilds.fetch(HOME_GUILD_ID);
-  const embed = new EmbedBuilder()
-    .setTitle(`${data.book.title} - ${getAuthorString(data.book.authors)}`)
-    .setURL(data.book.url)
-    .setFooter({ text: `Event Request: ${data._id}` })
-    .setColor(Colors.DarkGold)
-    .setAuthor({
-      name: data.type,
-      iconURL: homeGuild.iconURL() ?? undefined,
-    });
-  if (data.book.coverUrl) {
-    embed.setThumbnail(data.book.coverUrl);
-  }
-  if (data.description) {
-    embed.addFields({
-      name: "Request Reason",
-      value: data.description,
-      inline: false,
-    });
-  }
-  embed.addFields({
-    name: "Start Date",
-    value: `<t:${getUnixTimestamp(data.dates.startDate)}:D>`,
-    inline: true,
-  });
-  embed.addFields({
-    name: "End Date",
-    value: `<t:${getUnixTimestamp(data.dates.endDate)}:D>`,
-    inline: true,
-  });
-  embed.addFields({
-    name: "Requested By",
-    value: `${userMention(data.requestedBy.user.userId)}`,
-    inline: false,
-  });
-  return embed;
-}
-
 export const eventRequest: Event = {
   name: "eventRequest",
-  run: async (bot: Bot, eventRequestDto: EventRequestDto) => {
+  run: async (bot: Bot, eventRequestDto: EventRequestEventDto) => {
     try {
       logger.debug(
         `eventRequest event fired: ${JSON.stringify(eventRequestDto)}`,
@@ -86,8 +41,9 @@ export const eventRequest: Event = {
         await message.react("✅");
       }
       // TODO: send DM to event leader with guidelines
+      // TODO: Figure out how to get participants interested in the event
     } catch (err) {
-      logger.error(`Error while handling eventRequest event ${err}`);
+      logger.error(err, `Error while handling eventRequest event`);
     }
   },
 };

@@ -8,7 +8,6 @@ import { logger } from "../../utils/logHandler";
 
 export const sprintFinish: Event = {
   name: "sprintFinish",
-  // eslint-disable-next-line require-await
   run: async (bot: Bot, sprint: Sprint) => {
     try {
       logger.debug(
@@ -21,14 +20,17 @@ export const sprintFinish: Event = {
       const threadId = sprint.threadId;
       const channel = (await bot.channels.fetch(threadId)) as TextChannel;
       if (channel === null) {
-        logger.error(`Unable to find channel/thread with ID: ${threadId}`);
+        logger.error(
+          undefined,
+          `Unable to find channel/thread with ID: ${threadId}`,
+        );
         return;
       }
       channel.send({
         content: sprint.getFinishMessage(),
       });
     } catch (err) {
-      logger.error(`Error while handling sprintFinish event ${err}`);
+      logger.error(err, `Error while handling sprintFinish event`);
     }
   },
 };
