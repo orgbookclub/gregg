@@ -3,12 +3,12 @@ import { User, userMention } from "discord.js";
 
 import { getUserMentionString } from "../utils/eventUtils";
 
-import { SprintStatus } from "./SprintStatus";
+import { SprintStatus } from ".";
 
 /**
  * Represents a Sprint.
  */
-export default class Sprint {
+export class Sprint {
   id: string;
   threadId: string;
   participants: Set<string>;

@@ -1,10 +1,9 @@
-import Sprint from "./Sprint";
-import { SprintStatus } from "./SprintStatus";
+import { Sprint, SprintStatus } from ".";
 
 /**
  * Handles the storage and access of running sprints.
  */
-export default class SprintManager {
+export class SprintManager {
   /**
    * Initializes a SprintStore.
    */
