@@ -2,7 +2,6 @@ import { uuid4 } from "@sentry/utils";
 import { User, userMention } from "discord.js";
 
 import { getUserMentionString } from "../utils/eventUtils";
-import { logger } from "../utils/logHandler";
 
 import { SprintStatus } from "./SprintStatus";
 
@@ -13,18 +12,18 @@ export default class Sprint {
   id: string;
   threadId: string;
   participants: Set<string>;
-  startCounts: { [id: string]: number };
-  endCounts: { [id: string]: number };
+  startCounts: Record<string, number>;
+  endCounts: Record<string, number>;
   duration: number;
-  timer: NodeJS.Timeout | undefined;
+  timer?: NodeJS.Timeout;
   status: SprintStatus;
 
   /**
    * Initializes a sprint object.
    *
-   * @param {number} duration The duration in minutes for the sprint.
-   * @param {number} delayBy The duration in minutes for which to delay before the sprint starts.
-   * @param {string} threadId The ID of the channel or thread where the sprint will be.
+   * @param duration The duration in minutes for the sprint.
+   * @param delayBy The duration in minutes for which to delay before the sprint starts.
+   * @param threadId The ID of the channel or thread where the sprint will be.
    */
   constructor(duration: number, delayBy: number, threadId: string) {
     this.id = uuid4();
@@ -40,8 +39,8 @@ export default class Sprint {
   /**
    * Adds a user as a participant in a sprint, and marks their start count.
    *
-   * @param {User} user The user object.
-   * @param {number} startCount The initial start count of the user.
+   * @param user The user object.
+   * @param startCount The initial start count of the user.
    */
   join(user: User, startCount: number) {
     this.participants.add(user.id);
@@ -51,7 +50,7 @@ export default class Sprint {
   /**
    * Removes a user from a sprint.
    *
-   * @param {User} user The user object.
+   * @param user The user object.
    */
   leave(user: User) {
     this.participants.delete(user.id);
@@ -61,14 +60,15 @@ export default class Sprint {
   /**
    * Logs the end count of a sprint participant.
    *
-   * @param {User} user The user object.
-   * @param {number} endCount The end count of the user.
+   * @param user The user object.
+   * @param endCount The end count of the user.
    */
   finish(user: User, endCount: number) {
     this.endCounts[user.id] = endCount;
   }
+
   /**
-   *
+   * Cancels the sprint.
    */
   cancel() {
     this.status = SprintStatus.Cancelled;
@@ -78,10 +78,9 @@ export default class Sprint {
   /**
    * Creates a message showing the current sprint information.
    *
-   * @returns {string} The string representing the sprint status.
+   * @returns The string representing the sprint status.
    */
-  getStatusMessage(): string {
-    logger.debug(Array.from(this.participants.keys()));
+  getStatusMessage() {
     return (
       `**Sprint Status**: ${this.status}` +
       "\n" +
@@ -94,18 +93,18 @@ export default class Sprint {
   /**
    * Creates a message for the sprint start announcement.
    *
-   * @returns {string} The string representing the start announcement.
+   * @returns The string representing the start announcement.
    */
-  getStartMessage(): string {
+  getStartMessage() {
     return `Sprint started! Duration: ${this.duration} minutes`;
   }
 
   /**
    * Creates a message for the sprint finish announcement.
    *
-   * @returns {string} The string representing the finish announcement.
+   * @returns The string representing the finish announcement.
    */
-  getFinishMessage(): string {
+  getFinishMessage() {
     return (
       `${getUserMentionString(Array.from(this.participants.keys()))}` +
       "\n" +
@@ -116,10 +115,10 @@ export default class Sprint {
   /**
    * Calculates the scores for the sprint participants.
    *
-   * @returns {[string, number][]} A sorted list of tuples, representing the ID and the score of a participant.
+   * @returns A sorted list of tuples, representing the ID and the score of a participant.
    */
   calculateSprintScores(): [string, number][] {
-    const scores: { [id: string]: number } = {};
+    const scores: Record<string, number> = {};
     for (const key of this.participants) {
       if (this.endCounts[key] === undefined) continue;
       scores[key] = Math.max(0, this.endCounts[key] - this.startCounts[key]);
@@ -135,9 +134,9 @@ export default class Sprint {
   /**
    * Creates a message for the sprint ending announcement with the stats.
    *
-   * @returns {string} The string representing the sprint ending stats.
+   * @returns The string representing the sprint ending stats.
    */
-  getEndMessage(): string {
+  getEndMessage() {
     const scoreStrings = this.calculateSprintScores().map((item, index) => {
       const readingSpeed = (item[1] / this.duration).toFixed(2);
       return (

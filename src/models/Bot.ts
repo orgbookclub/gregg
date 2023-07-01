@@ -11,7 +11,9 @@ import SprintManager from "./SprintManager";
  */
 export interface Bot extends Client {
   commands: Command[];
+
   contexts: Context[];
+
   configs: {
     token: string;
     clientId: string;
@@ -19,7 +21,9 @@ export interface Bot extends Client {
     owsUrl: string;
     clientSecret: string;
   };
+
   api: OWSClient;
+
   dataCache: {
     sprintManager: SprintManager;
   };
