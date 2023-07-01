@@ -1,4 +1,3 @@
-import { User } from "@sentry/node";
 import {
   ActionRowBuilder,
   ApplicationCommandType,
@@ -12,11 +11,12 @@ import {
   PrivateThreadChannel,
   PublicThreadChannel,
   TextChannel,
+  User,
 } from "discord.js";
 
 import { Bot } from "../models/Bot";
 import { Context } from "../models/Context";
-import { errorHandler } from "../utils/errorHandler";
+import { logger } from "../utils/logHandler";
 
 function createBookmarkEmbed(
   author: User,
@@ -31,7 +31,7 @@ function createBookmarkEmbed(
   const bookmarkEmbed = new EmbedBuilder();
   bookmarkEmbed.setAuthor({
     name: author.tag,
-    iconURL: author.avatarURL(),
+    iconURL: author.displayAvatarURL(),
   });
   bookmarkEmbed.setDescription(message.content);
   bookmarkEmbed.addFields([
@@ -65,10 +65,7 @@ export const bookmark: Context = {
   data: new ContextMenuCommandBuilder()
     .setName("Bookmark")
     .setType(ApplicationCommandType.Message),
-  run: async (
-    bot: Bot,
-    interaction: ContextMenuCommandInteraction,
-  ): Promise<void> => {
+  run: async (bot: Bot, interaction: ContextMenuCommandInteraction) => {
     try {
       await interaction.deferReply({ ephemeral: true });
 
@@ -110,14 +107,7 @@ export const bookmark: Context = {
           );
         });
     } catch (err) {
-      await errorHandler(
-        bot,
-        "bookmark context command",
-        err,
-        interaction.guild?.name,
-        undefined,
-        interaction,
-      );
+      logger.error(err, "Error handling bookmark context command");
     }
   },
 };
