@@ -8,12 +8,12 @@ import { logger } from "./logHandler";
  *
  * @param bot The discord bot instance.
  */
-export const loadApiClient = async (bot: Bot): Promise<void> => {
+export const loadApiClient = async (bot: Bot) => {
   try {
     const client = new OWSClient();
     await client.initialize();
     bot.api = client;
   } catch (err) {
-    logger.error(`Error while loading API Client: ${err}`);
+    logger.error(err, `Error while loading API Client`);
   }
 };

@@ -10,9 +10,9 @@ const OUT_DIR = "dist";
 /**
  * Root level function for loading all of the event listeners.
  *
- * @param {Bot} bot The bot instance.
+ * @param bot The bot instance.
  */
-export const handleEvents = async (bot: Bot): Promise<void> => {
+export const handleEvents = async (bot: Bot) => {
   try {
     const files = glob.sync(`./${OUT_DIR}/events/**/*.js`, { realpath: true });
     for (const file of files) {
@@ -22,6 +22,6 @@ export const handleEvents = async (bot: Bot): Promise<void> => {
       bot.on(event.name, async (...args) => await event.run(bot, ...args));
     }
   } catch (err) {
-    logger.error(`Error while loading event listeners: ${err}`);
+    logger.error(err, `Error while loading event listeners`);
   }
 };

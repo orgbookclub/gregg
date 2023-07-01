@@ -1,4 +1,3 @@
-/* eslint-disable jsdoc/no-undefined-types */
 import { ButtonBuilder } from "@discordjs/builders";
 import {
   ActionRowBuilder,
@@ -11,6 +10,8 @@ import {
 } from "discord.js";
 
 import { Bot } from "../models/Bot";
+
+import { logger } from "./logHandler";
 
 /**
  * Handles all pagination related for a given array of data.
@@ -35,17 +36,17 @@ export class PaginationManager<T> {
   /**
    * Initializes an instance of Pagination Manager.
    *
-   * @param {number} pageSize The max items on each page.
-   * @param {T} data An array of objects.
-   * @param {Bot} bot The Bot instance.
-   * @param {(values: T[], bot: Bot, interaction: ChatInputCommandInteraction) => EmbedBuilder} embedBuilder A function which returns an embed for the given data type.
-   * @param {string} embedTitle The title of the embed.
+   * @param pageSize The max items on each page.
+   * @param objectList An array of objects.
+   * @param bot The Bot instance.
+   * @param embedBuilderFunction A function which returns an embed for the given data type.
+   * @param embedTitle The title of the embed.
    */
   constructor(
     pageSize: number,
-    data: T[],
+    objectList: T[],
     bot: Bot,
-    embedBuilder: (
+    embedBuilderFunction: (
       title: string,
       values: T[],
       int: ChatInputCommandInteraction,
@@ -55,16 +56,16 @@ export class PaginationManager<T> {
     this.currPageNum = 1;
     this.pageSize = pageSize;
     this.bot = bot;
-    this.data = data;
-    this.customEmbedBuilder = embedBuilder;
-    this.totalPageNum = Math.ceil(data.length / pageSize);
+    this.data = objectList;
+    this.customEmbedBuilder = embedBuilderFunction;
+    this.totalPageNum = Math.ceil(objectList.length / pageSize);
     this.embedTitle = embedTitle;
   }
 
   /**
    * Creates the Button Action Row and SelectMenuAction Row for a page.
    *
-   * @returns {{selectMenuActionRow: ActionRowBuilder<StringSelectMenuBuilder>, buttonActionRow: ActionRowBuilder<ButtonBuilder>}} The Action rows.
+   * @returns The Action rows.
    */
   createMessageComponentsForPage(): {
     selectMenuActionRow: ActionRowBuilder<StringSelectMenuBuilder>;
@@ -84,9 +85,11 @@ export class PaginationManager<T> {
       .setPlaceholder(`On Page ${this.currPageNum}`)
       .setCustomId(this.selectId);
     const pageGap = Math.ceil(this.totalPageNum / 10);
+
     for (let i = 1; i <= this.totalPageNum; i += pageGap) {
       selectMenu.addOptions({ label: `Page ${i}`, value: `${i}` });
     }
+
     const buttonActionRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
       backButton,
       forwardButton,
@@ -99,9 +102,9 @@ export class PaginationManager<T> {
   /**
    * Returns the page data.
    *
-   * @returns {T[]} An array of objects.
+   * @returns An array of objects.
    */
-  private getPageData(): T[] {
+  private getPageData() {
     return this.data.slice(
       (this.currPageNum - 1) * this.pageSize,
       this.currPageNum * this.pageSize,
@@ -111,7 +114,7 @@ export class PaginationManager<T> {
   /**
    * Creates the message payload for a page.
    *
-   * @param {ChatInputCommandInteraction} interaction The interaction instance.
+   * @param interaction The interaction instance.
    * @returns The message payload.
    */
   createMessagePayloadForPage(interaction: ChatInputCommandInteraction) {
@@ -123,6 +126,7 @@ export class PaginationManager<T> {
       pageData,
       interaction,
     );
+
     return {
       content: `Page ${this.currPageNum} out of ${this.totalPageNum}`,
       embeds: [embed],
@@ -133,9 +137,9 @@ export class PaginationManager<T> {
   /**
    * Initializes the collectors for the message components.
    *
-   * @param {Message} message The message instance.
-   * @param {ChatInputCommandInteraction} interaction The interaction instance.
-   * @param {number} duration The duration for which the collector watches for interactions (in milliseconds).
+   * @param message The message instance.
+   * @param interaction The interaction instance.
+   * @param duration The duration for which the collector watches for interactions (in milliseconds).
    */
   createCollectors(
     message: Message,
@@ -144,10 +148,6 @@ export class PaginationManager<T> {
   ) {
     const buttonCollector = message.createMessageComponentCollector({
       componentType: ComponentType.Button,
-      time: duration,
-    });
-    const selectMenuCollector = message.createMessageComponentCollector({
-      componentType: ComponentType.StringSelect,
       time: duration,
     });
 
@@ -168,7 +168,14 @@ export class PaginationManager<T> {
     });
 
     buttonCollector.on("end", (collected) => {
-      console.log(`Collected ${collected.size} interactions.`);
+      logger.debug(
+        `Collected ${collected.size} interactions on button collector on message ${buttonCollector.messageId}`,
+      );
+    });
+
+    const selectMenuCollector = message.createMessageComponentCollector({
+      componentType: ComponentType.StringSelect,
+      time: duration,
     });
 
     selectMenuCollector.on("collect", async (i) => {
@@ -186,7 +193,9 @@ export class PaginationManager<T> {
     });
 
     selectMenuCollector.on("end", (collected) => {
-      console.log(`Collected ${collected.size} interactions.`);
+      logger.debug(
+        `Collected ${collected.size} interactions on select menu collector on message ${selectMenuCollector.messageId}`,
+      );
     });
   }
 }

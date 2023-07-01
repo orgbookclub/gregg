@@ -13,7 +13,7 @@ const OUT_DIR = "dist";
  *
  * @returns Array of Command objects representing the imported commands.
  */
-const loadCommands = async (): Promise<Command[]> => {
+const loadCommands = async () => {
   try {
     const filePathExp = `./${OUT_DIR}/commands/*.js`;
     return await parseCommandFiles<Command>(filePathExp);
@@ -29,7 +29,7 @@ const loadCommands = async (): Promise<Command[]> => {
  *
  * @returns Array of Context objects representing the imported commands.
  */
-const loadContexts = async (): Promise<Context[]> => {
+const loadContexts = async () => {
   try {
     const filePathExp = `./${OUT_DIR}/contexts/*.js`;
     return await parseCommandFiles<Context>(filePathExp);

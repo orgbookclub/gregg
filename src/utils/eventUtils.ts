@@ -10,76 +10,54 @@ import { Bot } from "../models/Bot";
 
 import { getAuthorString } from "./bookUtils";
 
-function getEventItemField(event: EventDocument) {
-  return {
-    name: `📕 ${event.book.title} - ${getAuthorString(event.book.authors)}`,
-    value:
-      `> [Link](${event.book.url}) | __ID__: \`${event._id}\`` +
-      `\n> __Type__: ${event.type} | __Status__: ${event.status}` +
-      (event.dates.startDate !== undefined
-        ? `\n> __Start__: <t:${getUnixTimestamp(event.dates.startDate)}:D>`
-        : "") +
-      (event.dates.endDate !== undefined
-        ? ` | __End__: <t:${getUnixTimestamp(event.dates.endDate)}:D>`
-        : ""),
-    inline: false,
-  };
-}
-
 /**
  * Converts a javascript date object into unix timestamp.
  *
- * @param {Date} date A JS date object.
- * @returns {string} Unix timestamp.
+ * @param date A JS date object or a string.
+ * @returns The unix timestamp string.
  */
-export const getUnixTimestamp = (date: Date | string): string => {
+export const getUnixTimestamp = (date: Date | string) => {
   return Math.floor(new Date(date).getTime() / 1000).toString();
 };
 
 /**
- * Converts a particpant array to a comma separated user mention string.
+ * Converts a particpant array or a user array to a comma separated user mention string.
  *
- * @param {Participant[]| string[]} participants Particpant list.
- * @param {boolean} includePoints Indicates whether to include particpant points in the string.
- * @param {number} limit The max number of users to show in the string.
- * @returns {string} Result string.
+ * @param participants Participant list or a user list.
+ * @param includePoints Indicates whether to include particpant points in the string.
+ * @param limit The max number of users to show in the string.
+ * @returns Result string.
  */
 export const getUserMentionString = (
   participants: Participant[] | string[],
   includePoints = false,
   limit = 25,
-): string => {
+) => {
   const limitedParticipants = participants.slice(0, limit);
-  let result = limitedParticipants
+  return limitedParticipants
     .map((participant) => {
-      if (typeof participant !== "string") {
-        if (includePoints) {
-          return `${userMention(participant.user.userId.toString())}(${
-            participant.points
-          })`;
-        }
-        return userMention(participant.user.userId.toString());
-      } else if (typeof participant === "string") {
+      if (typeof participant === "string") {
         return userMention(participant);
       }
-      return null;
+      const userId = participant.user.userId.toString();
+      return includePoints
+        ? `${userMention(userId)}(${participant.points})`
+        : userMention(userId);
     })
     .join(",");
-  if (participants.length > limit) result += "...";
-  return result;
 };
 
 /**
  * Creates an embed to display a list of events.
  *
- * @param {string} title The title to display in the embed.
- * @param {EventDocument[]} data Array of events.
- * @param {ChatInputCommandInteraction} interaction The interaction instance.
- * @returns {EmbedBuilder} The embed.
+ * @param title The title to display in the embed.
+ * @param eventList Array of events.
+ * @param interaction The interaction instance.
+ * @returns The embed.
  */
 export function getEventsListEmbed(
   title: string,
-  data: EventDocument[],
+  eventList: EventDocument[],
   interaction: ChatInputCommandInteraction,
 ) {
   const embed = new EmbedBuilder().setTitle(title).setColor(Colors.Red);
@@ -89,19 +67,35 @@ export function getEventsListEmbed(
       iconURL: interaction.guild?.iconURL() ?? undefined,
     });
   }
-  data.forEach((event: EventDocument) => {
+  eventList.forEach((event: EventDocument) => {
     embed.addFields(getEventItemField(event));
   });
   return embed;
+
+  function getEventItemField(event: EventDocument) {
+    return {
+      name: `📕 ${event.book.title} - ${getAuthorString(event.book.authors)}`,
+      value:
+        `> [Link](${event.book.url}) | __ID__: \`${event._id}\`` +
+        `\n> __Type__: ${event.type} | __Status__: ${event.status}` +
+        (event.dates.startDate !== undefined
+          ? `\n> __Start__: <t:${getUnixTimestamp(event.dates.startDate)}:D>`
+          : "") +
+        (event.dates.endDate !== undefined
+          ? ` | __End__: <t:${getUnixTimestamp(event.dates.endDate)}:D>`
+          : ""),
+      inline: false,
+    };
+  }
 }
 
 /**
  * Creates an embed to display details of an event.
  *
- * @param {EventDocument} data The event.
- * @param {Bot} bot The bot instance.
- * @param {ChatInputCommandInteraction} interaction The interaction instance.
- * @returns {EmbedBuilder} The embed.
+ * @param data The event.
+ * @param bot The bot instance.
+ * @param interaction The interaction instance.
+ * @returns The embed.
  */
 export function getEventInfoEmbed(
   data: EventDocument,
@@ -111,7 +105,7 @@ export function getEventInfoEmbed(
   const embed = new EmbedBuilder()
     .setTitle(`${data.book.title} - ${getAuthorString(data.book.authors)}`)
     .setURL(data.book.url)
-    .setFooter({ text: `Event ${data._id} fetched by ${bot.user?.username}` })
+    .setFooter({ text: `Event ${data._id}` })
     .setColor(Colors.Gold)
     .setAuthor({
       name: data.type,
@@ -137,7 +131,7 @@ export function getEventInfoEmbed(
     value: `<t:${getUnixTimestamp(data.dates.endDate)}:D>`,
     inline: true,
   });
-  if (data.threads !== null && data.threads.length > 0) {
+  if (data.threads && data.threads.length > 0) {
     embed.addFields({
       name: "Thread",
       value: `<#${data.threads[0]}>`,
@@ -149,21 +143,21 @@ export function getEventInfoEmbed(
     value: `${userMention(data.requestedBy.user.userId)}`,
     inline: false,
   });
-  if (data.leaders !== null && data.leaders.length > 0) {
+  if (data.leaders && data.leaders.length > 0) {
     embed.addFields({
       name: "Leader(s)",
       value: getUserMentionString(data.leaders, true),
       inline: true,
     });
   }
-  if (data.interested !== null && data.interested.length > 0) {
+  if (data.interested && data.interested.length > 0) {
     embed.addFields({
       name: "Interested",
       value: getUserMentionString(data.interested, false),
       inline: false,
     });
   }
-  if (data.readers !== null && data.readers.length > 0) {
+  if (data.readers && data.readers.length > 0) {
     embed.addFields({
       name: "Reader(s)",
       value: getUserMentionString(data.readers, true),
