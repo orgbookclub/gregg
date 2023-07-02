@@ -4,15 +4,12 @@ import {
   SlashCommandSubcommandBuilder,
 } from "discord.js";
 
-import { Bot } from "../models/Bot";
-import { Command } from "../models/Command";
-import { CommandHandler } from "../models/CommandHandler";
+import { CommandHandler, Command, Bot } from "../models";
 import { logger } from "../utils/logHandler";
 
-import { handleAbout } from "./subcommands/gregg/about";
-import { handlePing } from "./subcommands/gregg/ping";
+import { handlePing, handleAbout } from "./subcommands/gregg";
 
-const handlers: { [key: string]: CommandHandler } = {
+const handlers: Record<string, CommandHandler> = {
   ping: handlePing,
   about: handleAbout,
 };
@@ -22,6 +19,7 @@ const greggPingSubcommand = new SlashCommandSubcommandBuilder()
 const greggInfoSubcommand = new SlashCommandSubcommandBuilder()
   .setName("about")
   .setDescription("Shows information about Gregg.");
+
 export const gregg: Command = {
   data: new SlashCommandBuilder()
     .setName("gregg")
@@ -34,7 +32,7 @@ export const gregg: Command = {
       const handler = handlers[subCommand];
       await handler(bot, interaction);
     } catch (err) {
-      logger.error(`Error processing command gregg: ${err}`);
+      logger.error(err, `Error processing command gregg`);
     }
   },
 };
