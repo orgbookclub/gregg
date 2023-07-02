@@ -1,15 +1,13 @@
 import { ChatInputCommandInteraction } from "discord.js";
 
-import { Bot } from "../../../models/Bot";
-import { CommandHandler } from "../../../models/CommandHandler";
-import { SprintStatus } from "../../../models/SprintStatus";
+import { CommandHandler, Bot, SprintStatus } from "../../../models";
 import { logger } from "../../../utils/logHandler";
 
 /**
  * Enables a user to log their count at the end of a sprint.
  *
- * @param {Bot} bot The bot instance.
- * @param {ChatInputCommandInteraction} interaction The interaction.
+ * @param bot The bot instance.
+ * @param interaction The interaction.
  */
 export const handleFinish: CommandHandler = async (
   bot: Bot,
@@ -43,6 +41,6 @@ export const handleFinish: CommandHandler = async (
       content: `Successfully logged end count: ${count}`,
     });
   } catch (err) {
-    logger.error(`Error in handleFinish ${err}`);
+    logger.error(err, `Error in handleFinish`);
   }
 };

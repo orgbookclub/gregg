@@ -1,16 +1,13 @@
 import { ChatInputCommandInteraction } from "discord.js";
 
-import { Bot } from "../../../models/Bot";
-import { CommandHandler } from "../../../models/CommandHandler";
-import Sprint from "../../../models/Sprint";
-import { SprintStatus } from "../../../models/SprintStatus";
+import { CommandHandler, Bot, SprintStatus, Sprint } from "../../../models";
 import { logger } from "../../../utils/logHandler";
 
 /**
  * Schedules a sprint to start in the current channel/thread.
  *
- * @param {Bot} bot The bot instance.
- * @param {ChatInputCommandInteraction} interaction The interaction.
+ * @param bot The bot instance.
+ * @param interaction The interaction.
  */
 export const handleStart: CommandHandler = async (
   bot: Bot,
@@ -47,6 +44,6 @@ export const handleStart: CommandHandler = async (
       content: `A Sprint of ${duration} minutes will start in ${delay} minutes!`,
     });
   } catch (err) {
-    logger.error(`Error in handleStart: ${err}`);
+    logger.error(err, `Error in handleStart`);
   }
 };

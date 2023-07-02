@@ -1,15 +1,13 @@
 import { ChatInputCommandInteraction } from "discord.js";
 
-import { Bot } from "../../../models/Bot";
-import { CommandHandler } from "../../../models/CommandHandler";
-import { SprintStatus } from "../../../models/SprintStatus";
+import { CommandHandler, Bot, SprintStatus } from "../../../models";
 import { logger } from "../../../utils/logHandler";
 
 /**
  * Enables a user to join an ongoing sprint.
  *
- * @param {Bot} bot The bot instance.
- * @param {ChatInputCommandInteraction} interaction The interaction.
+ * @param bot The bot instance.
+ * @param interaction The interaction.
  */
 export const handleJoin: CommandHandler = async (
   bot: Bot,
@@ -36,6 +34,6 @@ export const handleJoin: CommandHandler = async (
       content: `Successfully joined sprint with start count: ${startCount}`,
     });
   } catch (err) {
-    logger.error(`Error in handleJoin ${err}`);
+    logger.error(err, `Error in handleJoin`);
   }
 };
