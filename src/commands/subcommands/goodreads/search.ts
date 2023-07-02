@@ -6,11 +6,31 @@ import { CommandHandler } from "../../../models/CommandHandler";
 import { getAuthorString } from "../../../utils/bookUtils";
 import { logger } from "../../../utils/logHandler";
 
-function getGoodreadsSearchEmbed(
-  query: string,
-  data: BookDto[],
+/**
+ * Gets a list of books from GR and returns an embed.
+ *
+ * @param bot The bot instance.
+ * @param interaction The interaction.
+ */
+const handleSearch: CommandHandler = async (
   bot: Bot,
-): EmbedBuilder {
+  interaction: ChatInputCommandInteraction,
+) => {
+  try {
+    const query = interaction.options.getString("query", true);
+    const k = interaction.options.getInteger("k") ?? 5;
+    const response = await bot.api.goodreads.goodreadsControllerSearchBooks({
+      q: query,
+      k: k,
+    });
+    const embed = getGoodreadsSearchEmbed(query, response.data);
+    await interaction.editReply({ embeds: [embed] });
+  } catch (err) {
+    logger.error(err, `Error in handleSearch`);
+  }
+};
+
+function getGoodreadsSearchEmbed(query: string, data: BookDto[]): EmbedBuilder {
   let description = "";
   for (let i = 0; i < data.length; i++) {
     const book = data[i];
@@ -23,31 +43,9 @@ function getGoodreadsSearchEmbed(
   const embed = new EmbedBuilder()
     .setTitle(`Search results for ${query}`)
     .setDescription(description)
-    .setFooter({ text: `Fetched from Goodreads by ${bot.user?.username}` })
+    .setFooter({ text: `Fetched from Goodreads` })
     .setColor(Colors.Aqua);
   return embed;
 }
 
-/**
- * Gets a list of books from GR and returns an embed.
- *
- * @param {Bot} bot The bot instance.
- * @param {ChatInputCommandInteraction} interaction The interaction.
- */
-export const handleSearch: CommandHandler = async (
-  bot: Bot,
-  interaction: ChatInputCommandInteraction,
-) => {
-  try {
-    const query = interaction.options.getString("query", true);
-    const k = interaction.options.getInteger("k") ?? 5;
-    const response = await bot.api.goodreads.goodreadsControllerSearchBooks({
-      q: query,
-      k: k,
-    });
-    const embed = getGoodreadsSearchEmbed(query, response.data, bot);
-    await interaction.editReply({ embeds: [embed] });
-  } catch (err) {
-    logger.error(`Error in handleSearch: ${err}`);
-  }
-};
+export { handleSearch };

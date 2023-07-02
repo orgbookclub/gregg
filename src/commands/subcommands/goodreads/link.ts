@@ -1,14 +1,13 @@
 import { ChatInputCommandInteraction } from "discord.js";
 
-import { Bot } from "../../../models/Bot";
-import { CommandHandler } from "../../../models/CommandHandler";
+import { CommandHandler, Bot } from "../../../models";
 import { logger } from "../../../utils/logHandler";
 
 /**
  * Returns the GR URL of the book.
  *
- * @param {Bot} bot The bot instance.
- * @param {ChatInputCommandInteraction} interaction The interaction.
+ * @param bot The bot instance.
+ * @param interaction The interaction.
  */
 export const handleLink: CommandHandler = async (
   bot: Bot,
@@ -22,6 +21,6 @@ export const handleLink: CommandHandler = async (
     });
     await interaction.editReply({ content: response.data[0].url });
   } catch (err) {
-    logger.error(`Error in handleLink: ${err}`);
+    logger.error(err, `Error in handleLink`);
   }
 };

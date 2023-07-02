@@ -4,18 +4,18 @@ import {
   SlashCommandSubcommandBuilder,
 } from "discord.js";
 
-import { Bot } from "../models/Bot";
-import { Command } from "../models/Command";
-import { CommandHandler } from "../models/CommandHandler";
+import { CommandHandler, Command, Bot } from "../models";
 import { logger } from "../utils/logHandler";
 
-import { handleBook } from "./subcommands/goodreads/book";
-import { handleCover } from "./subcommands/goodreads/cover";
-import { handleLink } from "./subcommands/goodreads/link";
-import { handleQuote } from "./subcommands/goodreads/quote";
-import { handleSearch } from "./subcommands/goodreads/search";
+import {
+  handleBook,
+  handleCover,
+  handleLink,
+  handleQuote,
+  handleSearch,
+} from "./subcommands/goodreads";
 
-const handlers: { [key: string]: CommandHandler } = {
+const handlers: Record<string, CommandHandler> = {
   search: handleSearch,
   book: handleBook,
   cover: handleCover,
@@ -90,7 +90,7 @@ export const goodreads: Command = {
       const handler = handlers[subCommand];
       await handler(bot, interaction);
     } catch (err) {
-      logger.error(`Error processing command goodreads: ${err}`);
+      logger.error(err, `Error processing command goodreads`);
     }
   },
 };

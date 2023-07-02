@@ -1,14 +1,13 @@
 import { ChatInputCommandInteraction } from "discord.js";
 
-import { Bot } from "../../../models/Bot";
-import { CommandHandler } from "../../../models/CommandHandler";
+import { CommandHandler, Bot } from "../../../models";
 import { logger } from "../../../utils/logHandler";
 
 /**
  * Gets a random GR quote.
  *
- * @param {Bot} bot The bot instance.
- * @param {ChatInputCommandInteraction} interaction The interaction.
+ * @param bot The bot instance.
+ * @param interaction The interaction.
  */
 export const handleQuote: CommandHandler = async (
   bot: Bot,
@@ -25,6 +24,6 @@ export const handleQuote: CommandHandler = async (
     }
     await interaction.editReply({ content: quote });
   } catch (err) {
-    logger.error(`Error in handleQuote: ${err}`);
+    logger.error(err, `Error in handleQuote`);
   }
 };
