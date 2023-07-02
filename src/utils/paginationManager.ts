@@ -9,7 +9,7 @@ import {
   StringSelectMenuBuilder,
 } from "discord.js";
 
-import { Bot } from "../models/Bot";
+import { Bot } from "../models";
 
 import { logger } from "./logHandler";
 

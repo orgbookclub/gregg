@@ -1,9 +1,8 @@
 import { CreateEventDto, EventDocumentTypeEnum } from "@orgbookclub/ows-client";
 import { TextChannel } from "discord.js";
 
-import { ChannelIds } from "../../config/ChannelIds";
-import { Bot } from "../../models/Bot";
-import { Event } from "../../models/Event";
+import { ChannelIds } from "../../config";
+import { Bot, Event } from "../../models";
 import { getEventRequestEmbed } from "../../utils/eventUtils";
 import { logger } from "../../utils/logHandler";
 

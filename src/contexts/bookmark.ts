@@ -14,8 +14,7 @@ import {
   User,
 } from "discord.js";
 
-import { Bot } from "../models/Bot";
-import { Context } from "../models/Context";
+import { Context, Bot } from "../models";
 import { logger } from "../utils/logHandler";
 
 function createBookmarkEmbed(

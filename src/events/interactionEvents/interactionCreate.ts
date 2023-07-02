@@ -1,7 +1,6 @@
 import { Interaction } from "discord.js";
 
-import { Bot } from "../../models/Bot";
-import { Event } from "../../models/Event";
+import { Bot, Event } from "../../models";
 import { logger } from "../../utils/logHandler";
 
 export const interactionCreate: Event = {

@@ -1,7 +1,6 @@
 import glob from "glob";
 
-import { Command } from "../models/Command";
-import { Context } from "../models/Context";
+import { Command, Context } from "../models";
 
 import { logger } from "./logHandler";
 

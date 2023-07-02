@@ -1,6 +1,4 @@
-import { Bot } from "../../models/Bot";
-import { Event } from "../../models/Event";
-import Sprint from "../../models/Sprint";
+import { Bot, Sprint, Event } from "../../models";
 import { logger } from "../../utils/logHandler";
 
 export const sprintSchedule: Event = {

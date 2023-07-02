@@ -7,7 +7,7 @@ import {
   userMention,
 } from "discord.js";
 
-import { Bot } from "../models/Bot";
+import { Bot } from "../models";
 
 import { getAuthorString } from "./bookUtils";
 
