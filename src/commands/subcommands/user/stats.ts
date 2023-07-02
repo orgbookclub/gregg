@@ -6,9 +6,37 @@ import {
   User,
 } from "discord.js";
 
-import { Bot } from "../../../models/Bot";
-import { CommandHandler } from "../../../models/CommandHandler";
+import { CommandHandler, Bot } from "../../../models";
 import { logger } from "../../../utils/logHandler";
+
+/**
+ * Gets the server event stats for a user.
+ *
+ * @param bot The bot instance.
+ * @param interaction The interaction.
+ */
+const handleStats: CommandHandler = async (
+  bot: Bot,
+  interaction: ChatInputCommandInteraction,
+) => {
+  try {
+    await interaction.deferReply();
+    const user = interaction.options.getUser("user") ?? interaction.user;
+    const userResponse = await bot.api.users.usersControllerFindOneByUserId({
+      userid: user.id,
+    });
+    const userDto = userResponse.data;
+    const userEventsResponse = await bot.api.events.eventsControllerFind({
+      participantIds: [userDto._id],
+    });
+    const userEvents = userEventsResponse.data;
+    const stats = calculateUserEventStats(userDto._id, userEvents);
+    const embed = getUserEventStatsEmbed(stats, userDto._id, user, interaction);
+    await interaction.editReply({ embeds: [embed] });
+  } catch (err) {
+    logger.error(err, `Error in handleStats`);
+  }
+};
 
 interface Stats {
   totalNumberOfEvents: number;
@@ -22,7 +50,7 @@ interface Stats {
 
 type UserEventStats = {
   totalScore: number;
-  stats: { [key: string]: Stats };
+  stats: Record<string, Stats>;
 };
 
 function calculateUserEventStats(id: string, events: EventDocument[]) {
@@ -105,31 +133,4 @@ function getUserEventStatsEmbed(
   }
 }
 
-/**
- * Gets the server event stats for a user.
- *
- * @param {Bot} bot The bot instance.
- * @param {ChatInputCommandInteraction} interaction The interaction.
- */
-export const handleStats: CommandHandler = async (
-  bot: Bot,
-  interaction: ChatInputCommandInteraction,
-) => {
-  try {
-    await interaction.deferReply();
-    const user = interaction.options.getUser("user") ?? interaction.user;
-    const userResponse = await bot.api.users.usersControllerFindOneByUserId({
-      userid: user.id,
-    });
-    const userDto = userResponse.data;
-    const userEventsResponse = await bot.api.events.eventsControllerFind({
-      participantIds: [userDto._id],
-    });
-    const userEvents = userEventsResponse.data;
-    const stats = calculateUserEventStats(userDto._id, userEvents);
-    const embed = getUserEventStatsEmbed(stats, userDto._id, user, interaction);
-    await interaction.editReply({ embeds: [embed] });
-  } catch (err) {
-    logger.error(`Error in handleStats ${err}`);
-  }
-};
+export { handleStats };

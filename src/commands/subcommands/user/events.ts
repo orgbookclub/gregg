@@ -5,8 +5,7 @@ import {
 } from "@orgbookclub/ows-client";
 import { ChatInputCommandInteraction } from "discord.js";
 
-import { Bot } from "../../../models/Bot";
-import { CommandHandler } from "../../../models/CommandHandler";
+import { CommandHandler, Bot } from "../../../models";
 import { getEventsListEmbed } from "../../../utils/eventUtils";
 import { logger } from "../../../utils/logHandler";
 import { PaginationManager } from "../../../utils/paginationManager";
@@ -14,8 +13,8 @@ import { PaginationManager } from "../../../utils/paginationManager";
 /**
  * Gets the server event list for a user.
  *
- * @param {Bot} bot The bot instance.
- * @param {ChatInputCommandInteraction} interaction The interaction.
+ * @param bot The bot instance.
+ * @param interaction The interaction.
  */
 export const handleEvents: CommandHandler = async (
   bot: Bot,
@@ -59,6 +58,6 @@ export const handleEvents: CommandHandler = async (
     );
     pagedContentManager.createCollectors(message, interaction, 5 * 60 * 1000);
   } catch (err) {
-    logger.error(`Error in handleEvents ${err}`);
+    logger.error(err, `Error in handleEvents`);
   }
 };

@@ -4,19 +4,18 @@ import {
   SlashCommandSubcommandBuilder,
 } from "discord.js";
 
-import { EventStatusOptions } from "../config/EventStatusOptions";
-import { EventTypeOptions } from "../config/EventTypeOptions";
-import { Bot } from "../models/Bot";
-import { Command } from "../models/Command";
-import { CommandHandler } from "../models/CommandHandler";
+import { EventTypeOptions, EventStatusOptions } from "../config";
+import { CommandHandler, Command, Bot } from "../models";
 import { logger } from "../utils/logHandler";
 
-import { handleEvents } from "./subcommands/user/events";
-import { handleInfo } from "./subcommands/user/info";
-import { handleReaderboard } from "./subcommands/user/readerboard";
-import { handleStats } from "./subcommands/user/stats";
+import {
+  handleStats,
+  handleReaderboard,
+  handleEvents,
+  handleInfo,
+} from "./subcommands/user";
 
-const handlers: { [key: string]: CommandHandler } = {
+const handlers: Record<string, CommandHandler> = {
   info: handleInfo,
   stats: handleStats,
   events: handleEvents,
@@ -76,7 +75,7 @@ export const user: Command = {
       const handler = handlers[subCommand];
       await handler(bot, interaction);
     } catch (err) {
-      logger.error(`Error processing command user ${err}`);
+      logger.error(err, `Error processing command user`);
     }
   },
 };
