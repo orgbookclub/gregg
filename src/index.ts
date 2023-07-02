@@ -2,6 +2,7 @@ import { init } from "@sentry/node";
 import { ActivityType, Client } from "discord.js";
 
 import { IntentOptions } from "./config";
+import { connectPrisma } from "./database/connectPrisma";
 import { SprintManager, Bot } from "./models";
 import { errorHandler } from "./utils/errorHandler";
 import { loadApiClient } from "./utils/loadApiClient";
@@ -61,6 +62,9 @@ void (async () => {
   if (!success) {
     return;
   }
+
+  logger.debug("Initializing database...");
+  bot.db = await connectPrisma();
 
   logger.debug("Initializing Cache...");
   bot.dataCache = { sprintManager: new SprintManager() };

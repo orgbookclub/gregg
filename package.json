@@ -27,6 +27,7 @@
     "@discordjs/builders": "^1.6.3",
     "@discordjs/rest": "^1.7.1",
     "@orgbookclub/ows-client": "^0.1.1",
+    "@prisma/client": "^4.16.2",
     "@sentry/node": "^7.48.0",
     "@sentry/tracing": "^7.57.0",
     "@types/glob": "^8.0.1",

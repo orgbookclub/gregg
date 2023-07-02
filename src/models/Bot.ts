@@ -1,3 +1,4 @@
+import { PrismaClient } from "@prisma/client";
 import { Client } from "discord.js";
 
 import { OWSClient } from "../providers/owsClient";
@@ -28,4 +29,6 @@ export interface Bot extends Client {
   dataCache: {
     sprintManager: SprintManager;
   };
+
+  db: PrismaClient;
 }

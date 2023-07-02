@@ -1,0 +1,35 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("MONGODB_URI")
+}
+
+model qotds {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  v           Int?     @map("__v") @ignore
+  question    String
+  status      String
+  serverId    String
+  userId      String
+  suggestedOn DateTime @db.Date
+}
+
+model servers {
+  id         String @id @default(auto()) @map("_id") @db.ObjectId
+  v          Int?   @map("__v") @ignore
+  serverId   String
+  serverName String @default("")
+
+  @@unique([serverId], map: "serverId_1")
+}
+
+model users {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  v      Int?   @map("__v") @ignore
+  userId String
+
+  @@unique([userId], map: "userId_1")
+}
