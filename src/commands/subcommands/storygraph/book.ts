@@ -1,12 +1,34 @@
 import { StorygraphBookDto } from "@orgbookclub/ows-client";
 import { ChatInputCommandInteraction, Colors, EmbedBuilder } from "discord.js";
 
-import { Bot } from "../../../models/Bot";
-import { CommandHandler } from "../../../models/CommandHandler";
+import { CommandHandler, Bot } from "../../../models";
 import { getAuthorString } from "../../../utils/bookUtils";
 import { logger } from "../../../utils/logHandler";
 
-function getStorygraphBookEmbed(data: StorygraphBookDto, bot: Bot) {
+/**
+ * Gets the SG book information and returns an embed.
+ *
+ * @param bot The bot instance.
+ * @param interaction The interaction.
+ */
+const handleBook: CommandHandler = async (
+  bot: Bot,
+  interaction: ChatInputCommandInteraction,
+) => {
+  try {
+    const query = interaction.options.getString("query", true);
+    const response =
+      await bot.api.storygraph.storygraphControllerSearchAndGetBook({
+        q: query,
+      });
+    const embed = getStorygraphBookEmbed(response.data);
+    await interaction.editReply({ embeds: [embed] });
+  } catch (err) {
+    logger.error(err, `Error in handleBook`);
+  }
+};
+
+function getStorygraphBookEmbed(data: StorygraphBookDto) {
   const authorUrl = data.authors[0].url;
   const embed = new EmbedBuilder()
     .setTitle(data.title)
@@ -22,7 +44,7 @@ function getStorygraphBookEmbed(data: StorygraphBookDto, bot: Bot) {
       },
       { name: "Pace 🏃‍♂️", value: `${data.pace.join(", ")}`, inline: true },
     )
-    .setFooter({ text: `Fetched from Goodreads by ${bot.user?.username}` })
+    .setFooter({ text: `Fetched from Storygraph` })
     .setColor(Colors.DarkAqua);
   data.quesAns.forEach((element) => {
     embed.addFields({
@@ -34,25 +56,4 @@ function getStorygraphBookEmbed(data: StorygraphBookDto, bot: Bot) {
   return embed;
 }
 
-/**
- * Gets the SG book information and returns an embed.
- *
- * @param {Bot} bot The bot instance.
- * @param {ChatInputCommandInteraction} interaction The interaction.
- */
-export const handleBook: CommandHandler = async (
-  bot: Bot,
-  interaction: ChatInputCommandInteraction,
-) => {
-  try {
-    const query = interaction.options.getString("query", true);
-    const response =
-      await bot.api.storygraph.storygraphControllerSearchAndGetBook({
-        q: query,
-      });
-    const embed = getStorygraphBookEmbed(response.data, bot);
-    await interaction.editReply({ embeds: [embed] });
-  } catch (err) {
-    logger.error(`Error in handleBook: ${err}`);
-  }
-};
+export { handleBook };
