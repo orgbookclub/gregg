@@ -6,12 +6,10 @@ import {
   SlashCommandSubcommandGroupBuilder,
 } from "discord.js";
 
-import { Bot } from "../models/Bot";
-import { Command } from "../models/Command";
-import { CommandHandler } from "../models/CommandHandler";
+import { Bot, Command, CommandHandler } from "../models";
 import { logger } from "../utils/logHandler";
 
-const handlers: { [key: string]: CommandHandler } = {};
+const handlers: Record<string, CommandHandler> = {};
 
 const qotdSuggestSubcommand = new SlashCommandSubcommandBuilder()
   .setName("suggest")
@@ -75,7 +73,7 @@ export const misc: Command = {
       const handler = handlers[subCommand];
       await handler(bot, interaction);
     } catch (err) {
-      logger.error(`Error processing command misc ${err}`);
+      logger.error(err, `Error processing command misc`);
     }
   },
 };
