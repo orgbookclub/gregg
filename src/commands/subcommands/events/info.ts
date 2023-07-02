@@ -1,96 +1,14 @@
-import { EventDocument } from "@orgbookclub/ows-client";
-import {
-  channelMention,
-  ChatInputCommandInteraction,
-  Colors,
-  EmbedBuilder,
-  userMention,
-} from "discord.js";
+import { ChatInputCommandInteraction } from "discord.js";
 
-import { Bot } from "../../../models/Bot";
-import { CommandHandler } from "../../../models/CommandHandler";
-import { getAuthorString } from "../../../utils/bookUtils";
-import {
-  getUnixTimestamp,
-  getUserMentionString,
-} from "../../../utils/eventUtils";
+import { Bot, CommandHandler } from "../../../models";
+import { getEventInfoEmbed } from "../../../utils/eventUtils";
 import { logger } from "../../../utils/logHandler";
-
-function getEventInfoEmbed(
-  data: EventDocument,
-  bot: Bot,
-  interaction: ChatInputCommandInteraction,
-) {
-  const embed = new EmbedBuilder()
-    .setTitle(`${data.book.title} - ${getAuthorString(data.book.authors)}`)
-    .setURL(data.book.url)
-    .setFooter({ text: `Event ID: ${data._id}` })
-    .setColor(Colors.Gold)
-    .setAuthor({
-      name: `${data.status} ${data.type}`,
-      iconURL: interaction.guild?.iconURL() ?? undefined,
-    });
-  if (data.book.coverUrl) {
-    embed.setThumbnail(data.book.coverUrl);
-  }
-  if (data.description) {
-    embed.addFields({
-      name: "Description",
-      value: data.description,
-      inline: false,
-    });
-  }
-  embed.addFields({
-    name: "Start Date",
-    value: `<t:${getUnixTimestamp(data.dates.startDate)}:D>`,
-    inline: true,
-  });
-  embed.addFields({
-    name: "End Date",
-    value: `<t:${getUnixTimestamp(data.dates.endDate)}:D>`,
-    inline: true,
-  });
-  if (data.threads !== null && data.threads.length > 0) {
-    embed.addFields({
-      name: "Thread",
-      value: `${channelMention(data.threads[0])}`,
-      inline: true,
-    });
-  }
-  embed.addFields({
-    name: "Requested By",
-    value: `${userMention(data.requestedBy.user.userId)}`,
-    inline: false,
-  });
-  if (data.leaders !== null && data.leaders.length > 0) {
-    embed.addFields({
-      name: "Leader(s)",
-      value: getUserMentionString(data.leaders, true),
-      inline: true,
-    });
-  }
-  if (data.interested !== null && data.interested.length > 0) {
-    embed.addFields({
-      name: "Interested",
-      value: getUserMentionString(data.interested, false),
-      inline: false,
-    });
-  }
-  if (data.readers !== null && data.readers.length > 0) {
-    embed.addFields({
-      name: "Reader(s)",
-      value: getUserMentionString(data.readers, true),
-      inline: false,
-    });
-  }
-  return embed;
-}
 
 /**
  * Shows detailed information for an event.
  *
- * @param {Bot} bot The bot instance.
- * @param {ChatInputCommandInteraction} interaction The interaction.
+ * @param bot The bot instance.
+ * @param interaction The interaction.
  */
 export const handleInfo: CommandHandler = async (
   bot: Bot,
@@ -105,6 +23,6 @@ export const handleInfo: CommandHandler = async (
       embeds: [embed],
     });
   } catch (err) {
-    logger.error(`Error in handleInfo: ${err}`);
+    logger.error(err, `Error in handleInfo`);
   }
 };

@@ -3,7 +3,7 @@
   "author": "ravsodhi",
   "version": "0.1.0",
   "description": "Discord Bot",
-  "main": "./dist/src/index.js",
+  "main": "./dist/index.js",
   "private": true,
   "license": "UNLICENSED",
   "keywords": [

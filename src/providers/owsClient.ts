@@ -13,6 +13,7 @@ import { logger } from "../utils/logHandler";
 
 const CLIENT_ID = process.env.CLIENT_ID ?? "";
 const CLIENT_SECRET = process.env.CLIENT_SECRET ?? "";
+
 /**
  * The API Client for the backend service.
  * This client will be responsible for all interactions with the backend.
@@ -38,7 +39,7 @@ export class OWSClient {
       try {
         await this.initialize();
       } catch (err) {
-        logger.error(`Error refreshing access token with cron job: ${err}`);
+        logger.error(err, `Error refreshing access token with cron job`);
       }
     });
 
@@ -92,7 +93,6 @@ export class OWSClient {
    * and sets the class instance variable.
    */
   private async refreshAccessToken() {
-    logger.debug("Refreshing api client access token...");
     const response = await this.auth.authControllerGetAccessToken({
       clientCredentialsDto: {
         grant_type: "client_credentials",

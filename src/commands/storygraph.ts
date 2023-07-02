@@ -4,17 +4,17 @@ import {
   SlashCommandSubcommandBuilder,
 } from "discord.js";
 
-import { Bot } from "../models/Bot";
-import { Command } from "../models/Command";
-import { CommandHandler } from "../models/CommandHandler";
+import { CommandHandler, Command, Bot } from "../models";
 import { logger } from "../utils/logHandler";
 
-import { handleBook } from "./subcommands/storygraph/book";
-import { handleCover } from "./subcommands/storygraph/cover";
-import { handleLink } from "./subcommands/storygraph/link";
-import { handleSearch } from "./subcommands/storygraph/search";
+import {
+  handleBook,
+  handleCover,
+  handleLink,
+  handleSearch,
+} from "./subcommands/storygraph";
 
-const handlers: { [key: string]: CommandHandler } = {
+const handlers: Record<string, CommandHandler> = {
   search: handleSearch,
   book: handleBook,
   cover: handleCover,
@@ -79,7 +79,7 @@ export const storygraph: Command = {
       const handler = handlers[subCommand];
       await handler(bot, interaction);
     } catch (err) {
-      logger.error(`Error processing command storygraph ${err}`);
+      logger.error(err, `Error processing command storygraph`);
     }
   },
 };

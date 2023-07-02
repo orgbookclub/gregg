@@ -1,15 +1,13 @@
 import { ChatInputCommandInteraction, userMention } from "discord.js";
 
-import { Bot } from "../../../models/Bot";
-import { CommandHandler } from "../../../models/CommandHandler";
-import { SprintStatus } from "../../../models/SprintStatus";
+import { CommandHandler, Bot, SprintStatus } from "../../../models";
 import { logger } from "../../../utils/logHandler";
 
 /**
  * Cancels an ongoing sprint.
  *
- * @param {Bot} bot The bot instance.
- * @param {ChatInputCommandInteraction} interaction The interaction.
+ * @param bot The bot instance.
+ * @param interaction The interaction.
  */
 export const handleCancel: CommandHandler = async (
   bot: Bot,
@@ -40,6 +38,6 @@ export const handleCancel: CommandHandler = async (
       content: `Sprint cancelled by ${userMention(user.id)}`,
     });
   } catch (err) {
-    logger.error(`Error in handleCancel ${err}`);
+    logger.error(err, `Error in handleCancel`);
   }
 };

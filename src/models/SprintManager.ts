@@ -1,10 +1,9 @@
-import Sprint from "./Sprint";
-import { SprintStatus } from "./SprintStatus";
+import { Sprint, SprintStatus } from ".";
 
 /**
  * Handles the storage and access of running sprints.
  */
-export default class SprintManager {
+export class SprintManager {
   /**
    * Initializes a SprintStore.
    */
@@ -12,25 +11,25 @@ export default class SprintManager {
     this.sprints = {};
   }
 
-  sprints: { [id: string]: Sprint };
+  sprints: Record<string, Sprint>;
 
   /**
    * Returns the sprint with the given thread id.
    *
-   * @param {string} threadId The ID of the channel or thread.
-   * @returns {Sprint} Found sprint object.
+   * @param threadId The ID of the channel or thread.
+   * @returns Found sprint object.
    */
-  getSprint(threadId: string): Sprint {
+  getSprint(threadId: string) {
     return this.sprints[threadId];
   }
 
   /**
    * Returns a value indicating if there is an ongoing active sprint in the given thread.
    *
-   * @param {string} threadId The ID of the channel or thread.
-   * @returns {boolean} True if there is an existing sprint, false otherwise.
+   * @param threadId The ID of the channel or thread.
+   * @returns True if there is an existing sprint, false otherwise.
    */
-  isActiveSprintPresent(threadId: string): boolean {
+  isActiveSprintPresent(threadId: string) {
     return (
       this.sprints[threadId] !== undefined &&
       (this.sprints[threadId].status === SprintStatus.Ongoing ||
@@ -41,11 +40,11 @@ export default class SprintManager {
   /**
    * Returns a value indicating if a sprint is present for the given thread.
    *
-   * @param {string} threadId The ID of the channel or thread.
-   * @param {SprintStatus} status The sprint status.
-   * @returns {boolean} Value indicating sprint is present or not.
+   * @param threadId The ID of the channel or thread.
+   * @param status The sprint status.
+   * @returns Value indicating sprint is present or not.
    */
-  isSprintPresent(threadId: string, status: SprintStatus): boolean {
+  isSprintPresent(threadId: string, status: SprintStatus) {
     return (
       this.sprints[threadId] !== undefined &&
       this.sprints[threadId].status === status
@@ -55,7 +54,7 @@ export default class SprintManager {
   /**
    * Adds a sprint to the store.
    *
-   * @param {Sprint} sprint Input sprint object.
+   * @param sprint Input sprint object.
    */
   add(sprint: Sprint) {
     this.sprints[sprint.threadId] = sprint;
@@ -64,7 +63,7 @@ export default class SprintManager {
   /**
    * Removes a sprint from the store.
    *
-   * @param {Sprint} sprint The sprint to be deleted.
+   * @param sprint The sprint to be deleted.
    */
   remove(sprint: Sprint) {
     delete this.sprints[sprint.threadId];

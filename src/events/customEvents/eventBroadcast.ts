@@ -1,23 +1,22 @@
 import { TextChannel, userMention } from "discord.js";
 
-import { Bot } from "../../models/Bot";
-import { Event } from "../../models/Event";
+import { Bot, Event } from "../../models";
 import { logger } from "../../utils/logHandler";
 
-interface EventBroadcastDto {
+interface EventBroadcastEventDto {
   id: string;
   content: string;
 }
 
 export const eventBroadcast: Event = {
   name: "eventBroadcast",
-  run: async (bot: Bot, eventBroadcastDto: EventBroadcastDto) => {
+  run: async (bot: Bot, eventBroadcastEventDto: EventBroadcastEventDto) => {
     try {
       logger.debug(
-        `eventBroadcast event fired: ${JSON.stringify(eventBroadcastDto)}`,
+        `eventBroadcast event fired: ${JSON.stringify(eventBroadcastEventDto)}`,
       );
       const response = await bot.api.events.eventsControllerFindOne({
-        id: eventBroadcastDto.id,
+        id: eventBroadcastEventDto.id,
       });
       const eventDoc = response.data;
       let mentionString = "";
@@ -35,10 +34,10 @@ export const eventBroadcast: Event = {
       }
 
       await (channel as TextChannel).send({
-        content: eventBroadcastDto.content,
+        content: eventBroadcastEventDto.content,
       });
     } catch (err) {
-      logger.error(`Error while handling eventBroadcast event: ${err}`);
+      logger.error(err, `Error while handling eventBroadcast event`);
     }
   },
 };

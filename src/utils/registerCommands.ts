@@ -5,12 +5,12 @@ import {
   Routes,
 } from "discord-api-types/v10";
 
-import { Bot } from "../models/Bot";
+import { Bot } from "../models";
 
 import { logger } from "./logHandler";
 
 /**
- * Takes the commands, parses the `data` properties as needed,
+ * Takes both the commands and contexts, parses the `data` properties as needed,
  * and builds an array of all command data. Then, posts the data to the Discord endpoint
  * for registering commands.
  *
@@ -46,7 +46,7 @@ export const registerCommands = async (bot: Bot): Promise<boolean> => {
 
     return true;
   } catch (err) {
-    logger.error(`Error registering commands: ${err}`);
+    logger.error(err, `Error registering commands`);
     return false;
   }
 };

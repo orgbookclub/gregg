@@ -1,9 +1,8 @@
-import * as Sentry from "@sentry/node";
+import { init } from "@sentry/node";
 import { ActivityType, Client } from "discord.js";
 
-import { IntentOptions } from "./config/IntentOptions";
-import { Bot } from "./models/Bot";
-import SprintManager from "./models/SprintManager";
+import { IntentOptions } from "./config";
+import { SprintManager, Bot } from "./models";
 import { errorHandler } from "./utils/errorHandler";
 import { loadApiClient } from "./utils/loadApiClient";
 import { loadCommands, loadContexts } from "./utils/loadCommands";
@@ -12,7 +11,7 @@ import { logger } from "./utils/logHandler";
 import { registerCommands } from "./utils/registerCommands";
 import { validateEnv } from "./validateEnv";
 
-Sentry.init({
+init({
   dsn: process.env.SENTRY_DSN,
   // Set tracesSampleRate to 1.0 to capture 100%
   // of transactions for performance monitoring.
@@ -22,6 +21,10 @@ Sentry.init({
   environment: "development",
 });
 
+/**
+ * This is the entry point for the bot's process. This will log the boot process,
+ * call the necessary helpers to prepare the bot, and then log in to Discord.
+ */
 void (async () => {
   logger.debug("Starting process...");
   const bot = new Client({
@@ -29,11 +32,7 @@ void (async () => {
   }) as Bot;
 
   logger.debug("Validating environment variables...");
-  const validatedEnvironment = validateEnv(bot);
-  if (!validatedEnvironment.valid) {
-    logger.error(validatedEnvironment.message);
-    return;
-  }
+  bot.configs = validateEnv();
 
   /**
    * Fallthrough error handlers. These fire in rare cases where something throws

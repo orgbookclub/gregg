@@ -11,57 +11,16 @@ import {
   TextChannel,
 } from "discord.js";
 
-import { ChannelIds } from "../../../config/ChannelIds";
-import { Bot } from "../../../models/Bot";
-import { CommandHandler } from "../../../models/CommandHandler";
+import { ChannelIds } from "../../../config";
+import { Bot, CommandHandler } from "../../../models";
 import { getAuthorString } from "../../../utils/bookUtils";
 import {
   getEventInfoEmbed,
+  getThreadTitle,
   getUnixTimestamp,
   getUserMentionString,
 } from "../../../utils/eventUtils";
 import { logger } from "../../../utils/logHandler";
-
-function getThreadTitle(event: EventDocument) {
-  let eventTitle = `${event.book.title} - ${getAuthorString(
-    event.book.authors,
-  )}`;
-  if (eventTitle.length >= 100) {
-    eventTitle = eventTitle.slice(0, 96) + "...";
-  }
-  return eventTitle;
-}
-
-async function getForumChannel(bot: Bot, type: EventDocumentTypeEnum) {
-  let eventForum: Channel | null = null;
-  if (type === EventDocumentTypeEnum.BuddyRead) {
-    eventForum = await bot.channels.fetch(ChannelIds.BRForumChannel);
-  } else if (type === EventDocumentTypeEnum.MonthlyRead) {
-    eventForum = await bot.channels.fetch(ChannelIds.MRForumChannel);
-  }
-  if (eventForum === null || eventForum.type !== ChannelType.GuildForum) {
-    throw new Error(
-      `Unable to find specified forum channel for event type: ${type}`,
-    );
-  }
-  return eventForum;
-}
-function getPostContent(event: EventDocument) {
-  let content = "";
-  const eventTitle = `${event.book.title} - ${getAuthorString(
-    event.book.authors,
-  )}`;
-  content += `# ${eventTitle}`;
-  content += `\n### Link: ${event.book.url}`;
-  content += `\n### Cover: ${event.book.coverUrl}`;
-  content += `\n### Start Date: ${getUnixTimestamp(event.dates.startDate)}`;
-  content += `\n### End Date: ${getUnixTimestamp(event.dates.endDate)}`;
-  if (event.leaders.length > 0) {
-    content += `\n\nLeader(s): ${getUserMentionString(event.leaders, false)}`;
-  }
-  content += `\n\n ID: \`${event._id}\``;
-  return content;
-}
 
 /**
  * Creates thread(s) for an approved event, and writes information about the event on the thread.
@@ -70,7 +29,7 @@ function getPostContent(event: EventDocument) {
  * @param bot The bot instance.
  * @param interaction The interaction.
  */
-export const handleCreateThread: CommandHandler = async (
+const handleCreateThread: CommandHandler = async (
   bot: Bot,
   interaction: ChatInputCommandInteraction,
 ) => {
@@ -124,7 +83,41 @@ export const handleCreateThread: CommandHandler = async (
       await interaction.editReply(`Updated ${channelMention(thread.id)}`);
     }
     return;
-  } catch (error) {
-    logger.error(`Error in handleCreateThread: ${error}`);
+  } catch (err) {
+    logger.error(err, `Error in handleCreateThread`);
   }
 };
+
+async function getForumChannel(bot: Bot, type: EventDocumentTypeEnum) {
+  let eventForum: Channel | null = null;
+  if (type === EventDocumentTypeEnum.BuddyRead) {
+    eventForum = await bot.channels.fetch(ChannelIds.BRForumChannel);
+  } else if (type === EventDocumentTypeEnum.MonthlyRead) {
+    eventForum = await bot.channels.fetch(ChannelIds.MRForumChannel);
+  }
+  if (eventForum === null || eventForum.type !== ChannelType.GuildForum) {
+    throw new Error(
+      `Unable to find specified forum channel for event type: ${type}`,
+    );
+  }
+  return eventForum;
+}
+
+function getPostContent(event: EventDocument) {
+  let content = "";
+  const eventTitle = `${event.book.title} - ${getAuthorString(
+    event.book.authors,
+  )}`;
+  content += `# ${eventTitle}`;
+  content += `\n### Link: ${event.book.url}`;
+  content += `\n### Cover: ${event.book.coverUrl}`;
+  content += `\n### Start Date: ${getUnixTimestamp(event.dates.startDate)}`;
+  content += `\n### End Date: ${getUnixTimestamp(event.dates.endDate)}`;
+  if (event.leaders.length > 0) {
+    content += `\n\nLeader(s): ${getUserMentionString(event.leaders, false)}`;
+  }
+  content += `\n\n ID: \`${event._id}\``;
+  return content;
+}
+
+export { handleCreateThread };

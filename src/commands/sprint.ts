@@ -4,19 +4,19 @@ import {
   SlashCommandSubcommandBuilder,
 } from "discord.js";
 
-import { Bot } from "../models/Bot";
-import { Command } from "../models/Command";
-import { CommandHandler } from "../models/CommandHandler";
+import { CommandHandler, Command, Bot } from "../models";
 import { logger } from "../utils/logHandler";
 
-import { handleCancel } from "./subcommands/sprint/cancel";
-import { handleFinish } from "./subcommands/sprint/finish";
-import { handleJoin } from "./subcommands/sprint/join";
-import { handleLeave } from "./subcommands/sprint/leave";
-import { handleStart } from "./subcommands/sprint/start";
-import { handleStatus } from "./subcommands/sprint/status";
+import {
+  handleStart,
+  handleJoin,
+  handleLeave,
+  handleCancel,
+  handleStatus,
+  handleFinish,
+} from "./subcommands/sprint";
 
-const handlers: { [key: string]: CommandHandler } = {
+const handlers: Record<string, CommandHandler> = {
   start: handleStart,
   join: handleJoin,
   leave: handleLeave,
@@ -25,6 +25,7 @@ const handlers: { [key: string]: CommandHandler } = {
   finish: handleFinish,
   // TODO: Handle sprint stats command
 };
+
 // TODO: Handle cooldown for this command
 const sprintStartSubcommand = new SlashCommandSubcommandBuilder()
   .setName("start")
@@ -92,7 +93,7 @@ export const sprint: Command = {
       const handler = handlers[subCommand];
       await handler(bot, interaction);
     } catch (err) {
-      logger.error(`Error processing command sprint ${err}`);
+      logger.error(err, `Error processing command sprint`);
     }
   },
 };

@@ -1,12 +1,32 @@
 import { GoodreadsBookDto } from "@orgbookclub/ows-client";
 import { ChatInputCommandInteraction, Colors, EmbedBuilder } from "discord.js";
 
-import { Bot } from "../../../models/Bot";
-import { CommandHandler } from "../../../models/CommandHandler";
+import { Bot, CommandHandler } from "../../../models";
 import { getAuthorString } from "../../../utils/bookUtils";
 import { logger } from "../../../utils/logHandler";
 
-function getGoodreadsBookEmbed(data: GoodreadsBookDto, bot: Bot): EmbedBuilder {
+/**
+ * Gets the GR book information and returns an embed.
+ *
+ * @param bot The bot instance.
+ * @param interaction The interaction.
+ */
+const handleBook: CommandHandler = async (
+  bot: Bot,
+  interaction: ChatInputCommandInteraction,
+) => {
+  try {
+    const query = interaction.options.getString("query", true);
+    const response =
+      await bot.api.goodreads.goodreadsControllerSearchAndGetBook({ q: query });
+    const embed = getGoodreadsBookEmbed(response.data);
+    await interaction.editReply({ embeds: [embed] });
+  } catch (err) {
+    logger.error(`Error in handleBook: ${err}`);
+  }
+};
+
+function getGoodreadsBookEmbed(data: GoodreadsBookDto): EmbedBuilder {
   const authorUrl = data.authors[0].url;
   const embed = new EmbedBuilder()
     .setTitle(data.title)
@@ -19,28 +39,9 @@ function getGoodreadsBookEmbed(data: GoodreadsBookDto, bot: Bot): EmbedBuilder {
       { name: "Pages 📄", value: `${data.numPages}`, inline: true },
       { name: "Genres 🔖", value: `${data.genres.join(", ")}` },
     )
-    .setFooter({ text: `Fetched from Goodreads by ${bot.user?.username}` })
+    .setFooter({ text: `Fetched from Goodreads` })
     .setColor(Colors.Aqua);
   return embed;
 }
 
-/**
- * Gets the GR book information and returns an embed.
- *
- * @param {Bot} bot The bot instance.
- * @param {ChatInputCommandInteraction} interaction The interaction.
- */
-export const handleBook: CommandHandler = async (
-  bot: Bot,
-  interaction: ChatInputCommandInteraction,
-) => {
-  try {
-    const query = interaction.options.getString("query", true);
-    const response =
-      await bot.api.goodreads.goodreadsControllerSearchAndGetBook({ q: query });
-    const embed = getGoodreadsBookEmbed(response.data, bot);
-    await interaction.editReply({ embeds: [embed] });
-  } catch (err) {
-    logger.error(`Error in handleBook: ${err}`);
-  }
-};
+export { handleBook };

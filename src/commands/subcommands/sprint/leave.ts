@@ -1,15 +1,13 @@
 import { ChatInputCommandInteraction } from "discord.js";
 
-import { Bot } from "../../../models/Bot";
-import { CommandHandler } from "../../../models/CommandHandler";
-import { SprintStatus } from "../../../models/SprintStatus";
+import { CommandHandler, Bot, SprintStatus } from "../../../models";
 import { logger } from "../../../utils/logHandler";
 
 /**
  * Enables a user to leave an ongoing sprint.
  *
- * @param {Bot} bot The bot instance.
- * @param {ChatInputCommandInteraction} interaction The interaction.
+ * @param bot The bot instance.
+ * @param interaction The interaction.
  */
 export const handleLeave: CommandHandler = async (
   bot: Bot,
@@ -35,6 +33,6 @@ export const handleLeave: CommandHandler = async (
       content: `Successfully left the sprint`,
     });
   } catch (err) {
-    logger.error(`Error in handleLeave ${err}`);
+    logger.error(err, `Error in handleLeave`);
   }
 };

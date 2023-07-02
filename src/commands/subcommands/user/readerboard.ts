@@ -6,10 +6,43 @@ import {
   userMention,
 } from "discord.js";
 
-import { Bot } from "../../../models/Bot";
-import { CommandHandler } from "../../../models/CommandHandler";
+import { CommandHandler, Bot } from "../../../models";
 import { logger } from "../../../utils/logHandler";
 import { PaginationManager } from "../../../utils/paginationManager";
+
+/**
+ * Gets the server reading leaderboard.
+ *
+ * @param bot The bot instance.
+ * @param interaction The interaction.
+ */
+const handleReaderboard: CommandHandler = async (
+  bot: Bot,
+  interaction: ChatInputCommandInteraction,
+) => {
+  try {
+    await interaction.deferReply();
+    const response = await bot.api.events.eventsControllerFind({
+      status: EventDtoStatusEnum.Completed,
+    });
+    const events = response.data;
+    if (events.length === 0) {
+      await interaction.editReply("No events found, something went wrong! :(");
+      return;
+    }
+    const scores = calculateReaderboardStats(events);
+    const pageSize = 10;
+    const pagedContentManager = new PaginationManager<
+      [string, [number, number]]
+    >(pageSize, scores, bot, getReaderboardEmbed, `Server Readerboard`);
+    const message = await interaction.editReply(
+      pagedContentManager.createMessagePayloadForPage(interaction),
+    );
+    pagedContentManager.createCollectors(message, interaction, 5 * 60 * 1000);
+  } catch (err) {
+    logger.error(err, `Error in handleReaderboard`);
+  }
+};
 
 function calculateReaderboardStats(events: EventDocument[]) {
   const scoreMap = new Map<string, number>();
@@ -54,36 +87,5 @@ function getReaderboardEmbed(
   embed.setDescription(descriptionString);
   return embed;
 }
-/**
- * Gets the server reading leaderboard.
- *
- * @param {Bot} bot The bot instance.
- * @param {ChatInputCommandInteraction} interaction The interaction.
- */
-export const handleReaderboard: CommandHandler = async (
-  bot: Bot,
-  interaction: ChatInputCommandInteraction,
-) => {
-  try {
-    await interaction.deferReply();
-    const response = await bot.api.events.eventsControllerFind({
-      status: EventDtoStatusEnum.Completed,
-    });
-    const events = response.data;
-    if (events.length === 0) {
-      await interaction.editReply("No events found, something went wrong! :(");
-      return;
-    }
-    const scores = calculateReaderboardStats(events);
-    const pageSize = 10;
-    const pagedContentManager = new PaginationManager<
-      [string, [number, number]]
-    >(pageSize, scores, bot, getReaderboardEmbed, `Server Readerboard`);
-    const message = await interaction.editReply(
-      pagedContentManager.createMessagePayloadForPage(interaction),
-    );
-    pagedContentManager.createCollectors(message, interaction, 5 * 60 * 1000);
-  } catch (err) {
-    logger.error(`Error in handleReaderboard ${err}`);
-  }
-};
+
+export { handleReaderboard };

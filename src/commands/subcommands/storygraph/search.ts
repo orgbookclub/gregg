@@ -1,15 +1,37 @@
 import { BookDto } from "@orgbookclub/ows-client";
 import { ChatInputCommandInteraction, Colors, EmbedBuilder } from "discord.js";
 
-import { Bot } from "../../../models/Bot";
-import { CommandHandler } from "../../../models/CommandHandler";
+import { CommandHandler, Bot } from "../../../models";
 import { getAuthorString } from "../../../utils/bookUtils";
 import { logger } from "../../../utils/logHandler";
+
+/**
+ * Gets a list of books from SG and returns an embed.
+ *
+ * @param bot The bot instance.
+ * @param interaction The interaction.
+ */
+const handleSearch: CommandHandler = async (
+  bot: Bot,
+  interaction: ChatInputCommandInteraction,
+) => {
+  try {
+    const query = interaction.options.getString("query", true);
+    const k = interaction.options.getInteger("k") ?? 5;
+    const response = await bot.api.storygraph.storygraphControllerSearchBooks({
+      q: query,
+      k: k,
+    });
+    const embed = getStorygraphSearchEmbed(query, response.data);
+    await interaction.editReply({ embeds: [embed] });
+  } catch (err) {
+    logger.error(err, `Error in handleSearch`);
+  }
+};
 
 function getStorygraphSearchEmbed(
   query: string,
   data: BookDto[],
-  bot: Bot,
 ): EmbedBuilder {
   let description = "";
   for (let i = 0; i < data.length; i++) {
@@ -23,31 +45,8 @@ function getStorygraphSearchEmbed(
   const embed = new EmbedBuilder()
     .setTitle(`Search results for ${query}`)
     .setDescription(description)
-    .setFooter({ text: `Fetched from Storygraph by ${bot.user?.username}` })
+    .setFooter({ text: `Fetched from Storygraph` })
     .setColor(Colors.DarkAqua);
   return embed;
 }
-
-/**
- * Gets a list of books from SG and returns an embed.
- *
- * @param {Bot} bot The bot instance.
- * @param {ChatInputCommandInteraction} interaction The interaction.
- */
-export const handleSearch: CommandHandler = async (
-  bot: Bot,
-  interaction: ChatInputCommandInteraction,
-) => {
-  try {
-    const query = interaction.options.getString("query", true);
-    const k = interaction.options.getInteger("k") ?? 5;
-    const response = await bot.api.storygraph.storygraphControllerSearchBooks({
-      q: query,
-      k: k,
-    });
-    const embed = getStorygraphSearchEmbed(query, response.data, bot);
-    await interaction.editReply({ embeds: [embed] });
-  } catch (err) {
-    logger.error(`Error in handleSearch: ${err}`);
-  }
-};
+export { handleSearch };

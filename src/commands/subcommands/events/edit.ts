@@ -5,21 +5,8 @@ import {
 } from "@orgbookclub/ows-client";
 import { ChatInputCommandInteraction } from "discord.js";
 
-import { Bot } from "../../../models/Bot";
-import { CommandHandler } from "../../../models/CommandHandler";
+import { Bot, CommandHandler } from "../../../models";
 import { logger } from "../../../utils/logHandler";
-
-async function getValidUserById(bot: Bot, value: string) {
-  const userResponse = await bot.api.users.usersControllerFindOneByUserId({
-    userid: value,
-  });
-  console.log(userResponse);
-  if (!userResponse || !userResponse.data) {
-    return undefined;
-  }
-  const user = userResponse.data;
-  return user;
-}
 
 /**
  * Gives ability to edit an event.
@@ -27,7 +14,7 @@ async function getValidUserById(bot: Bot, value: string) {
  * @param bot The bot instance.
  * @param interaction The interaction.
  */
-export const handleEdit: CommandHandler = async (
+const handleEdit: CommandHandler = async (
   bot: Bot,
   interaction: ChatInputCommandInteraction,
 ) => {
@@ -152,7 +139,20 @@ export const handleEdit: CommandHandler = async (
       ephemeral: true,
     });
   } catch (err) {
-    logger.error(`Error in handleEdit ${err}`);
+    logger.error(err, `Error in handleEdit`);
     await interaction.followUp({ content: `${err}`, ephemeral: true });
   }
 };
+
+async function getValidUserById(bot: Bot, value: string) {
+  const userResponse = await bot.api.users.usersControllerFindOneByUserId({
+    userid: value,
+  });
+  if (!userResponse || !userResponse.data) {
+    return undefined;
+  }
+  const user = userResponse.data;
+  return user;
+}
+
+export { handleEdit };

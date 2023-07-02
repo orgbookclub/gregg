@@ -1,14 +1,13 @@
 import { ChatInputCommandInteraction, EmbedBuilder } from "discord.js";
 
-import { Bot } from "../../../models/Bot";
-import { CommandHandler } from "../../../models/CommandHandler";
+import { CommandHandler, Bot } from "../../../models";
 import { logger } from "../../../utils/logHandler";
 
 /**
  * Generates an embed containing information about Gregg.
  *
- * @param {Bot} bot The bot instance.
- * @param {ChatInputCommandInteraction} interaction The interaction.
+ * @param bot The bot instance.
+ * @param interaction The interaction.
  */
 export const handleAbout: CommandHandler = async (
   bot: Bot,
@@ -22,6 +21,6 @@ export const handleAbout: CommandHandler = async (
     );
     await interaction.reply({ embeds: [aboutEmbed] });
   } catch (err) {
-    logger.error(`Error in handlePing: ${err}`);
+    logger.error(err, `Error in handleAbout`);
   }
 };

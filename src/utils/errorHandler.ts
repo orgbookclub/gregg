@@ -1,7 +1,7 @@
-import * as Sentry from "@sentry/node";
+import { captureException } from "@sentry/node";
 import { CommandInteraction, ContextMenuCommandInteraction } from "discord.js";
 
-import { Bot } from "../models/Bot";
+import { Bot } from "../models";
 
 import { logger } from "./logHandler";
 
@@ -34,5 +34,5 @@ export const errorHandler = (
     errorStack: error.stack,
   });
 
-  Sentry.captureException(error);
+  captureException(error);
 };

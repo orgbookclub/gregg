@@ -1,14 +1,13 @@
 import { ChatInputCommandInteraction } from "discord.js";
 
-import { Bot } from "../../../models/Bot";
-import { CommandHandler } from "../../../models/CommandHandler";
+import { CommandHandler, Bot } from "../../../models";
 import { logger } from "../../../utils/logHandler";
 
 /**
  * Returns the book cover from SG.
  *
- * @param {Bot} bot The bot instance.
- * @param {ChatInputCommandInteraction} interaction The interaction.
+ * @param bot The bot instance.
+ * @param interaction The interaction.
  */
 export const handleCover: CommandHandler = async (
   bot: Bot,
@@ -22,6 +21,6 @@ export const handleCover: CommandHandler = async (
       });
     await interaction.editReply({ content: response.data.coverUrl });
   } catch (err) {
-    logger.error(`Error in handleCover: ${err}`);
+    logger.error(err, `Error in handleCover`);
   }
 };

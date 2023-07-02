@@ -5,9 +5,8 @@ import {
   TextChannel,
 } from "discord.js";
 
-import { ChannelIds } from "../../../config/ChannelIds";
-import { Bot } from "../../../models/Bot";
-import { CommandHandler } from "../../../models/CommandHandler";
+import { ChannelIds } from "../../../config";
+import { Bot, CommandHandler } from "../../../models";
 import { getEventInfoEmbed } from "../../../utils/eventUtils";
 import { logger } from "../../../utils/logHandler";
 
@@ -55,6 +54,6 @@ export const handleAnnounce: CommandHandler = async (
     });
     await interaction.editReply(`Announcement posted: ${message.url}`);
   } catch (err) {
-    logger.error(`Error in handleAnnounce: ${err}`);
+    logger.error(err, `Error in handleAnnounce`);
   }
 };

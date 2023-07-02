@@ -1,14 +1,10 @@
 import { TextChannel } from "discord.js";
 
-import { Bot } from "../../models/Bot";
-import { Event } from "../../models/Event";
-import Sprint from "../../models/Sprint";
-import { SprintStatus } from "../../models/SprintStatus";
+import { Bot, Sprint, SprintStatus, Event } from "../../models";
 import { logger } from "../../utils/logHandler";
 
 export const sprintStart: Event = {
   name: "sprintStart",
-  // eslint-disable-next-line require-await
   run: async (bot: Bot, sprint: Sprint) => {
     try {
       logger.debug(
@@ -21,14 +17,17 @@ export const sprintStart: Event = {
       const threadId = sprint.threadId;
       const channel = (await bot.channels.fetch(threadId)) as TextChannel;
       if (channel === null) {
-        logger.error(`Unable to find channel/thread with ID: ${threadId}`);
+        logger.error(
+          undefined,
+          `Unable to find channel/thread with ID: ${threadId}`,
+        );
         return;
       }
       channel.send({
         content: sprint.getStartMessage(),
       });
     } catch (err) {
-      logger.error(`Error while handling sprintStart event: ${err}`);
+      logger.error(err, `Error while handling sprintStart event`);
     }
   },
 };

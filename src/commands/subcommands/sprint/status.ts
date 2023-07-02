@@ -1,15 +1,14 @@
 import { ChatInputCommandInteraction } from "discord.js";
 
-import { Bot } from "../../../models/Bot";
+import { Bot, SprintStatus } from "../../../models";
 import { CommandHandler } from "../../../models/CommandHandler";
-import { SprintStatus } from "../../../models/SprintStatus";
 import { logger } from "../../../utils/logHandler";
 
 /**
  * Gets the status of the current ongoing sprint in the current channel/thread.
  *
- * @param {Bot} bot The bot instance.
- * @param {ChatInputCommandInteraction} interaction The interaction.
+ * @param bot The bot instance.
+ * @param interaction The interaction.
  */
 export const handleStatus: CommandHandler = async (
   bot: Bot,
@@ -37,6 +36,6 @@ export const handleStatus: CommandHandler = async (
       content: sprint.getStatusMessage(),
     });
   } catch (err) {
-    logger.error(`Error in handleStatus: ${err}`);
+    logger.error(err, `Error in handleStatus`);
   }
 };

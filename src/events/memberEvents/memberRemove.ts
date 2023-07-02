@@ -1,7 +1,6 @@
 import { GuildMember, PartialGuildMember } from "discord.js";
 
-import { Bot } from "../../models/Bot";
-import { Event } from "../../models/Event";
+import { Bot, Event } from "../../models";
 import { logger } from "../../utils/logHandler";
 
 export const memberRemove: Event = {
@@ -16,7 +15,7 @@ export const memberRemove: Event = {
       }
       logger.info(`${user.tag} (${user.id}) left guild ${guild.id}`);
     } catch (err) {
-      logger.error(`Error while handling memberRemove event: ${err}`);
+      logger.error(err, `Error while handling memberRemove event`);
     }
   },
 };

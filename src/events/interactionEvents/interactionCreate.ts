@@ -1,7 +1,6 @@
 import { Interaction } from "discord.js";
 
-import { Bot } from "../../models/Bot";
-import { Event } from "../../models/Event";
+import { Bot, Event } from "../../models";
 import { logger } from "../../utils/logHandler";
 
 export const interactionCreate: Event = {
@@ -21,7 +20,10 @@ export const interactionCreate: Event = {
         try {
           await command.run(bot, interaction);
         } catch (error) {
-          logger.error(error);
+          logger.error(
+            error,
+            `Error while executing command from interactionCreate event`,
+          );
           await interaction.reply({
             content: "There was an error while executing this command!",
             ephemeral: true,
@@ -37,7 +39,10 @@ export const interactionCreate: Event = {
         try {
           await command.run(bot, interaction);
         } catch (error) {
-          logger.error(error);
+          logger.error(
+            error,
+            `Error while executing context command from interactionCreate event`,
+          );
           await interaction.reply({
             content: "There was an error while executing this context command!",
             ephemeral: true,
@@ -45,7 +50,7 @@ export const interactionCreate: Event = {
         }
       }
     } catch (err) {
-      logger.error(`Error in interactionCreate: ${err}`);
+      logger.error(err, `Error while handling interactionCreate event`);
     }
   },
 };

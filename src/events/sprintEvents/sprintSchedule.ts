@@ -1,6 +1,4 @@
-import { Bot } from "../../models/Bot";
-import { Event } from "../../models/Event";
-import Sprint from "../../models/Sprint";
+import { Bot, Sprint, Event } from "../../models";
 import { logger } from "../../utils/logHandler";
 
 export const sprintSchedule: Event = {
@@ -17,7 +15,7 @@ export const sprintSchedule: Event = {
         bot.emit("sprintStart", sprint);
       }, delayBy * 60 * 1000);
     } catch (err) {
-      logger.error(`Error while handling sprintSchedule event ${err}`);
+      logger.error(err, `Error while handling sprintSchedule event`);
     }
   },
 };

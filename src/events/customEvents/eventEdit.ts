@@ -1,17 +1,16 @@
 import { UpdateEventDto } from "@orgbookclub/ows-client";
 
-import { Bot } from "../../models/Bot";
-import { Event } from "../../models/Event";
+import { Bot, Event } from "../../models";
 import { logger } from "../../utils/logHandler";
 
-interface EventEditDto {
+interface EventEditEventDto {
   id: string;
   updateEventDto: UpdateEventDto;
 }
 
 export const eventEdit: Event = {
   name: "eventEdit",
-  run: async (bot: Bot, eventEditDto: EventEditDto) => {
+  run: async (bot: Bot, eventEditDto: EventEditEventDto) => {
     try {
       logger.debug(`eventEdit event fired: ${JSON.stringify(eventEditDto)}`);
       const response = await bot.api.events.eventsControllerUpdate(
@@ -20,7 +19,7 @@ export const eventEdit: Event = {
       const event = response.data;
       logger.debug(`event updated: ${JSON.stringify(event)}`);
     } catch (err) {
-      logger.error(`Error while handling eventEdit event ${err}`);
+      logger.error(err, `Error while handling eventEdit event`);
     }
   },
 };
