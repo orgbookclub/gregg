@@ -3,6 +3,7 @@ import {
   ChatInputCommandInteraction,
   Colors,
   EmbedBuilder,
+  channelMention,
   userMention,
 } from "discord.js";
 
@@ -110,7 +111,7 @@ export function getEventInfoEmbed(
     .setFooter({ text: `Event ${data._id}` })
     .setColor(Colors.Gold)
     .setAuthor({
-      name: data.type,
+      name: `${data.status} ${data.type}`,
       iconURL: interaction.guild?.iconURL() ?? undefined,
     });
   if (data.book.coverUrl) {
@@ -136,7 +137,7 @@ export function getEventInfoEmbed(
   if (data.threads && data.threads.length > 0) {
     embed.addFields({
       name: "Thread",
-      value: `<#${data.threads[0]}>`,
+      value: `${channelMention(data.threads[0])}`,
       inline: true,
     });
   }
@@ -213,4 +214,20 @@ export async function getEventRequestEmbed(data: EventDocument, bot: Bot) {
     inline: false,
   });
   return embed;
+}
+
+/**
+ * Creates a title for a thread for an event.
+ *
+ * @param event The event.
+ * @returns The title.
+ */
+export function getThreadTitle(event: EventDocument) {
+  let eventTitle = `${event.book.title} - ${getAuthorString(
+    event.book.authors,
+  )}`;
+  if (eventTitle.length >= 100) {
+    eventTitle = eventTitle.slice(0, 96) + "...";
+  }
+  return eventTitle;
 }

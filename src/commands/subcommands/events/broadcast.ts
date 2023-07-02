@@ -10,35 +10,19 @@ import {
   TextInputStyle,
 } from "discord.js";
 
-import { Bot } from "../../../models/Bot";
-import { CommandHandler } from "../../../models/CommandHandler";
+import { CommandHandler, Bot } from "../../../models";
 import { logger } from "../../../utils/logHandler";
 
 const EVENT_BROADCAST_MODAL_ID = "eventBroadcastModal";
 const MESSAGE_FIELD_ID = "message";
-function getBroadcastModal(id: string) {
-  const modal = new ModalBuilder()
-    .setCustomId(EVENT_BROADCAST_MODAL_ID)
-    .setTitle(`Event Broadcast: ${id}`);
-  const messageInput = new TextInputBuilder()
-    .setCustomId(MESSAGE_FIELD_ID)
-    .setLabel("What message t?")
-    .setPlaceholder("sadfsdfasd")
-    .setStyle(TextInputStyle.Paragraph);
-  const messageRow =
-    new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
-      messageInput,
-    );
-  modal.addComponents(messageRow);
-  return modal;
-}
+
 /**
  * Broadcasts a message to all readers of an event.
  *
  * @param bot The bot instance.
  * @param interaction The interaction.
  */
-export const handleBroadcast: CommandHandler = async (
+const handleBroadcast: CommandHandler = async (
   bot: Bot,
   interaction: ChatInputCommandInteraction,
 ) => {
@@ -64,6 +48,25 @@ export const handleBroadcast: CommandHandler = async (
       ephemeral: true,
     });
   } catch (err) {
-    logger.error(`Error in handleBroadcast: ${err}`);
+    logger.error(err, `Error in handleBroadcast`);
   }
 };
+
+function getBroadcastModal(id: string) {
+  const modal = new ModalBuilder()
+    .setCustomId(EVENT_BROADCAST_MODAL_ID)
+    .setTitle(`Event Broadcast: ${id}`);
+  const messageInput = new TextInputBuilder()
+    .setCustomId(MESSAGE_FIELD_ID)
+    .setLabel("What message t?")
+    .setPlaceholder("sadfsdfasd")
+    .setStyle(TextInputStyle.Paragraph);
+  const messageRow =
+    new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
+      messageInput,
+    );
+  modal.addComponents(messageRow);
+  return modal;
+}
+
+export { handleBroadcast };

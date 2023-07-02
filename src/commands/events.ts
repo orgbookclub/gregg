@@ -4,24 +4,26 @@ import {
   SlashCommandSubcommandBuilder,
 } from "discord.js";
 
-import { EventFieldOptions } from "../config/EventFieldOptions";
-import { EventStatusOptions } from "../config/EventStatusOptions";
-import { EventTypeOptions } from "../config/EventTypeOptions";
-import { Bot } from "../models/Bot";
-import { Command } from "../models/Command";
-import { CommandHandler } from "../models/CommandHandler";
+import {
+  EventFieldOptions,
+  EventStatusOptions,
+  EventTypeOptions,
+} from "../config";
+import { Bot, Command, CommandHandler } from "../models";
 import { logger } from "../utils/logHandler";
 
-import { handleAnnounce } from "./subcommands/events/announce";
-import { handleBroadcast } from "./subcommands/events/broadcast";
-import { handleCreateThread } from "./subcommands/events/createThread";
-import { handleEdit } from "./subcommands/events/edit";
-import { handleInfo } from "./subcommands/events/info";
-import { handleList } from "./subcommands/events/list";
-import { handleRequest } from "./subcommands/events/request";
-import { handleSearch } from "./subcommands/events/search";
+import {
+  handleAnnounce,
+  handleBroadcast,
+  handleCreateThread,
+  handleEdit,
+  handleInfo,
+  handleList,
+  handleRequest,
+  handleSearch,
+} from "./subcommands/events";
 
-const handlers: { [key: string]: CommandHandler } = {
+const handlers: Record<string, CommandHandler> = {
   list: handleList,
   info: handleInfo,
   search: handleSearch,
@@ -31,6 +33,7 @@ const handlers: { [key: string]: CommandHandler } = {
   createthread: handleCreateThread,
   broadcast: handleBroadcast,
 };
+
 const eventsListSubcommand = new SlashCommandSubcommandBuilder()
   .setName("list")
   .setDescription("Shows a list of events")
@@ -152,7 +155,7 @@ export const events: Command = {
       const handler = handlers[subCommand];
       await handler(bot, interaction);
     } catch (err) {
-      logger.error(`Error processing command events ${err}`);
+      logger.error(err, `Error processing command events`);
     }
   },
 };

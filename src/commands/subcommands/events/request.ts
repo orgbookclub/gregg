@@ -11,8 +11,7 @@ import {
   TextInputStyle,
 } from "discord.js";
 
-import { Bot } from "../../../models/Bot";
-import { CommandHandler } from "../../../models/CommandHandler";
+import { CommandHandler, Bot } from "../../../models";
 import { logger } from "../../../utils/logHandler";
 
 const EVENT_REQUEST_MODAL_ID = "eventRequestModal";
@@ -20,6 +19,77 @@ const BOOK_LINK_FIELD_ID = "link";
 const START_DATE_FIELD_ID = "startDate";
 const END_DATE_FIELD_ID = "endDate";
 const REQUEST_REASON_FIELD_ID = "reason";
+
+/**
+ * For requesting an event.
+ *
+ * @param bot The bot instance.
+ * @param interaction The interaction.
+ */
+const handleRequest: CommandHandler = async (
+  bot: Bot,
+  interaction: ChatInputCommandInteraction,
+) => {
+  try {
+    const eventType = interaction.options.getString(
+      "type",
+      true,
+    ) as keyof typeof EventDtoTypeEnum;
+    const modal = getEventRequestModal(eventType);
+    await interaction.showModal(modal);
+    const filter = (msInteraction: ModalSubmitInteraction) =>
+      msInteraction.customId === EVENT_REQUEST_MODAL_ID;
+    const modalSubmitInteraction = await interaction.awaitModalSubmit({
+      filter,
+      time: 5 * 60 * 1000,
+      // 5 minutes until the modal times out
+    });
+
+    const { link, startDateString, endDateString, requestReason } =
+      extractFieldsFromModalSubmission(modalSubmitInteraction);
+
+    const { startDate, endDate } = validateModalSubmission(
+      startDateString,
+      endDateString,
+      link,
+    );
+    const response = await bot.api.users.usersControllerFindOneByUserId({
+      userid: interaction.user.id,
+    });
+    let user = response.data;
+    if (!user) {
+      const userCreateResponse = await bot.api.users.usersControllerCreate({
+        createUserDto: {
+          userId: interaction.user.id,
+          name: interaction.user.username,
+          joinDate: new Date().toISOString(),
+          profile: {
+            bio: "",
+          },
+        },
+      });
+      user = userCreateResponse.data;
+    }
+    const eventRequestDto: CreateEventDto = {
+      type: eventType,
+      dates: {
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString(),
+      },
+      requestedBy: { user: user._id, points: 0 },
+      leaders: [{ user: user._id, points: 0 }],
+      description: requestReason,
+    };
+    bot.emit("eventRequest", { url: link, createEventDto: eventRequestDto });
+    await modalSubmitInteraction.reply({
+      content: "Your event request has been submitted!",
+      ephemeral: true,
+    });
+  } catch (err) {
+    await interaction.followUp({ content: `${err}`, ephemeral: true });
+    logger.error(err, `Error in handleRequest`);
+  }
+};
 
 function getEventRequestModal(eventType: string) {
   const modal = new ModalBuilder()
@@ -123,72 +193,4 @@ function validateModalSubmission(
   return { startDate, endDate };
 }
 
-/**
- *
- * @param {Bot} bot The bot instance.
- * @param {ChatInputCommandInteraction} interaction The interaction.
- */
-export const handleRequest: CommandHandler = async (
-  bot: Bot,
-  interaction: ChatInputCommandInteraction,
-) => {
-  try {
-    const eventType = interaction.options.getString(
-      "type",
-      true,
-    ) as keyof typeof EventDtoTypeEnum;
-    const modal = getEventRequestModal(eventType);
-    await interaction.showModal(modal);
-    const filter = (msInteraction: ModalSubmitInteraction) =>
-      msInteraction.customId === EVENT_REQUEST_MODAL_ID;
-    const modalSubmitInteraction = await interaction.awaitModalSubmit({
-      filter,
-      time: 5 * 60 * 1000,
-      // 5 minutes until the modal times out
-    });
-
-    const { link, startDateString, endDateString, requestReason } =
-      extractFieldsFromModalSubmission(modalSubmitInteraction);
-
-    const { startDate, endDate } = validateModalSubmission(
-      startDateString,
-      endDateString,
-      link,
-    );
-    const response = await bot.api.users.usersControllerFindOneByUserId({
-      userid: interaction.user.id,
-    });
-    let user = response.data;
-    if (!user) {
-      const userCreateResponse = await bot.api.users.usersControllerCreate({
-        createUserDto: {
-          userId: interaction.user.id,
-          name: interaction.user.username,
-          joinDate: new Date().toISOString(),
-          profile: {
-            bio: "",
-          },
-        },
-      });
-      user = userCreateResponse.data;
-    }
-    const eventRequestDto: CreateEventDto = {
-      type: eventType,
-      dates: {
-        startDate: startDate.toISOString(),
-        endDate: endDate.toISOString(),
-      },
-      requestedBy: { user: user._id, points: 0 },
-      leaders: [{ user: user._id, points: 0 }],
-      description: requestReason,
-    };
-    bot.emit("eventRequest", { url: link, createEventDto: eventRequestDto });
-    await modalSubmitInteraction.reply({
-      content: "Your event request has been submitted!",
-      ephemeral: true,
-    });
-  } catch (err) {
-    await interaction.followUp({ content: `${err}`, ephemeral: true });
-    logger.error(`Error in handleRequest ${err}`);
-  }
-};
+export { handleRequest };
