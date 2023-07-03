@@ -3,64 +3,20 @@ import {
   ApplicationCommandType,
   ButtonBuilder,
   ButtonStyle,
+  Colors,
   ContextMenuCommandBuilder,
   ContextMenuCommandInteraction,
   EmbedBuilder,
   Message,
-  NewsChannel,
-  PrivateThreadChannel,
-  PublicThreadChannel,
   TextChannel,
   User,
 } from "discord.js";
 
 import { Context, Bot } from "../models";
+import { getUnixTimestamp } from "../utils/eventUtils";
 import { logger } from "../utils/logHandler";
 
-function createBookmarkEmbed(
-  author: User,
-  message: Message<boolean>,
-  guild: string,
-  channel:
-    | NewsChannel
-    | TextChannel
-    | PublicThreadChannel
-    | PrivateThreadChannel,
-) {
-  const bookmarkEmbed = new EmbedBuilder();
-  bookmarkEmbed.setAuthor({
-    name: author.tag,
-    iconURL: author.displayAvatarURL(),
-  });
-  bookmarkEmbed.setDescription(message.content);
-  bookmarkEmbed.addFields([
-    {
-      name: "Guild",
-      value: guild,
-      inline: true,
-    },
-    {
-      name: "Channel",
-      value: channel.name,
-      inline: true,
-    },
-  ]);
-  bookmarkEmbed.setTimestamp(message.createdAt);
-  return bookmarkEmbed;
-}
-
-function createDeleteBookmarkComponent() {
-  const deleteButton = new ButtonBuilder()
-    .setCustomId("delete-bookmark")
-    .setLabel("Delete")
-    .setStyle(ButtonStyle.Danger);
-  const row = new ActionRowBuilder<ButtonBuilder>().addComponents([
-    deleteButton,
-  ]);
-  return row;
-}
-
-export const bookmark: Context = {
+const bookmark: Context = {
   data: new ContextMenuCommandBuilder()
     .setName("Bookmark")
     .setType(ApplicationCommandType.Message),
@@ -69,12 +25,8 @@ export const bookmark: Context = {
       await interaction.deferReply({ ephemeral: true });
 
       const message = interaction.options.getMessage("message") as Message;
-      const channel = interaction.channel as
-        | TextChannel
-        | PublicThreadChannel
-        | NewsChannel
-        | PrivateThreadChannel;
-      const guild = interaction.guild?.name;
+      const channel = interaction.channel as TextChannel;
+      const guild = interaction.guild;
 
       if (!message || !channel || !guild) {
         await interaction.editReply("Bookmarking failed!");
@@ -83,19 +35,17 @@ export const bookmark: Context = {
 
       const author = message.author as User;
 
-      const bookmarkEmbed = createBookmarkEmbed(
-        author,
-        message,
-        guild,
-        channel,
-      );
+      const bookmarkEmbed = createBookmarkEmbed(author, message);
 
-      const row = createDeleteBookmarkComponent();
+      const buttonRow = createDeleteBookmarkComponent();
 
       await interaction.user
         .send({
+          content: `Bookmark created: ${`<t:${getUnixTimestamp(
+            new Date(),
+          )}>`}\n${message.url}`,
           embeds: [bookmarkEmbed],
-          components: [row],
+          components: [buttonRow],
         })
         .then(async () => {
           await interaction.editReply("Message has been bookmarked!");
@@ -110,3 +60,48 @@ export const bookmark: Context = {
     }
   },
 };
+
+function createBookmarkEmbed(author: User, message: Message<boolean>) {
+  const embed = new EmbedBuilder()
+    .setAuthor({
+      name: author.tag,
+      iconURL: author.displayAvatarURL(),
+    })
+    .setColor(Colors.Red);
+  if (message.content) {
+    embed.addFields([
+      {
+        name: "Message",
+        value: message.content,
+        inline: false,
+      },
+    ]);
+  }
+  message.attachments.forEach((attachment) => {
+    embed.addFields([
+      {
+        name: "Attachment",
+        value: attachment.url,
+        inline: false,
+      },
+    ]);
+    if (attachment.contentType?.includes("image")) {
+      embed.setImage(attachment.url);
+    }
+  });
+  embed.setTimestamp(message.createdAt);
+  return embed;
+}
+
+function createDeleteBookmarkComponent() {
+  const deleteButton = new ButtonBuilder()
+    .setCustomId("delete-bookmark")
+    .setLabel("Delete")
+    .setStyle(ButtonStyle.Danger);
+  const row = new ActionRowBuilder<ButtonBuilder>().addComponents([
+    deleteButton,
+  ]);
+  return row;
+}
+
+export { bookmark };
