@@ -1,14 +1,8 @@
 import { qotds } from "@prisma/client";
 import {
-  BaseGuildTextChannel,
-  Channel,
   ChatInputCommandInteraction,
-  GuildTextBasedChannel,
-  GuildTextBasedChannelTypes,
-  GuildTextThreadManager,
   TextChannel,
   ThreadAutoArchiveDuration,
-  ThreadChannel,
 } from "discord.js";
 
 import { ChannelIds } from "../../../config";
