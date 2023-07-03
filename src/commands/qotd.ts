@@ -8,11 +8,12 @@ import {
 import { Bot, Command, CommandHandler } from "../models";
 import { logger } from "../utils/logHandler";
 
-import { handleList, handleSuggest } from "./subcommands/qotd";
+import { handleList, handlePost, handleSuggest } from "./subcommands/qotd";
 
 const handlers: Record<string, CommandHandler> = {
   suggest: handleSuggest,
   list: handleList,
+  post: handlePost,
 };
 
 const qotdSuggestSubcommand = new SlashCommandSubcommandBuilder()

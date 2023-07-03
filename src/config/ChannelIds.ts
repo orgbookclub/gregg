@@ -4,4 +4,5 @@ export const ChannelIds = {
   MRForumChannel: "1091627544320688158",
   EventAnnouncementChannel: "1091692067845066884",
   QotdSuggestionChannel: process.env.QOTD_SUGGESTION_CHANNEL_ID ?? "",
+  QotdChannel: process.env.QOTD_CHANNEL ?? "",
 };

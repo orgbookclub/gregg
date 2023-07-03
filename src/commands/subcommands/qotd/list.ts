@@ -57,8 +57,8 @@ function getQotdListEmbed(
   }
   qotdList.forEach((doc) => {
     embed.addFields({
-      name: doc.id,
-      value: doc.question,
+      name: doc.question,
+      value: `> ID: \`${doc.id}\``,
       inline: false,
     });
   });
