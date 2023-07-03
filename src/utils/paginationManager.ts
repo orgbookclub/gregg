@@ -67,10 +67,7 @@ export class PaginationManager<T> {
    *
    * @returns The Action rows.
    */
-  createMessageComponentsForPage(): {
-    selectMenuActionRow: ActionRowBuilder<StringSelectMenuBuilder>;
-    buttonActionRow: ActionRowBuilder<ButtonBuilder>;
-  } {
+  createMessageComponentsForPage() {
     const backButton = new ButtonBuilder()
       .setEmoji({ name: "◀️" })
       .setStyle(ButtonStyle.Secondary)
