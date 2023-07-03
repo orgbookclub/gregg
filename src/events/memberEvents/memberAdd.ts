@@ -13,7 +13,11 @@ export const memberAdd: Event = {
       if (!user) {
         return;
       }
-      logger.info(`${user.tag} (${user.id}) joined guild ${guild.id}`);
+      if (member.pending) {
+        return;
+      }
+      // TODO: Add server_user object in DB to track messages/levels etc.
+      logger.info(`${user.username} (${user.id}) joined guild ${guild.id}`);
     } catch (err) {
       logger.error(err, `Error while handling memberAdd event`);
     }

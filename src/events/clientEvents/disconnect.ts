@@ -5,6 +5,6 @@ export const disconnect: Event = {
   name: "disconnect",
   // eslint-disable-next-line require-await
   run: async (bot: Bot) => {
-    logger.info(`${bot.user?.tag} disconnected`);
+    logger.info(`${bot.user?.username} disconnected from Discord`);
   },
 };

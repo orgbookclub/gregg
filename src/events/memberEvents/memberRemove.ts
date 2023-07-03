@@ -13,6 +13,8 @@ export const memberRemove: Event = {
       if (!user) {
         return;
       }
+
+      // TODO: Clean up a user's data when they leave the guild.
       logger.info(`${user.tag} (${user.id}) left guild ${guild.id}`);
     } catch (err) {
       logger.error(err, `Error while handling memberRemove event`);
