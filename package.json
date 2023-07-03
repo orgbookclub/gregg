@@ -19,6 +19,7 @@
   "scripts": {
     "prebuild": "rimraf ./dist",
     "build": "tsc",
+    "postinstall": "npx prisma generate",
     "lint": "eslint src --max-warnings 0",
     "start": "node -r dotenv/config ./dist/index.js",
     "dev": "tsc && node -r dotenv/config ./dist/index.js"
