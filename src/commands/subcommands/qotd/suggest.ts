@@ -52,14 +52,10 @@ const handleSuggest: CommandHandler = async (
 
     buttonCollector.on("collect", async (i) => {
       if (i.customId === approveId) {
-        bot.db.qotds.create({
-          data: {
-            question: question,
-            status: "Approved",
-            serverId: interaction.guild?.id ?? "",
-            userId: interaction.user.id,
-            suggestedOn: new Date(),
-          },
+        bot.emit("qotdApprove", {
+          question: question,
+          serverId: interaction.guild?.id ?? "",
+          userId: interaction.user.id,
         });
         await i.update({
           content: "Approved",
@@ -75,8 +71,7 @@ const handleSuggest: CommandHandler = async (
       }
     });
 
-    await interaction.reply({
-      ephemeral: true,
+    await interaction.editReply({
       content: "Your suggestion has been submitted!",
     });
   } catch (err) {

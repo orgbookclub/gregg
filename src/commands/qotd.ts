@@ -8,10 +8,11 @@ import {
 import { Bot, Command, CommandHandler } from "../models";
 import { logger } from "../utils/logHandler";
 
-import { handleSuggest } from "./subcommands/qotd/suggest";
+import { handleList, handleSuggest } from "./subcommands/qotd";
 
 const handlers: Record<string, CommandHandler> = {
   suggest: handleSuggest,
+  list: handleList,
 };
 
 const qotdSuggestSubcommand = new SlashCommandSubcommandBuilder()
@@ -23,6 +24,10 @@ const qotdSuggestSubcommand = new SlashCommandSubcommandBuilder()
       .setDescription("Your suggested question of the day.")
       .setRequired(true),
   );
+
+const qotdListSubcommand = new SlashCommandSubcommandBuilder()
+  .setName("list")
+  .setDescription("Lists the available QOTDs");
 
 const qotdPostSubcommand = new SlashCommandSubcommandBuilder()
   .setName("post")
@@ -38,35 +43,16 @@ const qotdPostSubcommand = new SlashCommandSubcommandBuilder()
       .addChannelTypes(ChannelType.GuildText),
   );
 
-const qotdListSubcommand = new SlashCommandSubcommandBuilder()
-  .setName("list")
-  .setDescription("Lists the available QOTDs");
-
-const qotdApproveSubcommand = new SlashCommandSubcommandBuilder()
-  .setName("approve")
-  .setDescription("Approve a suggested QOTD")
-  .addStringOption((option) =>
-    option.setName("id").setDescription("ID of the QOTD").setRequired(true),
-  );
-
-const qotdRejectSubcommand = new SlashCommandSubcommandBuilder()
-  .setName("reject")
-  .setDescription("Reject a suggested QOTD")
-  .addStringOption((option) =>
-    option.setName("id").setDescription("ID of the QOTD").setRequired(true),
-  );
-
 export const qotd: Command = {
   data: new SlashCommandBuilder()
     .setName("qotd")
     .setDescription("Handles QOTD commands")
     .addSubcommand(qotdSuggestSubcommand)
-    .addSubcommand(qotdPostSubcommand)
     .addSubcommand(qotdListSubcommand)
-    .addSubcommand(qotdApproveSubcommand)
-    .addSubcommand(qotdRejectSubcommand),
+    .addSubcommand(qotdPostSubcommand),
   run: async (bot: Bot, interaction: ChatInputCommandInteraction) => {
     try {
+      await interaction.deferReply({ ephemeral: true });
       const subCommand = interaction.options.getSubcommand();
       const handler = handlers[subCommand];
       await handler(bot, interaction);
