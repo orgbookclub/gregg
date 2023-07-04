@@ -13,7 +13,6 @@ import {
 
 import { ChannelIds } from "../../../config";
 import { Bot, CommandHandler } from "../../../models";
-import { getAuthorString } from "../../../utils/bookUtils";
 import {
   getEventInfoEmbed,
   getThreadTitle,
@@ -71,14 +70,14 @@ const handleCreateThread: CommandHandler = async (
       await interaction.editReply(`Created ${channelMention(post.id)}`);
     } else {
       const textThread = thread as TextChannel;
-      await textThread.send({
-        embeds: [getEventInfoEmbed(event, interaction)],
-      });
-      await bot.api.events.eventsControllerUpdate({
+      const eventResponse = await bot.api.events.eventsControllerUpdate({
         id: event._id,
         updateEventDto: {
           threads: [...event.threads, thread.id],
         },
+      });
+      await textThread.send({
+        embeds: [getEventInfoEmbed(eventResponse.data, interaction)],
       });
       await interaction.editReply(`Updated ${channelMention(thread.id)}`);
     }
@@ -105,18 +104,17 @@ async function getForumChannel(bot: Bot, type: EventDocumentTypeEnum) {
 
 function getPostContent(event: EventDocument) {
   let content = "";
-  const eventTitle = `${event.book.title} - ${getAuthorString(
-    event.book.authors,
-  )}`;
-  content += `# ${eventTitle}`;
-  content += `\n### Link: ${event.book.url}`;
-  content += `\n### Cover: ${event.book.coverUrl}`;
-  content += `\n### Start Date: ${getUnixTimestamp(event.dates.startDate)}`;
-  content += `\n### End Date: ${getUnixTimestamp(event.dates.endDate)}`;
+
+  content += `### From <t:${getUnixTimestamp(
+    event.dates.startDate,
+  )}> To <t:${getUnixTimestamp(event.dates.endDate)}>`;
   if (event.leaders.length > 0) {
-    content += `\n\nLeader(s): ${getUserMentionString(event.leaders, false)}`;
+    content += ` | Leader(s): ${getUserMentionString(event.leaders, false)}`;
   }
-  content += `\n\n ID: \`${event._id}\``;
+  content += `\n**Link**: ${event.book.url}`;
+  content += `\n**Cover**: ${event.book.coverUrl}`;
+
+  content += `\n\n**ID**: \`${event._id}\``;
   return content;
 }
 

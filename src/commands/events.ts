@@ -81,18 +81,7 @@ const eventsRequestSubcommand = new SlashCommandSubcommandBuilder()
       .addChoices(...EventTypeOptions)
       .setRequired(true),
   );
-const eventsAnnounceSubcommand = new SlashCommandSubcommandBuilder()
-  .setName("announce")
-  .setDescription("makes an announcement for an approved event")
-  .addStringOption((option) =>
-    option.setName("id").setDescription("Event ID").setRequired(true),
-  )
-  .addChannelOption((option) =>
-    option
-      .setName("thread")
-      .setDescription("The thread for the event, if it already exists")
-      .setRequired(false),
-  );
+
 const eventsCreateThreadSubcommand = new SlashCommandSubcommandBuilder()
   .setName("createthread")
   .setDescription("creates a forum post for an approved event")
@@ -105,6 +94,14 @@ const eventsCreateThreadSubcommand = new SlashCommandSubcommandBuilder()
       .setDescription("The thread if it already exists")
       .setRequired(false),
   );
+
+const eventsAnnounceSubcommand = new SlashCommandSubcommandBuilder()
+  .setName("announce")
+  .setDescription("makes an announcement for an approved event")
+  .addStringOption((option) =>
+    option.setName("id").setDescription("Event ID").setRequired(true),
+  );
+
 const eventsEditSubcommand = new SlashCommandSubcommandBuilder()
   .setName("edit")
   .setDescription("edit an event")
@@ -124,6 +121,7 @@ const eventsEditSubcommand = new SlashCommandSubcommandBuilder()
       .setDescription("The value which will be set in the field")
       .setRequired(true),
   );
+
 const eventsSearchSubcommand = new SlashCommandSubcommandBuilder()
   .setName("search")
   .setDescription("searches for events")
