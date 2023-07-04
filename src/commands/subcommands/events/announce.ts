@@ -45,7 +45,7 @@ export const handleAnnounce: CommandHandler = async (
       content: `New Buddy Read! Please react with ✅ if you'd like to participate in the discussions.\nDiscussion will take place in ${channelMention(
         event.threads[0],
       )}`,
-      embeds: [getEventInfoEmbed(event, bot, interaction)],
+      embeds: [getEventInfoEmbed(event, interaction)],
     });
     await message.react("✅");
     await bot.api.events.eventsControllerUpdate({

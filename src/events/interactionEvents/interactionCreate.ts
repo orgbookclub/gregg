@@ -1,14 +1,13 @@
 import {
-  ButtonInteraction,
   ChatInputCommandInteraction,
   ContextMenuCommandInteraction,
   Interaction,
-  Message,
   ModalSubmitInteraction,
   StringSelectMenuInteraction,
 } from "discord.js";
 
 import { Bot, Event } from "../../models";
+import { processButtonClick } from "../../modules/events/interactions/processButtonClick";
 import { logger } from "../../utils/logHandler";
 
 const interactionCreate: Event = {
@@ -99,21 +98,6 @@ async function processChatInputCommand(
     logger.error(
       error,
       `Error while executing command from interactionCreate event`,
-    );
-  }
-}
-
-async function processButtonClick(bot: Bot, interaction: ButtonInteraction) {
-  try {
-    if (interaction.customId === "delete-bookmark") {
-      await (interaction.message as Message).delete();
-    }
-
-    // TODO: Other generic button actions can go here.
-  } catch (error) {
-    logger.error(
-      error,
-      `Error while processing button click from interactionCreate event`,
     );
   }
 }

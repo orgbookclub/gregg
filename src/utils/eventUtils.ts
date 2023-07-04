@@ -1,5 +1,10 @@
-import { EventDocument, Participant } from "@orgbookclub/ows-client";
 import {
+  EventDocument,
+  Participant,
+  ParticipantDto,
+} from "@orgbookclub/ows-client";
+import {
+  ButtonInteraction,
   ChatInputCommandInteraction,
   Colors,
   EmbedBuilder,
@@ -101,7 +106,7 @@ export function getEventsListEmbed(
  */
 export function getEventInfoEmbed(
   data: EventDocument,
-  interaction: ChatInputCommandInteraction,
+  interaction: ChatInputCommandInteraction | ButtonInteraction,
 ) {
   const embed = new EmbedBuilder()
     .setTitle(`${data.book.title} - ${getAuthorString(data.book.authors)}`)
@@ -211,6 +216,13 @@ export async function getEventRequestEmbed(data: EventDocument, bot: Bot) {
     value: `${userMention(data.requestedBy.user.userId)}`,
     inline: false,
   });
+  if (data.interested && data.interested.length > 0) {
+    embed.addFields({
+      name: "Interested",
+      value: getUserMentionString(data.interested, false),
+      inline: false,
+    });
+  }
   return embed;
 }
 
@@ -228,4 +240,18 @@ export function getThreadTitle(event: EventDocument) {
     eventTitle = eventTitle.slice(0, 96) + "...";
   }
   return eventTitle;
+}
+
+/**
+ * Converts a participant object to its corresponding dto.
+ *
+ * @param participant The participant object.
+ * @returns The participant dto.
+ */
+export function participantToDto(participant: Participant) {
+  const participantDto: ParticipantDto = {
+    ...participant,
+    user: participant.user._id,
+  };
+  return participantDto;
 }

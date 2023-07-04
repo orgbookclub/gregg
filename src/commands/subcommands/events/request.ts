@@ -13,6 +13,7 @@ import {
 
 import { CommandHandler, Bot } from "../../../models";
 import { logger } from "../../../utils/logHandler";
+import { upsertUser } from "../../../utils/userUtils";
 
 const EVENT_REQUEST_MODAL_ID = "eventRequestModal";
 const BOOK_LINK_FIELD_ID = "link";
@@ -42,7 +43,6 @@ const handleRequest: CommandHandler = async (
     const modalSubmitInteraction = await interaction.awaitModalSubmit({
       filter,
       time: 5 * 60 * 1000,
-      // 5 minutes until the modal times out
     });
 
     const { link, startDateString, endDateString, requestReason } =
@@ -53,23 +53,7 @@ const handleRequest: CommandHandler = async (
       endDateString,
       link,
     );
-    const response = await bot.api.users.usersControllerFindOneByUserId({
-      userid: interaction.user.id,
-    });
-    let user = response.data;
-    if (!user) {
-      const userCreateResponse = await bot.api.users.usersControllerCreate({
-        createUserDto: {
-          userId: interaction.user.id,
-          name: interaction.user.username,
-          joinDate: new Date().toISOString(),
-          profile: {
-            bio: "",
-          },
-        },
-      });
-      user = userCreateResponse.data;
-    }
+    const user = await upsertUser(bot, interaction);
     const eventRequestDto: CreateEventDto = {
       type: eventType,
       dates: {

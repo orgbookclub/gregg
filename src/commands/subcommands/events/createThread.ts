@@ -72,7 +72,7 @@ const handleCreateThread: CommandHandler = async (
     } else {
       const textThread = thread as TextChannel;
       await textThread.send({
-        embeds: [getEventInfoEmbed(event, bot, interaction)],
+        embeds: [getEventInfoEmbed(event, interaction)],
       });
       await bot.api.events.eventsControllerUpdate({
         id: event._id,

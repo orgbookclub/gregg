@@ -1,5 +1,6 @@
+import { ButtonBuilder } from "@discordjs/builders";
 import { CreateEventDto, EventDocumentTypeEnum } from "@orgbookclub/ows-client";
-import { TextChannel } from "discord.js";
+import { ActionRowBuilder, ButtonStyle, TextChannel } from "discord.js";
 
 import { ChannelIds } from "../../config";
 import { Bot, Event } from "../../models";
@@ -11,7 +12,7 @@ interface EventRequestEventDto {
   createEventDto: CreateEventDto;
 }
 
-export const eventRequest: Event = {
+const eventRequest: Event = {
   name: "eventRequest",
   run: async (bot: Bot, eventRequestDto: EventRequestEventDto) => {
     try {
@@ -27,6 +28,7 @@ export const eventRequest: Event = {
       });
       const event = eventResponse.data;
       logger.debug(`event created: ${JSON.stringify(event)}`);
+
       if (event.type === EventDocumentTypeEnum.BuddyRead) {
         const channelId = ChannelIds.BRRequestChannel;
         const embed = await getEventRequestEmbed(event, bot);
@@ -34,10 +36,12 @@ export const eventRequest: Event = {
         if (channel === null || !channel.isTextBased()) {
           throw new Error("Unable to post event request in given channel");
         }
-        const message = await (channel as TextChannel).send({
+
+        const buttonActionRow = getButtonActionRow(event._id);
+        await (channel as TextChannel).send({
           embeds: [embed],
+          components: [buttonActionRow],
         });
-        await message.react("✅");
       }
       // TODO: send DM to event leader with guidelines
       // TODO: Figure out how to get participants interested in the event
@@ -46,3 +50,20 @@ export const eventRequest: Event = {
     }
   },
 };
+
+function getButtonActionRow(eventId: string) {
+  const interestedButton = new ButtonBuilder()
+    .setEmoji({ name: "✅" })
+    .setStyle(ButtonStyle.Success)
+    .setCustomId(`er-${eventId}-interested`);
+  const notInterestedButton = new ButtonBuilder()
+    .setEmoji({ name: "❌" })
+    .setStyle(ButtonStyle.Secondary)
+    .setCustomId(`er-${eventId}-notInterested`);
+  const buttonActionRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+    interestedButton,
+    notInterestedButton,
+  );
+  return buttonActionRow;
+}
+export { eventRequest };
