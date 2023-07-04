@@ -1,4 +1,5 @@
 import {
+  ChannelType,
   ChatInputCommandInteraction,
   SlashCommandBuilder,
   SlashCommandSubcommandBuilder,
@@ -56,6 +57,13 @@ const eventsBroadcastSubcommand = new SlashCommandSubcommandBuilder()
   .setDescription("Broadcasts a message to all the readers of an event")
   .addStringOption((option) =>
     option.setName("id").setDescription("Event ID").setRequired(true),
+  )
+  .addChannelOption((option) =>
+    option
+      .setName("channel")
+      .addChannelTypes(ChannelType.GuildText)
+      .setDescription("The channel to post the broadcast message in")
+      .setRequired(false),
   );
 const eventsInfoSubcommand = new SlashCommandSubcommandBuilder()
   .setName("info")
