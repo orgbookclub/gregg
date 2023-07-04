@@ -21,17 +21,17 @@ const handleStats: CommandHandler = async (
 ) => {
   try {
     await interaction.deferReply();
-    const user = interaction.options.getUser("user") ?? interaction.user;
+    const user = interaction.options.getUser("user", false) ?? interaction.user;
     const userResponse = await bot.api.users.usersControllerFindOneByUserId({
       userid: user.id,
     });
-    const userDto = userResponse.data;
+    const userDoc = userResponse.data;
     const userEventsResponse = await bot.api.events.eventsControllerFind({
-      participantIds: [userDto._id],
+      participantIds: [userDoc._id],
     });
-    const userEvents = userEventsResponse.data;
-    const stats = calculateUserEventStats(userDto._id, userEvents);
-    const embed = getUserEventStatsEmbed(stats, userDto._id, user, interaction);
+    const userEventDocs = userEventsResponse.data;
+    const stats = calculateUserEventStats(userDoc._id, userEventDocs);
+    const embed = getUserEventStatsEmbed(stats, userDoc._id, user, interaction);
     await interaction.editReply({ embeds: [embed] });
   } catch (err) {
     logger.error(err, `Error in handleStats`);
@@ -64,6 +64,7 @@ function calculateUserEventStats(id: string, events: EventDocument[]) {
       event.readers.find((x) => x.user._id === id)?.points ?? 0;
     const leaderPoints =
       event.leaders.find((x) => x.user._id === id)?.points ?? 0;
+
     if (userEventStats.stats[eventType] === undefined) {
       userEventStats.stats[eventType] = {
         totalNumberOfEvents: 0,
@@ -79,7 +80,7 @@ function calculateUserEventStats(id: string, events: EventDocument[]) {
     if (event.interested.find((x) => x.user._id === id)) {
       userEventStats.stats[eventType].interestedInCount += 1;
     }
-    if (event.requestedBy.user._id === id) {
+    if (event.requestedBy && event.requestedBy.user._id === id) {
       userEventStats.stats[eventType].requestedCount += 1;
     }
     if (event.leaders.find((x) => x.user._id === id)) {
