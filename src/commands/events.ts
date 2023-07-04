@@ -160,6 +160,13 @@ const eventsAddSubcommand = new SlashCommandSubcommandBuilder()
       .setDescription("The user to add as a participant")
       .setRequired(true),
   )
+  .addStringOption((option) =>
+    option
+      .setName("type")
+      .setDescription("The type of participant to add the user as")
+      .addChoices(...EventParticipantOptions)
+      .setRequired(true),
+  )
   .addIntegerOption((option) =>
     option
       .setName("points")
@@ -167,13 +174,6 @@ const eventsAddSubcommand = new SlashCommandSubcommandBuilder()
       .setRequired(false)
       .setMinValue(0)
       .setMaxValue(100),
-  )
-  .addStringOption((option) =>
-    option
-      .setName("type")
-      .setDescription("The type of participant to add the user as")
-      .addChoices(...EventParticipantOptions)
-      .setRequired(true),
   );
 
 const eventsRemoveSubcommand = new SlashCommandSubcommandBuilder()
