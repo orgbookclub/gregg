@@ -1,6 +1,11 @@
 import { ButtonBuilder } from "@discordjs/builders";
 import { CreateEventDto, EventDocumentTypeEnum } from "@orgbookclub/ows-client";
-import { ActionRowBuilder, ButtonStyle, TextChannel } from "discord.js";
+import {
+  ActionRowBuilder,
+  ButtonStyle,
+  ChatInputCommandInteraction,
+  TextChannel,
+} from "discord.js";
 
 import { ChannelIds } from "../../config";
 import { Bot, Event } from "../../models";
@@ -14,7 +19,11 @@ interface EventRequestEventDto {
 
 const eventRequest: Event = {
   name: "eventRequest",
-  run: async (bot: Bot, eventRequestDto: EventRequestEventDto) => {
+  run: async (
+    bot: Bot,
+    interaction: ChatInputCommandInteraction,
+    eventRequestDto: EventRequestEventDto,
+  ) => {
     try {
       logger.debug(
         `eventRequest event fired: ${JSON.stringify(eventRequestDto)}`,
@@ -31,7 +40,7 @@ const eventRequest: Event = {
 
       if (event.type === EventDocumentTypeEnum.BuddyRead) {
         const channelId = ChannelIds.BRRequestChannel;
-        const embed = await getEventRequestEmbed(event, bot);
+        const embed = getEventRequestEmbed(event, interaction);
         const channel = await bot.channels.fetch(channelId);
         if (channel === null || !channel.isTextBased()) {
           throw new Error("Unable to post event request in given channel");
@@ -44,7 +53,6 @@ const eventRequest: Event = {
         });
       }
       // TODO: send DM to event leader with guidelines
-      // TODO: Figure out how to get participants interested in the event
     } catch (err) {
       logger.error(err, `Error while handling eventRequest event`);
     }

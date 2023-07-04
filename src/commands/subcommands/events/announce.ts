@@ -1,5 +1,8 @@
 import { EventDtoStatusEnum } from "@orgbookclub/ows-client";
 import {
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
   channelMention,
   ChatInputCommandInteraction,
   TextChannel,
@@ -16,7 +19,7 @@ import { logger } from "../../../utils/logHandler";
  * @param bot The bot instance.
  * @param interaction The interaction.
  */
-export const handleAnnounce: CommandHandler = async (
+const handleAnnounce: CommandHandler = async (
   bot: Bot,
   interaction: ChatInputCommandInteraction,
 ) => {
@@ -41,13 +44,15 @@ export const handleAnnounce: CommandHandler = async (
     const announcementChannel = (await bot.channels.fetch(
       ChannelIds.EventAnnouncementChannel,
     )) as TextChannel;
+
     const message = await announcementChannel.send({
-      content: `New Buddy Read! Please react with ✅ if you'd like to participate in the discussions.\nDiscussion will take place in ${channelMention(
+      content: `New Server Event! Please click on the button if you'd like to be pinged for discussions.\nDiscussion will take place in ${channelMention(
         event.threads[0],
       )}`,
       embeds: [getEventInfoEmbed(event, interaction)],
+      components: [getButtonActionRow(event._id)],
     });
-    await message.react("✅");
+
     await bot.api.events.eventsControllerUpdate({
       id: event._id,
       updateEventDto: { status: "Announced" },
@@ -57,3 +62,21 @@ export const handleAnnounce: CommandHandler = async (
     logger.error(err, `Error in handleAnnounce`);
   }
 };
+
+function getButtonActionRow(eventId: string) {
+  const interestedButton = new ButtonBuilder()
+    .setEmoji({ name: "✅" })
+    .setStyle(ButtonStyle.Success)
+    .setCustomId(`ea-${eventId}-interested`);
+  const notInterestedButton = new ButtonBuilder()
+    .setEmoji({ name: "❌" })
+    .setStyle(ButtonStyle.Secondary)
+    .setCustomId(`ea-${eventId}-notInterested`);
+  const buttonActionRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+    interestedButton,
+    notInterestedButton,
+  );
+  return buttonActionRow;
+}
+
+export { handleAnnounce };

@@ -64,7 +64,10 @@ const handleRequest: CommandHandler = async (
       leaders: [{ user: user._id, points: 0 }],
       description: requestReason,
     };
-    bot.emit("eventRequest", { url: link, createEventDto: eventRequestDto });
+    bot.emit("eventRequest", interaction, {
+      url: link,
+      createEventDto: eventRequestDto,
+    });
     await modalSubmitInteraction.reply({
       content: "Your event request has been submitted!",
       ephemeral: true,

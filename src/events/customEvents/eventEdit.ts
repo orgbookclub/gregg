@@ -2,7 +2,10 @@ import { UpdateEventDto } from "@orgbookclub/ows-client";
 import { ButtonInteraction } from "discord.js";
 
 import { Bot, Event } from "../../models";
-import { getEventRequestEmbed } from "../../utils/eventUtils";
+import {
+  getEventInfoEmbed,
+  getEventRequestEmbed,
+} from "../../utils/eventUtils";
 import { logger } from "../../utils/logHandler";
 
 interface EventEditEventDto {
@@ -22,11 +25,16 @@ export const eventEdit: Event = {
       );
       const event = response.data;
       logger.debug(`event updated: ${JSON.stringify(event)}`);
-      if (
-        eventEditDto.interaction &&
-        eventEditDto.updateEmbedType === "request"
-      ) {
-        const updatedEmbed = await getEventRequestEmbed(event, bot);
+      if (eventEditDto.interaction) {
+        let updatedEmbed;
+        if (eventEditDto.updateEmbedType === "er") {
+          updatedEmbed = getEventRequestEmbed(event, eventEditDto.interaction);
+        } else if (eventEditDto.updateEmbedType === "ea") {
+          updatedEmbed = getEventInfoEmbed(event, eventEditDto.interaction);
+        }
+        if (!updatedEmbed) {
+          return;
+        }
         await eventEditDto.interaction.message.edit({
           embeds: [updatedEmbed],
         });

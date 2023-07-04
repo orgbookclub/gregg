@@ -17,9 +17,13 @@ const processButtonClick = async (bot: Bot, interaction: ButtonInteraction) => {
     if (interaction.customId === "delete-bookmark") {
       await (interaction.message as Message).delete();
     }
-    if (interaction.customId.startsWith("er-")) {
+    if (
+      interaction.customId.startsWith("er-") ||
+      interaction.customId.startsWith("ea-")
+    ) {
       await interaction.deferReply({ ephemeral: true });
       const parts = interaction.customId.split("-");
+      const embedType = parts[0];
       const eventId = parts[1];
       const action = parts[2];
 
@@ -73,7 +77,7 @@ const processButtonClick = async (bot: Bot, interaction: ButtonInteraction) => {
         id: eventId,
         updateEventDto: updateEventDto,
         interaction: interaction,
-        updateEmbedType: "request",
+        updateEmbedType: embedType,
       });
       await interaction.editReply({
         content:

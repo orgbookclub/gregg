@@ -12,11 +12,7 @@ import {
   userMention,
 } from "discord.js";
 
-import { Bot } from "../models";
-
 import { getAuthorString } from "./bookUtils";
-
-const HOME_GUILD_ID = process.env.HOME_GUILD_ID ?? "";
 
 /**
  * Converts a javascript date object into unix timestamp.
@@ -177,11 +173,13 @@ export function getEventInfoEmbed(
  * Creates an embed to display an event request.
  *
  * @param data The event document.
- * @param bot The bot instance.
+ * @param interaction The interaction.
  * @returns The embed.
  */
-export async function getEventRequestEmbed(data: EventDocument, bot: Bot) {
-  const homeGuild = await bot.guilds.fetch(HOME_GUILD_ID);
+export function getEventRequestEmbed(
+  data: EventDocument,
+  interaction: ChatInputCommandInteraction | ButtonInteraction,
+) {
   const embed = new EmbedBuilder()
     .setTitle(`${data.book.title} - ${getAuthorString(data.book.authors)}`)
     .setURL(data.book.url)
@@ -189,7 +187,7 @@ export async function getEventRequestEmbed(data: EventDocument, bot: Bot) {
     .setColor(Colors.DarkGold)
     .setAuthor({
       name: data.type,
-      iconURL: homeGuild.iconURL() ?? undefined,
+      iconURL: interaction.guild?.iconURL() ?? undefined,
     });
   if (data.book.coverUrl) {
     embed.setThumbnail(data.book.coverUrl);
