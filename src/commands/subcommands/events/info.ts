@@ -18,7 +18,7 @@ export const handleInfo: CommandHandler = async (
     await interaction.deferReply();
     const id = interaction.options.getString("id", true);
     const response = await bot.api.events.eventsControllerFindOne({ id: id });
-    const embed = getEventInfoEmbed(response.data, bot, interaction);
+    const embed = getEventInfoEmbed(response.data, interaction);
     await interaction.editReply({
       embeds: [embed],
     });

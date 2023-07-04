@@ -96,13 +96,11 @@ export function getEventsListEmbed(
  * Creates an embed to display details of an event.
  *
  * @param data The event.
- * @param bot The bot instance.
  * @param interaction The interaction instance.
  * @returns The embed.
  */
 export function getEventInfoEmbed(
   data: EventDocument,
-  bot: Bot,
   interaction: ChatInputCommandInteraction,
 ) {
   const embed = new EmbedBuilder()
