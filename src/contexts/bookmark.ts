@@ -44,7 +44,7 @@ const bookmark: Context = {
           content: `Bookmark created: ${`<t:${getUnixTimestamp(
             new Date(),
           )}>`}\n${message.url}`,
-          embeds: [bookmarkEmbed],
+          embeds: [bookmarkEmbed, ...message.embeds],
           components: [buttonRow],
         })
         .then(async () => {
