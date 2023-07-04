@@ -10,16 +10,19 @@ import {
   EventStatusOptions,
   EventTypeOptions,
 } from "../config";
+import { EventParticipantOptions } from "../config/EventParticipantOptions";
 import { Bot, Command, CommandHandler } from "../models";
 import { logger } from "../utils/logHandler";
 
 import {
+  handleAdd,
   handleAnnounce,
   handleBroadcast,
   handleCreateThread,
   handleEdit,
   handleInfo,
   handleList,
+  handleRemove,
   handleRequest,
   handleSearch,
 } from "./subcommands/events";
@@ -33,6 +36,8 @@ const handlers: Record<string, CommandHandler> = {
   announce: handleAnnounce,
   createthread: handleCreateThread,
   broadcast: handleBroadcast,
+  add: handleAdd,
+  remove: handleRemove,
 };
 
 const eventsListSubcommand = new SlashCommandSubcommandBuilder()
@@ -121,7 +126,6 @@ const eventsEditSubcommand = new SlashCommandSubcommandBuilder()
       .setDescription("The value which will be set in the field")
       .setRequired(true),
   );
-
 const eventsSearchSubcommand = new SlashCommandSubcommandBuilder()
   .setName("search")
   .setDescription("searches for events")
@@ -143,6 +147,54 @@ const eventsSearchSubcommand = new SlashCommandSubcommandBuilder()
       .setDescription("Event Status")
       .addChoices(...EventStatusOptions),
   );
+
+const eventsAddSubcommand = new SlashCommandSubcommandBuilder()
+  .setName("add")
+  .setDescription("Adds a participant to the event")
+  .addStringOption((option) =>
+    option.setName("id").setDescription("Event ID").setRequired(true),
+  )
+  .addUserOption((option) =>
+    option
+      .setName("user")
+      .setDescription("The user to add as a participant")
+      .setRequired(true),
+  )
+  .addIntegerOption((option) =>
+    option
+      .setName("points")
+      .setDescription("The number of points to assign. Defaults to 5")
+      .setRequired(false)
+      .setMinValue(0)
+      .setMaxValue(100),
+  )
+  .addStringOption((option) =>
+    option
+      .setName("type")
+      .setDescription("The type of participant to add the user as")
+      .addChoices(...EventParticipantOptions)
+      .setRequired(true),
+  );
+
+const eventsRemoveSubcommand = new SlashCommandSubcommandBuilder()
+  .setName("remove")
+  .setDescription("Removes a participant from the event")
+  .addStringOption((option) =>
+    option.setName("id").setDescription("Event ID").setRequired(true),
+  )
+  .addUserOption((option) =>
+    option
+      .setName("user")
+      .setDescription("The user to remove as a participant")
+      .setRequired(true),
+  )
+  .addStringOption((option) =>
+    option
+      .setName("type")
+      .setDescription("The type of participant")
+      .addChoices(...EventParticipantOptions)
+      .setRequired(true),
+  );
 export const events: Command = {
   data: new SlashCommandBuilder()
     .setName("events")
@@ -154,7 +206,9 @@ export const events: Command = {
     .addSubcommand(eventsCreateThreadSubcommand)
     .addSubcommand(eventsAnnounceSubcommand)
     .addSubcommand(eventsEditSubcommand)
-    .addSubcommand(eventsSearchSubcommand),
+    .addSubcommand(eventsSearchSubcommand)
+    .addSubcommand(eventsAddSubcommand)
+    .addSubcommand(eventsRemoveSubcommand),
   run: async (bot: Bot, interaction: ChatInputCommandInteraction) => {
     try {
       const subCommand = interaction.options.getSubcommand();

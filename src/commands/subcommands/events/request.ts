@@ -53,7 +53,7 @@ const handleRequest: CommandHandler = async (
       endDateString,
       link,
     );
-    const user = await upsertUser(bot, interaction);
+    const user = await upsertUser(bot, interaction.user);
     const eventRequestDto: CreateEventDto = {
       type: eventType,
       dates: {
@@ -138,16 +138,12 @@ function getEventRequestModal(eventType: string) {
   return modal;
 }
 
-function extractFieldsFromModalSubmission(
-  modalSubmitInteraction: ModalSubmitInteraction,
-) {
-  const link =
-    modalSubmitInteraction.fields.getTextInputValue(BOOK_LINK_FIELD_ID);
+function extractFieldsFromModalSubmission(interaction: ModalSubmitInteraction) {
+  const link = interaction.fields.getTextInputValue(BOOK_LINK_FIELD_ID);
   const startDateString =
-    modalSubmitInteraction.fields.getTextInputValue(START_DATE_FIELD_ID);
-  const endDateString =
-    modalSubmitInteraction.fields.getTextInputValue(END_DATE_FIELD_ID);
-  const requestReason = modalSubmitInteraction.fields.getTextInputValue(
+    interaction.fields.getTextInputValue(START_DATE_FIELD_ID);
+  const endDateString = interaction.fields.getTextInputValue(END_DATE_FIELD_ID);
+  const requestReason = interaction.fields.getTextInputValue(
     REQUEST_REASON_FIELD_ID,
   );
   return { link, startDateString, endDateString, requestReason };

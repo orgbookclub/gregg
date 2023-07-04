@@ -8,6 +8,7 @@ import {
   channelMention,
   ChannelType,
   ChatInputCommandInteraction,
+  hideLinkEmbed,
   TextChannel,
 } from "discord.js";
 
@@ -111,7 +112,7 @@ function getPostContent(event: EventDocument) {
   if (event.leaders.length > 0) {
     content += ` | Leader(s): ${getUserMentionString(event.leaders, false)}`;
   }
-  content += `\n**Link**: ${event.book.url}`;
+  content += `\n**Link**: ${hideLinkEmbed(event.book.url)}`;
   content += `\n**Cover**: ${event.book.coverUrl}`;
 
   content += `\n\n**ID**: \`${event._id}\``;

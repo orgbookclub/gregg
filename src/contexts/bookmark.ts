@@ -23,8 +23,11 @@ const bookmark: Context = {
   run: async (bot: Bot, interaction: ContextMenuCommandInteraction) => {
     try {
       await interaction.deferReply({ ephemeral: true });
-
-      const message = interaction.options.getMessage("message") as Message;
+      if (!interaction.isMessageContextMenuCommand()) {
+        await interaction.editReply("Something went wrong!");
+        return;
+      }
+      const message = interaction.targetMessage;
       const channel = interaction.channel as TextChannel;
       const guild = interaction.guild;
 

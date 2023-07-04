@@ -27,7 +27,7 @@ const processButtonClick = async (bot: Bot, interaction: ButtonInteraction) => {
       const eventId = parts[1];
       const action = parts[2];
 
-      const user = await upsertUser(bot, interaction);
+      const user = await upsertUser(bot, interaction.user);
 
       const eventResponse = await bot.api.events.eventsControllerFindOne({
         id: eventId,
