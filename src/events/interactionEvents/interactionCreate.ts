@@ -1,6 +1,7 @@
 import {
   ChatInputCommandInteraction,
   ContextMenuCommandInteraction,
+  Events,
   Interaction,
   ModalSubmitInteraction,
   StringSelectMenuInteraction,
@@ -11,7 +12,7 @@ import { processButtonClick } from "../../modules/events/interactions/processBut
 import { logger } from "../../utils/logHandler";
 
 const interactionCreate: Event = {
-  name: "interactionCreate",
+  name: Events.InteractionCreate,
   run: async (bot: Bot, interaction: Interaction) => {
     try {
       logger.debug(
@@ -43,8 +44,9 @@ async function processContextMenuCommand(
   interaction: ContextMenuCommandInteraction,
 ) {
   try {
+    const { cooldowns } = bot;
     const command = bot.contexts.find(
-      (el) => el.data.name === interaction.commandName,
+      (x) => x.data.name === interaction.commandName,
     );
 
     if (!command) {
@@ -53,6 +55,28 @@ async function processContextMenuCommand(
       });
       return;
     }
+
+    if (!cooldowns[command.data.name]) {
+      cooldowns[command.data.name] = {};
+    }
+
+    const now = Date.now();
+    const timestamps = cooldowns[command.data.name];
+    const defaultCooldownDuration = 0;
+
+    const cooldownAmount = (command.cooldown ?? defaultCooldownDuration) * 1000;
+    if (timestamps[interaction.user.id]) {
+      const expirationTime = timestamps[interaction.user.id] + cooldownAmount;
+      if (now < expirationTime) {
+        const expiredTimestamp = Math.round(expirationTime / 1000);
+        return interaction.reply({
+          content: `Please wait, you are on a cooldown for \`${command.data.name}\`. You can use it again <t:${expiredTimestamp}:R>.`,
+          ephemeral: true,
+        });
+      }
+    }
+    timestamps[interaction.user.id] = now;
+    setTimeout(() => delete timestamps[interaction.user.id], cooldownAmount);
 
     // TODO: Type guards
 
@@ -74,8 +98,9 @@ async function processChatInputCommand(
   interaction: ChatInputCommandInteraction,
 ) {
   try {
+    const { cooldowns } = bot;
     const command = bot.commands.find(
-      (el) => el.data.name === interaction.commandName,
+      (x) => x.data.name === interaction.commandName,
     );
 
     if (!command) {
@@ -84,6 +109,28 @@ async function processChatInputCommand(
       });
       return;
     }
+
+    if (!cooldowns[command.data.name]) {
+      cooldowns[command.data.name] = {};
+    }
+
+    const now = Date.now();
+    const timestamps = cooldowns[command.data.name];
+    const defaultCooldownDuration = 0;
+    const cooldownAmount = (command.cooldown ?? defaultCooldownDuration) * 1000;
+
+    if (timestamps[interaction.user.id]) {
+      const expirationTime = timestamps[interaction.user.id] + cooldownAmount;
+      if (now < expirationTime) {
+        const expiredTimestamp = Math.round(expirationTime / 1000);
+        return interaction.reply({
+          content: `Please wait, you are on a cooldown for \`${command.data.name}\`. You can use it again <t:${expiredTimestamp}:R>.`,
+          ephemeral: true,
+        });
+      }
+    }
+    timestamps[interaction.user.id] = now;
+    setTimeout(() => delete timestamps[interaction.user.id], cooldownAmount);
 
     // TODO: Can add type guards here
     // e.g. isGuildOnly command, isDMOnly command etc.

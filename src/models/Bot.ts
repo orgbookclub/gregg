@@ -31,4 +31,5 @@ export interface Bot extends Client {
   };
 
   db: PrismaClient;
+  cooldowns: Record<string, Record<string, number>>;
 }

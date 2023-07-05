@@ -68,6 +68,7 @@ void (async () => {
 
   logger.debug("Initializing Cache...");
   bot.dataCache = { sprintManager: new SprintManager() };
+  bot.cooldowns = {};
 
   logger.debug("Attaching event listeners...");
   handleEvents(bot);
