@@ -12,11 +12,12 @@ export const messageCreate: Event = {
       if (author.bot) {
         return;
       }
+
       if (!guild || channel.type === ChannelType.DM) {
         return;
       }
 
-      // Load any custom listeners here
+      // TODO: Load any custom listeners here
 
       logger.debug(
         `Guild ${guild.id}: ${author.tag}(${author.id}) sent message ${message.id}`,

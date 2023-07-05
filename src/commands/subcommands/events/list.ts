@@ -44,7 +44,7 @@ export const handleList: CommandHandler = async (
     const message = await interaction.editReply(
       pagedContentManager.createMessagePayloadForPage(interaction),
     );
-    pagedContentManager.createCollectors(message, interaction, 120000);
+    pagedContentManager.createCollectors(message, interaction, 5 * 60 * 1000);
   } catch (err) {
     logger.error(err, `Error in handleList`);
   }

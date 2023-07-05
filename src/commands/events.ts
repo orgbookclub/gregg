@@ -1,4 +1,5 @@
 import {
+  ChannelType,
   ChatInputCommandInteraction,
   SlashCommandBuilder,
   SlashCommandSubcommandBuilder,
@@ -9,16 +10,19 @@ import {
   EventStatusOptions,
   EventTypeOptions,
 } from "../config";
+import { EventParticipantOptions } from "../config/EventParticipantOptions";
 import { Bot, Command, CommandHandler } from "../models";
 import { logger } from "../utils/logHandler";
 
 import {
+  handleAdd,
   handleAnnounce,
   handleBroadcast,
   handleCreateThread,
   handleEdit,
   handleInfo,
   handleList,
+  handleRemove,
   handleRequest,
   handleSearch,
 } from "./subcommands/events";
@@ -32,6 +36,8 @@ const handlers: Record<string, CommandHandler> = {
   announce: handleAnnounce,
   createthread: handleCreateThread,
   broadcast: handleBroadcast,
+  add: handleAdd,
+  remove: handleRemove,
 };
 
 const eventsListSubcommand = new SlashCommandSubcommandBuilder()
@@ -56,6 +62,13 @@ const eventsBroadcastSubcommand = new SlashCommandSubcommandBuilder()
   .setDescription("Broadcasts a message to all the readers of an event")
   .addStringOption((option) =>
     option.setName("id").setDescription("Event ID").setRequired(true),
+  )
+  .addChannelOption((option) =>
+    option
+      .setName("channel")
+      .addChannelTypes(ChannelType.GuildText)
+      .setDescription("The channel to post the broadcast message in")
+      .setRequired(false),
   );
 const eventsInfoSubcommand = new SlashCommandSubcommandBuilder()
   .setName("info")
@@ -73,18 +86,7 @@ const eventsRequestSubcommand = new SlashCommandSubcommandBuilder()
       .addChoices(...EventTypeOptions)
       .setRequired(true),
   );
-const eventsAnnounceSubcommand = new SlashCommandSubcommandBuilder()
-  .setName("announce")
-  .setDescription("makes an announcement for an approved event")
-  .addStringOption((option) =>
-    option.setName("id").setDescription("Event ID").setRequired(true),
-  )
-  .addChannelOption((option) =>
-    option
-      .setName("thread")
-      .setDescription("The thread for the event, if it already exists")
-      .setRequired(false),
-  );
+
 const eventsCreateThreadSubcommand = new SlashCommandSubcommandBuilder()
   .setName("createthread")
   .setDescription("creates a forum post for an approved event")
@@ -97,6 +99,14 @@ const eventsCreateThreadSubcommand = new SlashCommandSubcommandBuilder()
       .setDescription("The thread if it already exists")
       .setRequired(false),
   );
+
+const eventsAnnounceSubcommand = new SlashCommandSubcommandBuilder()
+  .setName("announce")
+  .setDescription("makes an announcement for an approved event")
+  .addStringOption((option) =>
+    option.setName("id").setDescription("Event ID").setRequired(true),
+  );
+
 const eventsEditSubcommand = new SlashCommandSubcommandBuilder()
   .setName("edit")
   .setDescription("edit an event")
@@ -137,6 +147,54 @@ const eventsSearchSubcommand = new SlashCommandSubcommandBuilder()
       .setDescription("Event Status")
       .addChoices(...EventStatusOptions),
   );
+
+const eventsAddSubcommand = new SlashCommandSubcommandBuilder()
+  .setName("add")
+  .setDescription("Adds a participant to the event")
+  .addStringOption((option) =>
+    option.setName("id").setDescription("Event ID").setRequired(true),
+  )
+  .addUserOption((option) =>
+    option
+      .setName("user")
+      .setDescription("The user to add as a participant")
+      .setRequired(true),
+  )
+  .addStringOption((option) =>
+    option
+      .setName("type")
+      .setDescription("The type of participant to add the user as")
+      .addChoices(...EventParticipantOptions)
+      .setRequired(true),
+  )
+  .addIntegerOption((option) =>
+    option
+      .setName("points")
+      .setDescription("The number of points to assign. Defaults to 5")
+      .setRequired(false)
+      .setMinValue(0)
+      .setMaxValue(100),
+  );
+
+const eventsRemoveSubcommand = new SlashCommandSubcommandBuilder()
+  .setName("remove")
+  .setDescription("Removes a participant from the event")
+  .addStringOption((option) =>
+    option.setName("id").setDescription("Event ID").setRequired(true),
+  )
+  .addUserOption((option) =>
+    option
+      .setName("user")
+      .setDescription("The user to remove as a participant")
+      .setRequired(true),
+  )
+  .addStringOption((option) =>
+    option
+      .setName("type")
+      .setDescription("The type of participant")
+      .addChoices(...EventParticipantOptions)
+      .setRequired(true),
+  );
 export const events: Command = {
   data: new SlashCommandBuilder()
     .setName("events")
@@ -148,7 +206,9 @@ export const events: Command = {
     .addSubcommand(eventsCreateThreadSubcommand)
     .addSubcommand(eventsAnnounceSubcommand)
     .addSubcommand(eventsEditSubcommand)
-    .addSubcommand(eventsSearchSubcommand),
+    .addSubcommand(eventsSearchSubcommand)
+    .addSubcommand(eventsAddSubcommand)
+    .addSubcommand(eventsRemoveSubcommand),
   run: async (bot: Bot, interaction: ChatInputCommandInteraction) => {
     try {
       const subCommand = interaction.options.getSubcommand();

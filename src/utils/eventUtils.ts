@@ -1,5 +1,10 @@
-import { EventDocument, Participant } from "@orgbookclub/ows-client";
 import {
+  EventDocument,
+  Participant,
+  ParticipantDto,
+} from "@orgbookclub/ows-client";
+import {
+  ButtonInteraction,
   ChatInputCommandInteraction,
   Colors,
   EmbedBuilder,
@@ -7,11 +12,7 @@ import {
   userMention,
 } from "discord.js";
 
-import { Bot } from "../models";
-
 import { getAuthorString } from "./bookUtils";
-
-const HOME_GUILD_ID = process.env.HOME_GUILD_ID ?? "";
 
 /**
  * Converts a javascript date object into unix timestamp.
@@ -95,75 +96,73 @@ export function getEventsListEmbed(
 /**
  * Creates an embed to display details of an event.
  *
- * @param data The event.
- * @param bot The bot instance.
+ * @param event The event.
  * @param interaction The interaction instance.
  * @returns The embed.
  */
 export function getEventInfoEmbed(
-  data: EventDocument,
-  bot: Bot,
-  interaction: ChatInputCommandInteraction,
+  event: EventDocument,
+  interaction: ChatInputCommandInteraction | ButtonInteraction,
 ) {
   const embed = new EmbedBuilder()
-    .setTitle(`${data.book.title} - ${getAuthorString(data.book.authors)}`)
-    .setURL(data.book.url)
-    .setFooter({ text: `Event ${data._id}` })
+    .setTitle(`${event.book.title} - ${getAuthorString(event.book.authors)}`)
+    .setURL(event.book.url)
+    .setFooter({ text: `Event ID: ${event._id}` })
     .setColor(Colors.Gold)
     .setAuthor({
-      name: `${data.status} ${data.type}`,
+      name: `${event.status} ${event.type}`,
       iconURL: interaction.guild?.iconURL() ?? undefined,
     });
-  if (data.book.coverUrl) {
-    embed.setThumbnail(data.book.coverUrl);
+  if (event.book.coverUrl) {
+    embed.setThumbnail(event.book.coverUrl);
   }
-  if (data.description) {
+  if (event.description) {
     embed.addFields({
       name: "Description",
-      value: data.description,
+      value: event.description,
       inline: false,
     });
   }
   embed.addFields({
     name: "Start Date",
-    value: `<t:${getUnixTimestamp(data.dates.startDate)}:D>`,
+    value: `<t:${getUnixTimestamp(event.dates.startDate)}:D>`,
     inline: true,
   });
   embed.addFields({
     name: "End Date",
-    value: `<t:${getUnixTimestamp(data.dates.endDate)}:D>`,
+    value: `<t:${getUnixTimestamp(event.dates.endDate)}:D>`,
     inline: true,
   });
-  if (data.threads && data.threads.length > 0) {
+  if (event.threads && event.threads.length > 0) {
     embed.addFields({
       name: "Thread",
-      value: `${channelMention(data.threads[0])}`,
+      value: `${channelMention(event.threads[0])}`,
       inline: true,
     });
   }
   embed.addFields({
     name: "Requested By",
-    value: `${userMention(data.requestedBy.user.userId)}`,
+    value: `${userMention(event.requestedBy.user.userId)}`,
     inline: false,
   });
-  if (data.leaders && data.leaders.length > 0) {
+  if (event.leaders && event.leaders.length > 0) {
     embed.addFields({
       name: "Leader(s)",
-      value: getUserMentionString(data.leaders, true),
+      value: getUserMentionString(event.leaders, true),
       inline: true,
     });
   }
-  if (data.interested && data.interested.length > 0) {
+  if (event.interested && event.interested.length > 0) {
     embed.addFields({
-      name: "Interested",
-      value: getUserMentionString(data.interested, false),
+      name: `Interested (${event.interested.length})`,
+      value: getUserMentionString(event.interested, false),
       inline: false,
     });
   }
-  if (data.readers && data.readers.length > 0) {
+  if (event.readers && event.readers.length > 0) {
     embed.addFields({
-      name: "Reader(s)",
-      value: getUserMentionString(data.readers, true),
+      name: `Reader(s) (${event.readers.length})`,
+      value: getUserMentionString(event.readers, true),
       inline: false,
     });
   }
@@ -173,46 +172,55 @@ export function getEventInfoEmbed(
 /**
  * Creates an embed to display an event request.
  *
- * @param data The event document.
- * @param bot The bot instance.
+ * @param event The event document.
+ * @param interaction The interaction.
  * @returns The embed.
  */
-export async function getEventRequestEmbed(data: EventDocument, bot: Bot) {
-  const homeGuild = await bot.guilds.fetch(HOME_GUILD_ID);
+export function getEventRequestEmbed(
+  event: EventDocument,
+  interaction: ChatInputCommandInteraction | ButtonInteraction,
+) {
   const embed = new EmbedBuilder()
-    .setTitle(`${data.book.title} - ${getAuthorString(data.book.authors)}`)
-    .setURL(data.book.url)
-    .setFooter({ text: `Event Request: ${data._id}` })
+    .setTitle(`${event.book.title} - ${getAuthorString(event.book.authors)}`)
+    .setURL(event.book.url)
+    .setFooter({ text: `Event ID: ${event._id}` })
     .setColor(Colors.DarkGold)
     .setAuthor({
-      name: data.type,
-      iconURL: homeGuild.iconURL() ?? undefined,
+      name: `${event.type} Request`,
+      iconURL: interaction.guild?.iconURL() ?? undefined,
     });
-  if (data.book.coverUrl) {
-    embed.setThumbnail(data.book.coverUrl);
+  if (event.book.coverUrl) {
+    embed.setThumbnail(event.book.coverUrl);
   }
-  if (data.description) {
+  if (event.description) {
     embed.addFields({
       name: "Request Reason",
-      value: data.description,
+      value: event.description,
       inline: false,
     });
   }
   embed.addFields({
     name: "Start Date",
-    value: `<t:${getUnixTimestamp(data.dates.startDate)}:D>`,
+    value: `<t:${getUnixTimestamp(event.dates.startDate)}:D>`,
     inline: true,
   });
   embed.addFields({
     name: "End Date",
-    value: `<t:${getUnixTimestamp(data.dates.endDate)}:D>`,
+    value: `<t:${getUnixTimestamp(event.dates.endDate)}:D>`,
     inline: true,
   });
   embed.addFields({
     name: "Requested By",
-    value: `${userMention(data.requestedBy.user.userId)}`,
+    value: `${userMention(event.requestedBy.user.userId)}`,
     inline: false,
   });
+  if (event.interested && event.interested.length > 0) {
+    embed.addFields({
+      name: `Interested (${event.interested.length})`,
+      value: getUserMentionString(event.interested, false),
+      inline: false,
+    });
+  }
   return embed;
 }
 
@@ -230,4 +238,18 @@ export function getThreadTitle(event: EventDocument) {
     eventTitle = eventTitle.slice(0, 96) + "...";
   }
   return eventTitle;
+}
+
+/**
+ * Converts a participant object to its corresponding dto.
+ *
+ * @param participant The participant object.
+ * @returns The participant dto.
+ */
+export function participantToDto(participant: Participant) {
+  const participantDto: ParticipantDto = {
+    ...participant,
+    user: participant.user._id,
+  };
+  return participantDto;
 }

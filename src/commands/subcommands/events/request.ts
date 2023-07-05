@@ -13,6 +13,7 @@ import {
 
 import { CommandHandler, Bot } from "../../../models";
 import { logger } from "../../../utils/logHandler";
+import { upsertUser } from "../../../utils/userUtils";
 
 const EVENT_REQUEST_MODAL_ID = "eventRequestModal";
 const BOOK_LINK_FIELD_ID = "link";
@@ -42,7 +43,6 @@ const handleRequest: CommandHandler = async (
     const modalSubmitInteraction = await interaction.awaitModalSubmit({
       filter,
       time: 5 * 60 * 1000,
-      // 5 minutes until the modal times out
     });
 
     const { link, startDateString, endDateString, requestReason } =
@@ -53,23 +53,7 @@ const handleRequest: CommandHandler = async (
       endDateString,
       link,
     );
-    const response = await bot.api.users.usersControllerFindOneByUserId({
-      userid: interaction.user.id,
-    });
-    let user = response.data;
-    if (!user) {
-      const userCreateResponse = await bot.api.users.usersControllerCreate({
-        createUserDto: {
-          userId: interaction.user.id,
-          name: interaction.user.username,
-          joinDate: new Date().toISOString(),
-          profile: {
-            bio: "",
-          },
-        },
-      });
-      user = userCreateResponse.data;
-    }
+    const user = await upsertUser(bot, interaction.user);
     const eventRequestDto: CreateEventDto = {
       type: eventType,
       dates: {
@@ -80,7 +64,10 @@ const handleRequest: CommandHandler = async (
       leaders: [{ user: user._id, points: 0 }],
       description: requestReason,
     };
-    bot.emit("eventRequest", { url: link, createEventDto: eventRequestDto });
+    bot.emit("eventRequest", interaction, {
+      url: link,
+      createEventDto: eventRequestDto,
+    });
     await modalSubmitInteraction.reply({
       content: "Your event request has been submitted!",
       ephemeral: true,
@@ -151,16 +138,12 @@ function getEventRequestModal(eventType: string) {
   return modal;
 }
 
-function extractFieldsFromModalSubmission(
-  modalSubmitInteraction: ModalSubmitInteraction,
-) {
-  const link =
-    modalSubmitInteraction.fields.getTextInputValue(BOOK_LINK_FIELD_ID);
+function extractFieldsFromModalSubmission(interaction: ModalSubmitInteraction) {
+  const link = interaction.fields.getTextInputValue(BOOK_LINK_FIELD_ID);
   const startDateString =
-    modalSubmitInteraction.fields.getTextInputValue(START_DATE_FIELD_ID);
-  const endDateString =
-    modalSubmitInteraction.fields.getTextInputValue(END_DATE_FIELD_ID);
-  const requestReason = modalSubmitInteraction.fields.getTextInputValue(
+    interaction.fields.getTextInputValue(START_DATE_FIELD_ID);
+  const endDateString = interaction.fields.getTextInputValue(END_DATE_FIELD_ID);
+  const requestReason = interaction.fields.getTextInputValue(
     REQUEST_REASON_FIELD_ID,
   );
   return { link, startDateString, endDateString, requestReason };

@@ -8,9 +8,12 @@ import {
   ChatInputCommandInteraction,
   ModalSubmitInteraction,
   TextInputStyle,
+  ChannelType,
+  TextChannel,
 } from "discord.js";
 
 import { CommandHandler, Bot } from "../../../models";
+import { getUserMentionString } from "../../../utils/eventUtils";
 import { logger } from "../../../utils/logHandler";
 
 const EVENT_BROADCAST_MODAL_ID = "eventBroadcastModal";
@@ -28,23 +31,61 @@ const handleBroadcast: CommandHandler = async (
 ) => {
   try {
     const id = interaction.options.getString("id", true);
+    const channel = interaction.options.getChannel<ChannelType.GuildText>(
+      "channel",
+      false,
+    );
+    if (channel && !channel.isTextBased()) {
+      await interaction.reply("Invalid channel!");
+      return;
+    }
+
+    // Create and show modal
     const modal = getBroadcastModal(id);
     await interaction.showModal(modal);
+
     const filter = (msInteraction: ModalSubmitInteraction) =>
       msInteraction.customId === EVENT_BROADCAST_MODAL_ID;
     const modalSubmitInteraction = await interaction.awaitModalSubmit({
       filter,
       time: 5 * 60 * 1000,
-      // 5 minutes until the modal times out
     });
     const messageContent =
       modalSubmitInteraction.fields.getTextInputValue(MESSAGE_FIELD_ID);
 
-    // TODO: Validate the id is of a valid event.
+    // Get event details
+    const response = await bot.api.events.eventsControllerFindOne({ id: id });
+    if (!response) {
+      await modalSubmitInteraction.reply({
+        content: "Invalid Event ID!",
+        ephemeral: true,
+      });
+      return;
+    }
+    const eventDoc = response.data;
 
-    bot.emit("eventBroadcast", { id: id, content: messageContent });
+    let threadToPost;
+    if (!channel) {
+      const threadId = eventDoc.threads[0];
+      const eventThreadChannel = await bot.channels.fetch(threadId);
+      if (eventThreadChannel === null || !eventThreadChannel.isTextBased()) {
+        throw new Error("Unable to post event broadcast in configured channel");
+      }
+      threadToPost = eventThreadChannel as TextChannel;
+    } else {
+      threadToPost = channel;
+    }
+
+    const mentionString = getUserMentionString(eventDoc.interested, false);
+    if (mentionString.length !== 0) {
+      await threadToPost.send({ content: mentionString });
+    }
+    if (messageContent.length !== 0) {
+      await threadToPost.send({ content: messageContent });
+    }
+
     await modalSubmitInteraction.reply({
-      content: "Your broadcast request has been submitted!",
+      content: "Your message has been broadcasted!",
       ephemeral: true,
     });
   } catch (err) {
@@ -58,9 +99,12 @@ function getBroadcastModal(id: string) {
     .setTitle(`Event Broadcast: ${id}`);
   const messageInput = new TextInputBuilder()
     .setCustomId(MESSAGE_FIELD_ID)
-    .setLabel("What message t?")
-    .setPlaceholder("sadfsdfasd")
-    .setStyle(TextInputStyle.Paragraph);
+    .setLabel("What message would you like to send?")
+    .setPlaceholder(
+      "Write a message to make the bot send it along with the pings",
+    )
+    .setStyle(TextInputStyle.Paragraph)
+    .setRequired(false);
   const messageRow =
     new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
       messageInput,
