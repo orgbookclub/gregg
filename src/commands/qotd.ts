@@ -50,7 +50,8 @@ export const qotd: Command = {
     .setDescription("Handles QOTD commands")
     .addSubcommand(qotdSuggestSubcommand)
     .addSubcommand(qotdListSubcommand)
-    .addSubcommand(qotdPostSubcommand),
+    .addSubcommand(qotdPostSubcommand)
+    .setDMPermission(false),
   run: async (bot: Bot, interaction: ChatInputCommandInteraction) => {
     try {
       await interaction.deferReply({ ephemeral: true });

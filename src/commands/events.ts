@@ -208,7 +208,8 @@ export const events: Command = {
     .addSubcommand(eventsEditSubcommand)
     .addSubcommand(eventsSearchSubcommand)
     .addSubcommand(eventsAddSubcommand)
-    .addSubcommand(eventsRemoveSubcommand),
+    .addSubcommand(eventsRemoveSubcommand)
+    .setDMPermission(false),
   run: async (bot: Bot, interaction: ChatInputCommandInteraction) => {
     try {
       const subCommand = interaction.options.getSubcommand();

@@ -85,7 +85,8 @@ export const sprint: Command = {
     .addSubcommand(sprintStatsSubcommand)
     .addSubcommand(sprintStatusSubcommand)
     .addSubcommand(sprintCancelSubcommand)
-    .addSubcommand(sprintLeaveSubcommand),
+    .addSubcommand(sprintLeaveSubcommand)
+    .setDMPermission(false),
   run: async (bot: Bot, interaction: ChatInputCommandInteraction) => {
     try {
       await interaction.deferReply();

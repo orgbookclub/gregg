@@ -22,53 +22,54 @@ const handlers: Record<string, CommandHandler> = {
   readerboard: handleReaderboard,
 };
 
+const userReaderboardCommand = new SlashCommandSubcommandBuilder()
+  .setName("readerboard")
+  .setDescription("Shows the server reading leaderboard");
+
+const userEventsCommand = new SlashCommandSubcommandBuilder()
+  .setName("events")
+  .setDescription("Shows the events for a user")
+  .addStringOption((option) =>
+    option
+      .setName("type")
+      .setDescription("Event Type")
+      .addChoices(...EventTypeOptions)
+      .setRequired(true),
+  )
+  .addStringOption((option) =>
+    option
+      .setName("status")
+      .setDescription("Event Status")
+      .addChoices(...EventStatusOptions)
+      .setRequired(true),
+  )
+  .addUserOption((option) =>
+    option.setName("user").setDescription("User for which to fetch info"),
+  );
+
+const userStatsCommand = new SlashCommandSubcommandBuilder()
+  .setName("stats")
+  .setDescription("Shows the user's event stats for the server")
+  .addUserOption((option) =>
+    option.setName("user").setDescription("User for which to fetch info"),
+  );
+
+const userInfoCommand = new SlashCommandSubcommandBuilder()
+  .setName("info")
+  .setDescription("Gets information about a user")
+  .addUserOption((option) =>
+    option.setName("user").setDescription("User for which to fetch info"),
+  );
+
 export const user: Command = {
   data: new SlashCommandBuilder()
     .setName("user")
     .setDescription("Handles user commands")
-    .addSubcommand(
-      new SlashCommandSubcommandBuilder()
-        .setName("info")
-        .setDescription("Gets information about a user")
-        .addUserOption((option) =>
-          option.setName("user").setDescription("User for which to fetch info"),
-        ),
-    )
-    .addSubcommand(
-      new SlashCommandSubcommandBuilder()
-        .setName("stats")
-        .setDescription("Shows the user's event stats for the server")
-        .addUserOption((option) =>
-          option.setName("user").setDescription("User for which to fetch info"),
-        ),
-    )
-    .addSubcommand(
-      new SlashCommandSubcommandBuilder()
-        .setName("events")
-        .setDescription("Shows the events for a user")
-        .addStringOption((option) =>
-          option
-            .setName("type")
-            .setDescription("Event Type")
-            .addChoices(...EventTypeOptions)
-            .setRequired(true),
-        )
-        .addStringOption((option) =>
-          option
-            .setName("status")
-            .setDescription("Event Status")
-            .addChoices(...EventStatusOptions)
-            .setRequired(true),
-        )
-        .addUserOption((option) =>
-          option.setName("user").setDescription("User for which to fetch info"),
-        ),
-    )
-    .addSubcommand(
-      new SlashCommandSubcommandBuilder()
-        .setName("readerboard")
-        .setDescription("Shows the server reading leaderboard"),
-    ),
+    .addSubcommand(userInfoCommand)
+    .addSubcommand(userStatsCommand)
+    .addSubcommand(userEventsCommand)
+    .addSubcommand(userReaderboardCommand)
+    .setDMPermission(false),
   run: async (bot: Bot, interaction: ChatInputCommandInteraction) => {
     try {
       const subCommand = interaction.options.getSubcommand();
