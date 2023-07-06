@@ -1,51 +1,35 @@
-import { BookDto } from "@orgbookclub/ows-client";
-import { ChatInputCommandInteraction, Colors, EmbedBuilder } from "discord.js";
-
-import { Bot } from "../../../models/Bot";
-import { CommandHandler } from "../../../models/CommandHandler";
-import { getAuthorString } from "../../../utils/bookUtils";
+import { CommandHandler } from "../../../models";
+import { getBookSearchEmbed } from "../../../utils/bookUtils";
 import { logger } from "../../../utils/logHandler";
 
 /**
- * Gets a list of books from GR and returns an embed.
+ * Fetches a list of book links from GR.
  *
  * @param bot The bot instance.
  * @param interaction The interaction.
  */
-const handleSearch: CommandHandler = async (
-  bot: Bot,
-  interaction: ChatInputCommandInteraction,
-) => {
+const handleSearch: CommandHandler = async (bot, interaction) => {
   try {
     const query = interaction.options.getString("query", true);
-    const k = interaction.options.getInteger("k") ?? 5;
+    const limit = interaction.options.getInteger("limit") ?? 5;
+    const isEphermal = interaction.options.getBoolean("ephermal") ?? true;
+    await interaction.deferReply({ ephemeral: isEphermal });
+
     const response = await bot.api.goodreads.goodreadsControllerSearchBooks({
       q: query,
-      k: k,
+      k: limit,
     });
-    const embed = getGoodreadsSearchEmbed(query, response.data);
+
+    if (!response || response.data.length === 0) {
+      await interaction.editReply("No books found with that query!");
+    }
+
+    const embed = getBookSearchEmbed(query, response.data, "Goodreads");
     await interaction.editReply({ embeds: [embed] });
   } catch (err) {
     logger.error(err, `Error in handleSearch`);
+    await interaction.editReply("Something went wrong! Please try again later");
   }
 };
-
-function getGoodreadsSearchEmbed(query: string, data: BookDto[]): EmbedBuilder {
-  let description = "";
-  for (let i = 0; i < data.length; i++) {
-    const book = data[i];
-    const authorString = getAuthorString(book.authors);
-    const bookString = `\`${i + 1}\` [${book.title}](${
-      book.url
-    }) - *${authorString}*`;
-    description += bookString + "\n";
-  }
-  const embed = new EmbedBuilder()
-    .setTitle(`Search results for ${query}`)
-    .setDescription(description)
-    .setFooter({ text: `Fetched from Goodreads` })
-    .setColor(Colors.Aqua);
-  return embed;
-}
 
 export { handleSearch };
