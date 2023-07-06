@@ -3,9 +3,8 @@ import {
   EventDtoStatusEnum,
   EventDtoTypeEnum,
 } from "@orgbookclub/ows-client";
-import { ChatInputCommandInteraction } from "discord.js";
 
-import { CommandHandler, Bot } from "../../../models";
+import { CommandHandler } from "../../../models";
 import { getEventsListEmbed } from "../../../utils/eventUtils";
 import { logger } from "../../../utils/logHandler";
 import { PaginationManager } from "../../../utils/paginationManager";
@@ -16,10 +15,7 @@ import { PaginationManager } from "../../../utils/paginationManager";
  * @param bot The bot instance.
  * @param interaction The interaction.
  */
-export const handleEvents: CommandHandler = async (
-  bot: Bot,
-  interaction: ChatInputCommandInteraction,
-) => {
+export const handleEvents: CommandHandler = async (bot, interaction) => {
   try {
     await interaction.deferReply();
     const user = interaction.options.getUser("user") ?? interaction.user;
@@ -31,20 +27,30 @@ export const handleEvents: CommandHandler = async (
       "status",
       true,
     ) as keyof typeof EventDtoStatusEnum;
+
     const userResponse = await bot.api.users.usersControllerFindOneByUserId({
       userid: user.id,
     });
-    const userDto = userResponse.data;
+    if (!userResponse) {
+      await interaction.editReply(
+        `No user found! Please check if the user ID ${user.id} is registered with the bot`,
+      );
+      return;
+    }
+
+    const userDoc = userResponse.data;
     const userEventsResponse = await bot.api.events.eventsControllerFind({
-      participantIds: [userDto._id],
+      participantIds: [userDoc._id],
       status: eventStatus,
       type: eventType,
     });
-    const userEvents = userEventsResponse.data;
-    if (userEvents.length === 0) {
-      await interaction.editReply("No events found for given parameters");
+    if (!userEventsResponse || userEventsResponse.data.length === 0) {
+      await interaction.editReply(
+        "No events found for the user for the chosen options",
+      );
       return;
     }
+    const userEvents = userEventsResponse.data;
     const pageSize = 5;
     const pagedContentManager = new PaginationManager<EventDocument>(
       pageSize,
@@ -59,5 +65,8 @@ export const handleEvents: CommandHandler = async (
     pagedContentManager.createCollectors(message, interaction, 5 * 60 * 1000);
   } catch (err) {
     logger.error(err, `Error in handleEvents`);
+    await interaction.editReply(
+      "Something went wrong! Please try again later.",
+    );
   }
 };

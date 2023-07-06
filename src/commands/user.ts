@@ -1,11 +1,7 @@
-import {
-  ChatInputCommandInteraction,
-  SlashCommandBuilder,
-  SlashCommandSubcommandBuilder,
-} from "discord.js";
+import { SlashCommandBuilder, SlashCommandSubcommandBuilder } from "discord.js";
 
 import { EventTypeOptions, EventStatusOptions } from "../config";
-import { CommandHandler, Command, Bot } from "../models";
+import { CommandHandler, Command } from "../models";
 import { logger } from "../utils/logHandler";
 
 import {
@@ -28,7 +24,7 @@ const userReaderboardCommand = new SlashCommandSubcommandBuilder()
 
 const userEventsCommand = new SlashCommandSubcommandBuilder()
   .setName("events")
-  .setDescription("Shows the events for a user")
+  .setDescription("Gets the server events for the user")
   .addStringOption((option) =>
     option
       .setName("type")
@@ -49,7 +45,7 @@ const userEventsCommand = new SlashCommandSubcommandBuilder()
 
 const userStatsCommand = new SlashCommandSubcommandBuilder()
   .setName("stats")
-  .setDescription("Shows the user's event stats for the server")
+  .setDescription("Gets the server event stats for a user")
   .addUserOption((option) =>
     option.setName("user").setDescription("User for which to fetch info"),
   );
@@ -65,12 +61,12 @@ export const user: Command = {
   data: new SlashCommandBuilder()
     .setName("user")
     .setDescription("Handles user commands")
-    .addSubcommand(userInfoCommand)
-    .addSubcommand(userStatsCommand)
     .addSubcommand(userEventsCommand)
+    .addSubcommand(userInfoCommand)
     .addSubcommand(userReaderboardCommand)
+    .addSubcommand(userStatsCommand)
     .setDMPermission(false),
-  run: async (bot: Bot, interaction: ChatInputCommandInteraction) => {
+  run: async (bot, interaction) => {
     try {
       const subCommand = interaction.options.getSubcommand();
       const handler = handlers[subCommand];
@@ -79,4 +75,5 @@ export const user: Command = {
       logger.error(err, `Error processing command user`);
     }
   },
+  cooldown: 15,
 };

@@ -6,7 +6,9 @@ import {
   User,
 } from "discord.js";
 
-import { CommandHandler, Bot } from "../../../models";
+import { CommandHandler } from "../../../models";
+import { Stats } from "../../../models/commands/user/Stats";
+import { UserEventStats } from "../../../models/commands/user/UserEventStats";
 import { logger } from "../../../utils/logHandler";
 
 /**
@@ -15,50 +17,45 @@ import { logger } from "../../../utils/logHandler";
  * @param bot The bot instance.
  * @param interaction The interaction.
  */
-const handleStats: CommandHandler = async (
-  bot: Bot,
-  interaction: ChatInputCommandInteraction,
-) => {
+const handleStats: CommandHandler = async (bot, interaction) => {
   try {
     await interaction.deferReply();
     const user = interaction.options.getUser("user", false) ?? interaction.user;
+
     const userResponse = await bot.api.users.usersControllerFindOneByUserId({
       userid: user.id,
     });
-    const userDoc = userResponse.data;
+    if (!userResponse) {
+      await interaction.editReply(
+        `No user found! Please check if the user ID ${user.id} is registered with the bot`,
+      );
+      return;
+    }
+
+    const userId = userResponse.data._id;
     const userEventsResponse = await bot.api.events.eventsControllerFind({
-      participantIds: [userDoc._id],
+      participantIds: [userId],
     });
+    if (!userEventsResponse || userEventsResponse.data.length === 0) {
+      await interaction.editReply("No events found for given user");
+      return;
+    }
+
     const userEventDocs = userEventsResponse.data;
-    const stats = calculateUserEventStats(userDoc._id, userEventDocs);
-    const embed = getUserEventStatsEmbed(stats, userDoc._id, user, interaction);
+    const stats = calculateUserEventStats(userId, userEventDocs);
+    const embed = getUserEventStatsEmbed(stats, userId, user, interaction);
     await interaction.editReply({ embeds: [embed] });
   } catch (err) {
     logger.error(err, `Error in handleStats`);
   }
 };
 
-interface Stats {
-  totalNumberOfEvents: number;
-  interestedInCount: number;
-  requestedCount: number;
-  leadCount: number;
-  readCount: number;
-  readerPoints: number;
-  leaderPoints: number;
-}
-
-type UserEventStats = {
-  totalScore: number;
-  stats: Record<string, Stats>;
-};
-
-function calculateUserEventStats(id: string, events: EventDocument[]) {
+function calculateUserEventStats(id: string, eventDocs: EventDocument[]) {
   const userEventStats: UserEventStats = {
     totalScore: 0,
     stats: {},
   };
-  for (const event of events) {
+  for (const event of eventDocs) {
     const eventType = event.type;
     const readerPoints =
       event.readers.find((x) => x.user._id === id)?.points ?? 0;
@@ -105,7 +102,7 @@ function getUserEventStatsEmbed(
   interaction: ChatInputCommandInteraction,
 ) {
   const embed = new EmbedBuilder()
-    .setTitle(`${user.username}#${user.discriminator}`)
+    .setTitle(`${user.username}`)
     .setAuthor({
       name: interaction.guild?.name ?? "Guild Name Unavailable",
       iconURL: interaction.guild?.iconURL() ?? undefined,
