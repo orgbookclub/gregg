@@ -1,8 +1,20 @@
-<p align="center">
-  <a href="https://github.com/orgbookclub/gregg" target="blank"><img src="./public/static/logo.png" alt="OWS Logo" /></a>
-</p>
-[![CI](https://github.com/orgbookclub/gregg/actions/workflows/gregg-develop-ci.yml/badge.svg)](https://github.com/orgbookclub/gregg/actions/workflows/gregg-develop-ci.yml)
 
-## TODO Replace with correct logo
+# Gregg
+[![CI](https://github.com/orgbookclub/gregg/actions/workflows/gregg-develop-ci.yml/badge.svg)](https://github.com/orgbookclub/gregg/actions/workflows/gregg-develop-ci.yml) [![CD](https://github.com/orgbookclub/gregg/actions/workflows/gregg-deploy-railway.yml/badge.svg)](https://github.com/orgbookclub/gregg/actions/workflows/gregg-deploy-railway.yml)
 
-## TODO Update readme with relevant info
+This is the repository for Gregg, a Discord bot for Book Clubs. Currently, Gregg is custom-tailored to the [Organized Book Club](https://discord.gg/BookClubs) server on Discord.
+
+
+## Running the project
+```bash
+yarn install
+
+# development
+yarn start:dev
+
+# prod
+yarn start
+```
+
+## Test
+Currently, there is no test suite for the project.

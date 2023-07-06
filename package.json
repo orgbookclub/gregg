@@ -22,7 +22,7 @@
     "postinstall": "npx prisma generate",
     "lint": "eslint src --max-warnings 0",
     "start": "node -r dotenv/config ./dist/index.js",
-    "dev": "tsc && node -r dotenv/config ./dist/index.js"
+    "start:dev": "tsc && node -r dotenv/config ./dist/index.js"
   },
   "dependencies": {
     "@discordjs/builders": "^1.6.3",
