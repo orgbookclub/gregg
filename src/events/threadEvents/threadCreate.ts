@@ -1,10 +1,10 @@
-import { ThreadChannel } from "discord.js";
+import { Events, ThreadChannel } from "discord.js";
 
 import { Bot, Event } from "../../models";
 import { logger } from "../../utils/logHandler";
 
 export const threadCreate: Event = {
-  name: "threadCreate",
+  name: Events.ThreadCreate,
   run: async (bot: Bot, thread: ThreadChannel) => {
     try {
       if (thread.joinable) {

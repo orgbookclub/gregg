@@ -1,9 +1,9 @@
-import { MessageReaction, PartialMessageReaction } from "discord.js";
+import { Events, MessageReaction, PartialMessageReaction } from "discord.js";
 
 import { Bot, Event } from "../../models";
 
 export const reactionAdd: Event = {
-  name: "reactionAdd",
+  name: Events.MessageReactionAdd,
   // eslint-disable-next-line require-await
   run: async (
     _bot: Bot,

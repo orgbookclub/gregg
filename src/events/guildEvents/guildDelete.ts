@@ -1,10 +1,10 @@
-import { Guild } from "discord.js";
+import { Events, Guild } from "discord.js";
 
 import { Bot, Event } from "../../models";
 import { logger } from "../../utils/logHandler";
 
 export const guildDelete: Event = {
-  name: "guildDelete",
+  name: Events.GuildDelete,
   // eslint-disable-next-line require-await
   run: async (bot: Bot, guild: Guild) => {
     logger.info(
