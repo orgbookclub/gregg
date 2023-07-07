@@ -1,4 +1,6 @@
-# Storygraph Commands
+# Storygraph
+
+## Commands
 
 The `/storygraph` commands are used to interact with [Storygraph](https://app.thestorygraph.com).
 

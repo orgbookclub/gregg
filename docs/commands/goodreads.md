@@ -1,4 +1,6 @@
-# Goodreads Commands
+# Goodreads
+
+## Commands
 
 The `/goodreads` commands are used to interact with [Goodreads](https://goodreads.com).
 

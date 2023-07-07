@@ -1,4 +1,6 @@
-# Gregg Commands
+# Gregg
+
+## Commands
 
 The `/gregg` commands are general-purpose commands.
 
