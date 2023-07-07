@@ -9,4 +9,5 @@ export interface Context {
   data: ContextMenuCommandBuilder;
 
   run: (bot: Bot, interaction: ContextMenuCommandInteraction) => Promise<void>;
+  cooldown?: number;
 }

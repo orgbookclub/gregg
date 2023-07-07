@@ -3,7 +3,8 @@ import { ActivityType, Client } from "discord.js";
 
 import { IntentOptions } from "./config";
 import { connectPrisma } from "./database/connectPrisma";
-import { SprintManager, Bot } from "./models";
+import { Bot } from "./models";
+import { SprintManager } from "./models/commands/sprint/SprintManager";
 import { errorHandler } from "./utils/errorHandler";
 import { loadApiClient } from "./utils/loadApiClient";
 import { loadCommands, loadContexts } from "./utils/loadCommands";
@@ -68,6 +69,7 @@ void (async () => {
 
   logger.debug("Initializing Cache...");
   bot.dataCache = { sprintManager: new SprintManager() };
+  bot.cooldowns = {};
 
   logger.debug("Attaching event listeners...");
   handleEvents(bot);

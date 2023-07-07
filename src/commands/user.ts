@@ -1,15 +1,10 @@
-import {
-  ChatInputCommandInteraction,
-  SlashCommandBuilder,
-  SlashCommandSubcommandBuilder,
-} from "discord.js";
+import { SlashCommandBuilder, SlashCommandSubcommandBuilder } from "discord.js";
 
 import { EventTypeOptions, EventStatusOptions } from "../config";
-import { CommandHandler, Command, Bot } from "../models";
+import { CommandHandler, Command } from "../models";
 import { logger } from "../utils/logHandler";
 
 import {
-  handleStats,
   handleReaderboard,
   handleEvents,
   handleInfo,
@@ -17,59 +12,51 @@ import {
 
 const handlers: Record<string, CommandHandler> = {
   info: handleInfo,
-  stats: handleStats,
   events: handleEvents,
   readerboard: handleReaderboard,
 };
+
+const userReaderboardSubcommand = new SlashCommandSubcommandBuilder()
+  .setName("readerboard")
+  .setDescription("Shows the server reading leaderboard");
+
+const userEventsSubcommand = new SlashCommandSubcommandBuilder()
+  .setName("events")
+  .setDescription("Gets the server events for the user")
+  .addStringOption((option) =>
+    option
+      .setName("type")
+      .setDescription("Event Type")
+      .addChoices(...EventTypeOptions)
+      .setRequired(true),
+  )
+  .addStringOption((option) =>
+    option
+      .setName("status")
+      .setDescription("Event Status")
+      .addChoices(...EventStatusOptions)
+      .setRequired(true),
+  )
+  .addUserOption((option) =>
+    option.setName("user").setDescription("User for which to fetch info"),
+  );
+
+const userInfoSubcommand = new SlashCommandSubcommandBuilder()
+  .setName("info")
+  .setDescription("Gets information about a user")
+  .addUserOption((option) =>
+    option.setName("user").setDescription("User for which to fetch info"),
+  );
 
 export const user: Command = {
   data: new SlashCommandBuilder()
     .setName("user")
     .setDescription("Handles user commands")
-    .addSubcommand(
-      new SlashCommandSubcommandBuilder()
-        .setName("info")
-        .setDescription("Gets information about a user")
-        .addUserOption((option) =>
-          option.setName("user").setDescription("User for which to fetch info"),
-        ),
-    )
-    .addSubcommand(
-      new SlashCommandSubcommandBuilder()
-        .setName("stats")
-        .setDescription("Shows the user's event stats for the server")
-        .addUserOption((option) =>
-          option.setName("user").setDescription("User for which to fetch info"),
-        ),
-    )
-    .addSubcommand(
-      new SlashCommandSubcommandBuilder()
-        .setName("events")
-        .setDescription("Shows the events for a user")
-        .addStringOption((option) =>
-          option
-            .setName("type")
-            .setDescription("Event Type")
-            .addChoices(...EventTypeOptions)
-            .setRequired(true),
-        )
-        .addStringOption((option) =>
-          option
-            .setName("status")
-            .setDescription("Event Status")
-            .addChoices(...EventStatusOptions)
-            .setRequired(true),
-        )
-        .addUserOption((option) =>
-          option.setName("user").setDescription("User for which to fetch info"),
-        ),
-    )
-    .addSubcommand(
-      new SlashCommandSubcommandBuilder()
-        .setName("readerboard")
-        .setDescription("Shows the server reading leaderboard"),
-    ),
-  run: async (bot: Bot, interaction: ChatInputCommandInteraction) => {
+    .addSubcommand(userEventsSubcommand)
+    .addSubcommand(userInfoSubcommand)
+    .addSubcommand(userReaderboardSubcommand)
+    .setDMPermission(false),
+  run: async (bot, interaction) => {
     try {
       const subCommand = interaction.options.getSubcommand();
       const handler = handlers[subCommand];
@@ -78,4 +65,5 @@ export const user: Command = {
       logger.error(err, `Error processing command user`);
     }
   },
+  cooldown: 15,
 };

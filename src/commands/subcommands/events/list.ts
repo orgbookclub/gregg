@@ -3,9 +3,8 @@ import {
   EventDtoStatusEnum,
   EventDtoTypeEnum,
 } from "@orgbookclub/ows-client";
-import { ChatInputCommandInteraction } from "discord.js";
 
-import { Bot, CommandHandler } from "../../../models";
+import { CommandHandler } from "../../../models";
 import { getEventsListEmbed } from "../../../utils/eventUtils";
 import { logger } from "../../../utils/logHandler";
 import { PaginationManager } from "../../../utils/paginationManager";
@@ -16,10 +15,7 @@ import { PaginationManager } from "../../../utils/paginationManager";
  * @param bot The bot instance.
  * @param interaction The interaction.
  */
-export const handleList: CommandHandler = async (
-  bot: Bot,
-  interaction: ChatInputCommandInteraction,
-) => {
+export const handleList: CommandHandler = async (bot, interaction) => {
   try {
     await interaction.deferReply();
     const eventType = interaction.options.getString(
@@ -30,6 +26,7 @@ export const handleList: CommandHandler = async (
       "status",
       true,
     ) as keyof typeof EventDtoStatusEnum;
+
     const response = await bot.api.events.eventsControllerFind({
       status: eventStatus,
       type: eventType,
@@ -47,5 +44,6 @@ export const handleList: CommandHandler = async (
     pagedContentManager.createCollectors(message, interaction, 5 * 60 * 1000);
   } catch (err) {
     logger.error(err, `Error in handleList`);
+    await interaction.editReply("Something went wrong! Please try again later");
   }
 };

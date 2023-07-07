@@ -6,7 +6,7 @@ import {
   userMention,
 } from "discord.js";
 
-import { CommandHandler, Bot } from "../../../models";
+import { CommandHandler } from "../../../models";
 import { logger } from "../../../utils/logHandler";
 import { PaginationManager } from "../../../utils/paginationManager";
 
@@ -16,21 +16,21 @@ import { PaginationManager } from "../../../utils/paginationManager";
  * @param bot The bot instance.
  * @param interaction The interaction.
  */
-const handleReaderboard: CommandHandler = async (
-  bot: Bot,
-  interaction: ChatInputCommandInteraction,
-) => {
+const handleReaderboard: CommandHandler = async (bot, interaction) => {
   try {
     await interaction.deferReply();
+
     const response = await bot.api.events.eventsControllerFind({
       status: EventDtoStatusEnum.Completed,
     });
-    const events = response.data;
-    if (events.length === 0) {
+
+    const eventDocs = response.data;
+    if (eventDocs.length === 0) {
       await interaction.editReply("No events found, something went wrong! :(");
       return;
     }
-    const scores = calculateReaderboardStats(events);
+    const scores = calculateReaderboardScores(eventDocs);
+
     const pageSize = 10;
     const pagedContentManager = new PaginationManager<
       [string, [number, number]]
@@ -41,12 +41,16 @@ const handleReaderboard: CommandHandler = async (
     pagedContentManager.createCollectors(message, interaction, 5 * 60 * 1000);
   } catch (err) {
     logger.error(err, `Error in handleReaderboard`);
+    await interaction.editReply(
+      "Something went wrong! Please try again later.",
+    );
   }
 };
 
-function calculateReaderboardStats(events: EventDocument[]) {
+function calculateReaderboardScores(eventDocs: EventDocument[]) {
   const scoreMap = new Map<string, number>();
-  for (const event of events) {
+
+  for (const event of eventDocs) {
     for (const participant of event.readers.concat(event.leaders)) {
       const userId = participant.user.userId;
       scoreMap.set(
@@ -55,14 +59,18 @@ function calculateReaderboardStats(events: EventDocument[]) {
       );
     }
   }
+
   const scores = [...scoreMap.entries()];
   scores.sort((a, b) => b[1] - a[1]);
+
   let position = 1;
   const scoresWithPosition: [string, [number, number]][] = [];
   for (const score of scores) {
-    scoresWithPosition.push([score[0], [position, score[1]]]);
+    const [userId, points] = score;
+    scoresWithPosition.push([userId, [position, points]]);
     position += 1;
   }
+
   return scoresWithPosition;
 }
 

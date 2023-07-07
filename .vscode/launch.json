@@ -10,7 +10,7 @@
       "name": "Launch Via Yarn",
       "runtimeExecutable": "yarn",
       "cwd": "${workspaceFolder}",
-      "runtimeArgs": ["dev"],
+      "runtimeArgs": ["start:dev"],
       "console": "integratedTerminal"
     }
   ]

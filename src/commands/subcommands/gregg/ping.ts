@@ -1,6 +1,4 @@
-import { ChatInputCommandInteraction } from "discord.js";
-
-import { CommandHandler, Bot } from "../../../models";
+import { CommandHandler } from "../../../models";
 import { logger } from "../../../utils/logHandler";
 
 /**
@@ -9,13 +7,11 @@ import { logger } from "../../../utils/logHandler";
  * @param bot The bot instance.
  * @param interaction The interaction.
  */
-export const handlePing: CommandHandler = async (
-  bot: Bot,
-  interaction: ChatInputCommandInteraction,
-) => {
+export const handlePing: CommandHandler = async (bot, interaction) => {
   try {
     await interaction.reply("Pong!");
   } catch (err) {
     logger.error(err, `Error in handlePing`);
+    await interaction.reply("Something went wrong! Please try again later.");
   }
 };

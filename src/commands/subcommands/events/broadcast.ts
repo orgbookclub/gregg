@@ -5,14 +5,12 @@ import {
   TextInputBuilder,
 } from "@discordjs/builders";
 import {
-  ChatInputCommandInteraction,
   ModalSubmitInteraction,
   TextInputStyle,
   ChannelType,
-  TextChannel,
 } from "discord.js";
 
-import { CommandHandler, Bot } from "../../../models";
+import { CommandHandler } from "../../../models";
 import { getUserMentionString } from "../../../utils/eventUtils";
 import { logger } from "../../../utils/logHandler";
 
@@ -25,23 +23,18 @@ const MESSAGE_FIELD_ID = "message";
  * @param bot The bot instance.
  * @param interaction The interaction.
  */
-const handleBroadcast: CommandHandler = async (
-  bot: Bot,
-  interaction: ChatInputCommandInteraction,
-) => {
+const handleBroadcast: CommandHandler = async (bot, interaction) => {
   try {
-    const id = interaction.options.getString("id", true);
-    const channel = interaction.options.getChannel<ChannelType.GuildText>(
-      "channel",
-      false,
-    );
+    const eventId = interaction.options.getString("id", true);
+    const channel =
+      interaction.options.getChannel<ChannelType.GuildText>("channel");
     if (channel && !channel.isTextBased()) {
       await interaction.reply("Invalid channel!");
       return;
     }
 
     // Create and show modal
-    const modal = getBroadcastModal(id);
+    const modal = getBroadcastModal(eventId);
     await interaction.showModal(modal);
 
     const filter = (msInteraction: ModalSubmitInteraction) =>
@@ -54,7 +47,9 @@ const handleBroadcast: CommandHandler = async (
       modalSubmitInteraction.fields.getTextInputValue(MESSAGE_FIELD_ID);
 
     // Get event details
-    const response = await bot.api.events.eventsControllerFindOne({ id: id });
+    const response = await bot.api.events.eventsControllerFindOne({
+      id: eventId,
+    });
     if (!response) {
       await modalSubmitInteraction.reply({
         content: "Invalid Event ID!",
@@ -62,16 +57,20 @@ const handleBroadcast: CommandHandler = async (
       });
       return;
     }
+
     const eventDoc = response.data;
 
     let threadToPost;
     if (!channel) {
       const threadId = eventDoc.threads[0];
       const eventThreadChannel = await bot.channels.fetch(threadId);
-      if (eventThreadChannel === null || !eventThreadChannel.isTextBased()) {
-        throw new Error("Unable to post event broadcast in configured channel");
+      if (!eventThreadChannel?.isTextBased()) {
+        await interaction.editReply(
+          "Configured channel in event is not a valid text channel! Please try manually giving the channel as input",
+        );
+        return;
       }
-      threadToPost = eventThreadChannel as TextChannel;
+      threadToPost = eventThreadChannel;
     } else {
       threadToPost = channel;
     }
@@ -90,6 +89,7 @@ const handleBroadcast: CommandHandler = async (
     });
   } catch (err) {
     logger.error(err, `Error in handleBroadcast`);
+    await interaction.editReply("Something went wrong! Please try again later");
   }
 };
 

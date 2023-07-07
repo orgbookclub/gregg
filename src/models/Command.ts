@@ -10,4 +10,5 @@ export interface Command {
   data: SlashCommandBuilder | SlashCommandSubcommandsOnlyBuilder;
 
   run: (bot: Bot, interaction: ChatInputCommandInteraction) => Promise<void>;
+  cooldown?: number;
 }

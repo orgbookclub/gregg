@@ -1,4 +1,5 @@
-import { Sprint, SprintStatus } from ".";
+import { Sprint } from "./Sprint";
+import { SprintStatus } from "./SprintStatus";
 
 /**
  * Handles the storage and access of running sprints.
@@ -24,31 +25,14 @@ export class SprintManager {
   }
 
   /**
-   * Returns a value indicating if there is an ongoing active sprint in the given thread.
-   *
-   * @param threadId The ID of the channel or thread.
-   * @returns True if there is an existing sprint, false otherwise.
-   */
-  isActiveSprintPresent(threadId: string) {
-    return (
-      this.sprints[threadId] !== undefined &&
-      (this.sprints[threadId].status === SprintStatus.Ongoing ||
-        this.sprints[threadId].status === SprintStatus.Scheduled)
-    );
-  }
-
-  /**
-   * Returns a value indicating if a sprint is present for the given thread.
+   * Returns a value indicating if a sprint with the status is present for the given thread.
    *
    * @param threadId The ID of the channel or thread.
    * @param status The sprint status.
-   * @returns Value indicating sprint is present or not.
+   * @returns Boolean indicating sprint is present or not.
    */
   isSprintPresent(threadId: string, status: SprintStatus) {
-    return (
-      this.sprints[threadId] !== undefined &&
-      this.sprints[threadId].status === status
-    );
+    return this.sprints[threadId]?.status === status;
   }
 
   /**

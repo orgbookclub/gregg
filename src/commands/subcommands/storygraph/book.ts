@@ -1,52 +1,58 @@
 import { StorygraphBookDto } from "@orgbookclub/ows-client";
-import { ChatInputCommandInteraction, Colors, EmbedBuilder } from "discord.js";
+import { Colors, EmbedBuilder } from "discord.js";
 
-import { CommandHandler, Bot } from "../../../models";
+import { CommandHandler } from "../../../models";
 import { getAuthorString } from "../../../utils/bookUtils";
 import { logger } from "../../../utils/logHandler";
 
 /**
- * Gets the SG book information and returns an embed.
+ * Fetches details of a book from SG.
  *
  * @param bot The bot instance.
  * @param interaction The interaction.
  */
-const handleBook: CommandHandler = async (
-  bot: Bot,
-  interaction: ChatInputCommandInteraction,
-) => {
+const handleBook: CommandHandler = async (bot, interaction) => {
   try {
     const query = interaction.options.getString("query", true);
+    const isEphermal = interaction.options.getBoolean("ephermal") ?? true;
+    await interaction.deferReply({ ephemeral: isEphermal });
+
     const response =
       await bot.api.storygraph.storygraphControllerSearchAndGetBook({
         q: query,
       });
+
+    if (!response) {
+      await interaction.editReply("No books found with that query!");
+    }
+
     const embed = getStorygraphBookEmbed(response.data);
     await interaction.editReply({ embeds: [embed] });
   } catch (err) {
     logger.error(err, `Error in handleBook`);
+    await interaction.editReply("Something went wrong! Please try again later");
   }
 };
 
-function getStorygraphBookEmbed(data: StorygraphBookDto) {
-  const authorUrl = data.authors[0].url;
+function getStorygraphBookEmbed(book: StorygraphBookDto) {
+  const authorUrl = book.authors[0].url;
   const embed = new EmbedBuilder()
-    .setTitle(data.title)
-    .setURL(data.url)
-    .setAuthor({ name: getAuthorString(data.authors), url: authorUrl })
-    .setThumbnail(data.coverUrl)
+    .setTitle(book.title)
+    .setURL(book.url)
+    .setAuthor({ name: getAuthorString(book.authors), url: authorUrl })
+    .setThumbnail(book.coverUrl)
     .addFields(
-      { name: "Rating ⭐", value: `${data.avgRating}`, inline: true },
+      { name: "Rating ⭐", value: `${book.avgRating}`, inline: true },
       {
         name: "Moods 🤔",
-        value: `${data.moods.slice(0, 3).join(", ")}`,
+        value: `${book.moods.slice(0, 3).join(", ")}`,
         inline: true,
       },
-      { name: "Pace 🏃‍♂️", value: `${data.pace.join(", ")}`, inline: true },
+      { name: "Pace 🏃‍♂️", value: `${book.pace.join(", ")}`, inline: true },
     )
     .setFooter({ text: `Fetched from Storygraph` })
     .setColor(Colors.DarkAqua);
-  data.quesAns.forEach((element) => {
+  book.quesAns.forEach((element) => {
     embed.addFields({
       name: `🔹 ${element.question}`,
       value: element.answer,

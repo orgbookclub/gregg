@@ -4,12 +4,11 @@ import {
   EventDtoStatusEnum,
 } from "@orgbookclub/ows-client";
 import {
-  Channel,
   channelMention,
   ChannelType,
-  ChatInputCommandInteraction,
   hideLinkEmbed,
-  TextChannel,
+  time,
+  TimestampStyles,
 } from "discord.js";
 
 import { ChannelIds } from "../../../config";
@@ -17,7 +16,6 @@ import { Bot, CommandHandler } from "../../../models";
 import {
   getEventInfoEmbed,
   getThreadTitle,
-  getUnixTimestamp,
   getUserMentionString,
 } from "../../../utils/eventUtils";
 import { logger } from "../../../utils/logHandler";
@@ -29,76 +27,96 @@ import { logger } from "../../../utils/logHandler";
  * @param bot The bot instance.
  * @param interaction The interaction.
  */
-const handleCreateThread: CommandHandler = async (
-  bot: Bot,
-  interaction: ChatInputCommandInteraction,
-) => {
+const handleCreateThread: CommandHandler = async (bot, interaction) => {
   try {
     await interaction.deferReply();
     const id = interaction.options.getString("id", true);
-    const thread = interaction.options.getChannel("thread");
+    const channel = interaction.options.getChannel<
+      ChannelType.GuildForum | ChannelType.PublicThread
+    >("channel");
+    const threadTitle = interaction.options.getString("title");
 
     // Validate event
     const response = await bot.api.events.eventsControllerFindOne({ id: id });
     if (!response) {
       await interaction.editReply("Invalid Event ID!");
     }
-    const event = response.data;
+    const eventDoc = response.data;
 
-    if (event.status !== EventDtoStatusEnum.Approved) {
+    if (eventDoc.status !== EventDtoStatusEnum.Approved) {
       await interaction.editReply(
-        "Event must be in 'Approved' state! Threads can only be created for approved events.",
+        "Event must be in 'Approved' state! Threads will only be created for approved events",
       );
       return;
     }
 
-    const title = getThreadTitle(event);
-    if (thread === null) {
-      const forum = await getForumChannel(bot, event.type);
+    // Create a new thread in a forum
+    if (!channel || channel.type === ChannelType.GuildForum) {
+      let forum = channel;
+      if (!channel) {
+        forum = await getConfiguredForumChannel(bot, eventDoc.type);
+      }
+      if (!forum) {
+        await interaction.editReply(
+          "Unable to find a configured/inputted forum channel!",
+        );
+        return;
+      }
       const post = await forum.threads.create({
-        name: title,
+        name: threadTitle ?? getThreadTitle(eventDoc),
         message: {
-          content: getPostContent(event),
+          content: getPostContent(eventDoc),
         },
-        reason: "Creating new thread for event",
       });
       await bot.api.events.eventsControllerUpdate({
-        id: event._id,
+        id: eventDoc._id,
         updateEventDto: {
-          threads: [...event.threads, post.id],
+          threads: [...eventDoc.threads, post.id],
         },
       });
       await interaction.editReply(`Created ${channelMention(post.id)}`);
-    } else {
-      const textThread = thread as TextChannel;
+      return;
+    }
+
+    // Update an already existing thread
+    if (!eventDoc.threads.includes(channel.id)) {
       const eventResponse = await bot.api.events.eventsControllerUpdate({
-        id: event._id,
+        id: eventDoc._id,
         updateEventDto: {
-          threads: [...event.threads, thread.id],
+          threads: [...eventDoc.threads, channel.id],
         },
       });
-      await textThread.send({
+
+      await channel.send({
         embeds: [getEventInfoEmbed(eventResponse.data, interaction)],
       });
-      await interaction.editReply(`Updated ${channelMention(thread.id)}`);
+    } else {
+      await channel.send({
+        embeds: [getEventInfoEmbed(eventDoc, interaction)],
+      });
+      if (threadTitle) {
+        await channel.edit({ name: threadTitle });
+      }
+      await interaction.editReply(`Updated ${channelMention(channel.id)}`);
     }
-    return;
   } catch (err) {
     logger.error(err, `Error in handleCreateThread`);
+    await interaction.editReply("Something went wrong! Please try again later");
   }
 };
 
-async function getForumChannel(bot: Bot, type: EventDocumentTypeEnum) {
-  let eventForum: Channel | null = null;
+async function getConfiguredForumChannel(
+  bot: Bot,
+  type: EventDocumentTypeEnum,
+) {
+  let eventForum;
   if (type === EventDocumentTypeEnum.BuddyRead) {
     eventForum = await bot.channels.fetch(ChannelIds.BRForumChannel);
   } else if (type === EventDocumentTypeEnum.MonthlyRead) {
     eventForum = await bot.channels.fetch(ChannelIds.MRForumChannel);
   }
-  if (eventForum === null || eventForum.type !== ChannelType.GuildForum) {
-    throw new Error(
-      `Unable to find specified forum channel for event type: ${type}`,
-    );
+  if (!eventForum || eventForum.type !== ChannelType.GuildForum) {
+    return null;
   }
   return eventForum;
 }
@@ -106,15 +124,15 @@ async function getForumChannel(bot: Bot, type: EventDocumentTypeEnum) {
 function getPostContent(event: EventDocument) {
   let content = "";
 
-  content += `### From <t:${getUnixTimestamp(
-    event.dates.startDate,
-  )}> To <t:${getUnixTimestamp(event.dates.endDate)}>`;
+  content += `### From ${time(
+    new Date(event.dates.startDate),
+    TimestampStyles.LongDate,
+  )} to ${time(new Date(event.dates.endDate), TimestampStyles.LongDate)}`;
   if (event.leaders.length > 0) {
     content += ` | Leader(s): ${getUserMentionString(event.leaders, false)}`;
   }
   content += `\n**Link**: ${hideLinkEmbed(event.book.url)}`;
   content += `\n**Cover**: ${event.book.coverUrl}`;
-
   content += `\n\n**ID**: \`${event._id}\``;
   return content;
 }

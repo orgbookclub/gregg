@@ -1,6 +1,7 @@
-import { ChatInputCommandInteraction } from "discord.js";
+import { userMention } from "discord.js";
 
-import { CommandHandler, Bot, SprintStatus } from "../../../models";
+import { CommandHandler } from "../../../models";
+import { SprintStatus } from "../../../models/commands/sprint/SprintStatus";
 import { logger } from "../../../utils/logHandler";
 
 /**
@@ -9,11 +10,10 @@ import { logger } from "../../../utils/logHandler";
  * @param bot The bot instance.
  * @param interaction The interaction.
  */
-export const handleLeave: CommandHandler = async (
-  bot: Bot,
-  interaction: ChatInputCommandInteraction,
-) => {
+export const handleLeave: CommandHandler = async (bot, interaction) => {
   try {
+    await interaction.deferReply();
+
     const threadId = interaction.channelId;
     const user = interaction.user;
     if (
@@ -23,16 +23,17 @@ export const handleLeave: CommandHandler = async (
       )
     ) {
       await interaction.editReply({
-        content: "There are no active sprints to leave in this thread!",
+        content: "There are no ongoing sprints to leave in this thread!",
       });
       return;
     }
     const sprint = bot.dataCache.sprintManager.getSprint(threadId);
-    sprint.leave(user);
+    sprint.leave(user.id);
     await interaction.editReply({
-      content: `Successfully left the sprint`,
+      content: `${userMention(user.id)} has left the sprint`,
     });
   } catch (err) {
     logger.error(err, `Error in handleLeave`);
+    await interaction.editReply("Something went wrong! Please try again later");
   }
 };

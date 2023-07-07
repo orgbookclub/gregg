@@ -7,29 +7,34 @@ datasource db {
   url      = env("MONGODB_URI")
 }
 
+type SprintsParticipants {
+  didFinish  Boolean
+  endCount   Int
+  startCount Int
+  userId     String
+}
+
 model qotds {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  v           Int?     @map("__v") @ignore
   question    String
-  status      String
   serverId    String
-  userId      String
+  status      String
   suggestedOn DateTime @db.Date
+  userId      String
 }
 
 model servers {
-  id         String @id @default(auto()) @map("_id") @db.ObjectId
-  v          Int?   @map("__v") @ignore
-  serverId   String
-  serverName String @default("")
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+}
 
-  @@unique([serverId], map: "serverId_1")
+model sprints {
+  id           String                @id @default(auto()) @map("_id") @db.ObjectId
+  duration     Int
+  participants SprintsParticipants[]
+  startedBy    String
+  threadId     String
 }
 
 model users {
-  id     String @id @default(auto()) @map("_id") @db.ObjectId
-  v      Int?   @map("__v") @ignore
-  userId String
-
-  @@unique([userId], map: "userId_1")
+  id String @id @default(auto()) @map("_id") @db.ObjectId
 }

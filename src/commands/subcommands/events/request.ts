@@ -1,17 +1,25 @@
 import {
+  EventDocumentTypeEnum,
+  EventDtoTypeEnum,
+} from "@orgbookclub/ows-client";
+import {
   ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
   ModalActionRowComponentBuilder,
   ModalBuilder,
-  TextInputBuilder,
-} from "@discordjs/builders";
-import { CreateEventDto, EventDtoTypeEnum } from "@orgbookclub/ows-client";
-import {
-  ChatInputCommandInteraction,
   ModalSubmitInteraction,
+  TextInputBuilder,
   TextInputStyle,
 } from "discord.js";
 
-import { CommandHandler, Bot } from "../../../models";
+import { ChannelIds } from "../../../config";
+import { Bot, CommandHandler } from "../../../models";
+import { EventRequestSubmission } from "../../../models/commands/events/EventRequestSubmission";
+import {
+  getEventRequestEmbed,
+  getNextMonthRange,
+} from "../../../utils/eventUtils";
 import { logger } from "../../../utils/logHandler";
 import { upsertUser } from "../../../utils/userUtils";
 
@@ -27,10 +35,7 @@ const REQUEST_REASON_FIELD_ID = "reason";
  * @param bot The bot instance.
  * @param interaction The interaction.
  */
-const handleRequest: CommandHandler = async (
-  bot: Bot,
-  interaction: ChatInputCommandInteraction,
-) => {
+const handleRequest: CommandHandler = async (bot, interaction) => {
   try {
     const eventType = interaction.options.getString(
       "type",
@@ -44,39 +49,108 @@ const handleRequest: CommandHandler = async (
       filter,
       time: 5 * 60 * 1000,
     });
+    await modalSubmitInteraction.deferReply({ ephemeral: true });
 
-    const { link, startDateString, endDateString, requestReason } =
-      extractFieldsFromModalSubmission(modalSubmitInteraction);
-
-    const { startDate, endDate } = validateModalSubmission(
-      startDateString,
-      endDateString,
-      link,
+    const submission: EventRequestSubmission = getEventRequestSubmission(
+      modalSubmitInteraction,
+      eventType,
     );
-    const user = await upsertUser(bot, interaction.user);
-    const eventRequestDto: CreateEventDto = {
-      type: eventType,
-      dates: {
-        startDate: startDate.toISOString(),
-        endDate: endDate.toISOString(),
-      },
-      requestedBy: { user: user._id, points: 0 },
-      leaders: [{ user: user._id, points: 0 }],
-      description: requestReason,
-    };
-    bot.emit("eventRequest", interaction, {
-      url: link,
-      createEventDto: eventRequestDto,
+    const validationResponse = isValidSubmission(submission);
+    if (!validationResponse.isValid) {
+      await modalSubmitInteraction.editReply(
+        `Invalid submission: ${validationResponse.message}`,
+      );
+      return;
+    }
+
+    const user = await upsertUser(bot, modalSubmitInteraction.user);
+
+    const response = await createEvent(eventType, submission, user._id, bot);
+    if (!response) {
+      await interaction.editReply(
+        "Something went wrong while trying to create the event :(",
+      );
+      return;
+    }
+
+    const eventResponse = await bot.api.events.eventsControllerFindOne({
+      id: response.data._id,
     });
-    await modalSubmitInteraction.reply({
-      content: "Your event request has been submitted!",
-      ephemeral: true,
+    if (!eventResponse) {
+      await interaction.editReply(
+        "Something went wrong while trying fetch the event :(",
+      );
+      return;
+    }
+
+    const eventDoc = eventResponse.data;
+    if (eventDoc.type === EventDocumentTypeEnum.BuddyRead) {
+      const channelId = ChannelIds.BRRequestChannel;
+      const channel = await bot.channels.fetch(channelId);
+      if (!channel?.isTextBased()) {
+        await modalSubmitInteraction.editReply(
+          "Unable to post event request in the configured channel. Please contact staff",
+        );
+        return;
+      }
+      const embed = getEventRequestEmbed(eventDoc, modalSubmitInteraction);
+      const buttonActionRow = getButtonActionRow(eventDoc._id);
+      await channel.send({
+        embeds: [embed],
+        components: [buttonActionRow],
+      });
+    }
+
+    await modalSubmitInteraction.editReply({
+      content: "Event request successful!",
     });
   } catch (err) {
-    await interaction.followUp({ content: `${err}`, ephemeral: true });
     logger.error(err, `Error in handleRequest`);
+    await interaction.reply("Something went wrong! Please try again later");
   }
 };
+
+async function createEvent(
+  eventType: keyof typeof EventDtoTypeEnum,
+  submission: EventRequestSubmission,
+  userId: string,
+  bot: Bot,
+) {
+  const createEventDto = {
+    type: eventType,
+    dates: {
+      startDate: new Date(submission.startDate).toISOString(),
+      endDate: new Date(submission.endDate).toISOString(),
+    },
+    requestedBy: { user: userId, points: 0 },
+    leaders: [{ user: userId, points: 0 }],
+    description: submission.requestReason,
+  };
+
+  const response = await bot.api.events.eventsControllerCreateFromUrl({
+    url: submission.link,
+    createEventDto: createEventDto,
+  });
+  return response;
+}
+
+function getButtonActionRow(eventId: string) {
+  const interestedButton = new ButtonBuilder()
+    .setLabel("Join")
+    .setEmoji({ name: "✅" })
+    .setStyle(ButtonStyle.Success)
+    .setCustomId(`er-${eventId}-interested`);
+  const notInterestedButton = new ButtonBuilder()
+    .setLabel("Leave")
+    .setEmoji({ name: "⛔" })
+    .setStyle(ButtonStyle.Secondary)
+    .setCustomId(`er-${eventId}-notInterested`);
+  const buttonActionRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+    interestedButton,
+    notInterestedButton,
+  );
+  return buttonActionRow;
+}
 
 function getEventRequestModal(eventType: string) {
   const modal = new ModalBuilder()
@@ -94,7 +168,7 @@ function getEventRequestModal(eventType: string) {
     );
   modal.addComponents(linkActionRow);
 
-  if (eventType === EventDtoTypeEnum.BuddyRead) {
+  if (eventType !== EventDtoTypeEnum.MonthlyRead) {
     const startDateInput = new TextInputBuilder()
       .setCustomId(START_DATE_FIELD_ID)
       .setLabel("When do you want the event to start?")
@@ -138,42 +212,65 @@ function getEventRequestModal(eventType: string) {
   return modal;
 }
 
-function extractFieldsFromModalSubmission(interaction: ModalSubmitInteraction) {
+function getEventRequestSubmission(
+  interaction: ModalSubmitInteraction,
+  eventType: string,
+) {
   const link = interaction.fields.getTextInputValue(BOOK_LINK_FIELD_ID);
-  const startDateString =
-    interaction.fields.getTextInputValue(START_DATE_FIELD_ID);
-  const endDateString = interaction.fields.getTextInputValue(END_DATE_FIELD_ID);
   const requestReason = interaction.fields.getTextInputValue(
     REQUEST_REASON_FIELD_ID,
   );
-  return { link, startDateString, endDateString, requestReason };
+
+  if (eventType !== EventDtoTypeEnum.MonthlyRead) {
+    const startDateString =
+      interaction.fields.getTextInputValue(START_DATE_FIELD_ID);
+    const endDateString =
+      interaction.fields.getTextInputValue(END_DATE_FIELD_ID);
+    return {
+      link: link,
+      requestReason: requestReason,
+      startDate: startDateString,
+      endDate: endDateString,
+    };
+  } else {
+    const [startDate, endDate] = getNextMonthRange(new Date());
+    return {
+      link: link,
+      requestReason: requestReason,
+      startDate: startDate.toDateString(),
+      endDate: endDate.toDateString(),
+    };
+  }
 }
 
-function validateModalSubmission(
-  startDateString: string,
-  endDateString: string,
-  link: string,
-) {
+function isValidSubmission(request: EventRequestSubmission) {
+  const { link, startDate: startDateString, endDate: endDateString } = request;
   const startTimestamp = Date.parse(startDateString);
   if (isNaN(startTimestamp)) {
-    throw new Error("Invalid start date");
+    return { isValid: false, message: "Invalid start date" };
   }
   const startDate = new Date(startTimestamp);
   if (startDate < new Date()) {
-    throw new Error("Start date cannot be in the past!");
+    return { isValid: false, message: "Start date cannot be in the past!" };
   }
   const endTimestamp = Date.parse(endDateString);
   if (isNaN(endTimestamp)) {
-    throw new Error("Invalid end date");
+    return { isValid: false, message: "Invalid end date" };
   }
   const endDate = new Date(endTimestamp);
   if (endDate < startDate) {
-    throw new Error("End date cannot be before the start date!");
+    return {
+      isValid: false,
+      message: "End date cannot be before the start date!",
+    };
   }
   if (!link.includes("goodreads.com/") && !link.includes("storygraph.com/")) {
-    throw new Error("Invalid link!");
+    return {
+      isValid: false,
+      message: "Invalid link",
+    };
   }
-  return { startDate, endDate };
+  return { isValid: true };
 }
 
 export { handleRequest };

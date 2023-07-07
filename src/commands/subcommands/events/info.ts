@@ -1,6 +1,4 @@
-import { ChatInputCommandInteraction } from "discord.js";
-
-import { Bot, CommandHandler } from "../../../models";
+import { CommandHandler } from "../../../models";
 import { getEventInfoEmbed } from "../../../utils/eventUtils";
 import { logger } from "../../../utils/logHandler";
 
@@ -10,19 +8,19 @@ import { logger } from "../../../utils/logHandler";
  * @param bot The bot instance.
  * @param interaction The interaction.
  */
-export const handleInfo: CommandHandler = async (
-  bot: Bot,
-  interaction: ChatInputCommandInteraction,
-) => {
+export const handleInfo: CommandHandler = async (bot, interaction) => {
   try {
     await interaction.deferReply();
-    const id = interaction.options.getString("id", true);
-    const response = await bot.api.events.eventsControllerFindOne({ id: id });
+    const eventId = interaction.options.getString("id", true);
+    const response = await bot.api.events.eventsControllerFindOne({
+      id: eventId,
+    });
     const embed = getEventInfoEmbed(response.data, interaction);
     await interaction.editReply({
       embeds: [embed],
     });
   } catch (err) {
     logger.error(err, `Error in handleInfo`);
+    await interaction.editReply("Something went wrong! Please try again later");
   }
 };

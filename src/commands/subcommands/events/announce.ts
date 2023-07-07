@@ -3,13 +3,12 @@ import {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
+  ChannelType,
   channelMention,
-  ChatInputCommandInteraction,
-  TextChannel,
 } from "discord.js";
 
 import { ChannelIds } from "../../../config";
-import { Bot, CommandHandler } from "../../../models";
+import { CommandHandler } from "../../../models";
 import { getEventInfoEmbed } from "../../../utils/eventUtils";
 import { logger } from "../../../utils/logHandler";
 
@@ -19,58 +18,86 @@ import { logger } from "../../../utils/logHandler";
  * @param bot The bot instance.
  * @param interaction The interaction.
  */
-const handleAnnounce: CommandHandler = async (
-  bot: Bot,
-  interaction: ChatInputCommandInteraction,
-) => {
+const handleAnnounce: CommandHandler = async (bot, interaction) => {
   try {
     await interaction.deferReply();
     const id = interaction.options.getString("id", true);
+    const channel =
+      interaction.options.getChannel<ChannelType.GuildAnnouncement>("channel");
 
-    // Validate event
     const response = await bot.api.events.eventsControllerFindOne({ id: id });
     if (!response) {
       await interaction.editReply("Invalid Event ID!");
-    }
-
-    const event = response.data;
-    if (event.status !== EventDtoStatusEnum.Approved) {
-      await interaction.editReply(
-        "Event must be in 'Approved' state! Announcements can only be created for approved events.",
-      );
       return;
     }
 
-    const announcementChannel = (await bot.channels.fetch(
-      ChannelIds.EventAnnouncementChannel,
-    )) as TextChannel;
+    const eventDoc = response.data;
+    if (eventDoc.status !== EventDtoStatusEnum.Approved) {
+      await interaction.editReply(
+        "Event must be in 'Approved' state! Announcements can only be created for approved events",
+      );
+      return;
+    }
+    let announcementChannel = channel;
+    if (!channel) {
+      const configuredChannel = await bot.channels.fetch(
+        ChannelIds.EventAnnouncementChannel,
+      );
+
+      if (
+        !configuredChannel ||
+        configuredChannel.type !== ChannelType.GuildAnnouncement
+      ) {
+        await interaction.editReply(
+          "Configured announcement channel is not valid :(",
+        );
+        return;
+      }
+      announcementChannel = configuredChannel;
+    }
+    if (!announcementChannel) return;
 
     const message = await announcementChannel.send({
-      content: `New Server Event! Please click on the button if you'd like to be pinged for discussions.\nDiscussion will take place in ${channelMention(
-        event.threads[0],
-      )}`,
-      embeds: [getEventInfoEmbed(event, interaction)],
-      components: [getButtonActionRow(event._id)],
-    });
-
-    await bot.api.events.eventsControllerUpdate({
-      id: event._id,
-      updateEventDto: { status: "Announced" },
+      content:
+        "New Server Event! Please click on the button if you'd like to be pinged for discussions." +
+        "\n" +
+        `Discussion will take place in ${eventDoc.threads
+          .map((x) => channelMention(x))
+          .join(", ")}`,
+      embeds: [getEventInfoEmbed(eventDoc, interaction)],
+      components: [getButtonActionRow(eventDoc._id)],
     });
     await interaction.editReply(`Announcement posted: ${message.url}`);
+
+    const updateResponse = await bot.api.events.eventsControllerUpdate({
+      id: eventDoc._id,
+      updateEventDto: { status: EventDtoStatusEnum.Announced },
+    });
+    if (!updateResponse) {
+      await interaction.editReply(
+        `Announcement posted: ${message.url} but There was an error updating the event status :(`,
+      );
+      return;
+    }
+    await interaction.editReply({
+      content: `Announcement posted: ${message.url} and event status changed to 'Announced'`,
+    });
   } catch (err) {
     logger.error(err, `Error in handleAnnounce`);
+    await interaction.reply("Something went wrong! Please try again later");
   }
 };
 
 function getButtonActionRow(eventId: string) {
   const interestedButton = new ButtonBuilder()
+    .setLabel("Join")
     .setEmoji({ name: "✅" })
     .setStyle(ButtonStyle.Success)
     .setCustomId(`ea-${eventId}-interested`);
   const notInterestedButton = new ButtonBuilder()
-    .setEmoji({ name: "❌" })
-    .setStyle(ButtonStyle.Secondary)
+    .setLabel("Leave")
+    .setEmoji({ name: "⛔" })
+    .setStyle(ButtonStyle.Danger)
     .setCustomId(`ea-${eventId}-notInterested`);
   const buttonActionRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
     interestedButton,

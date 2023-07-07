@@ -1,11 +1,10 @@
 import {
   ChannelType,
-  ChatInputCommandInteraction,
   SlashCommandBuilder,
   SlashCommandSubcommandBuilder,
 } from "discord.js";
 
-import { Bot, Command, CommandHandler } from "../models";
+import { Command, CommandHandler } from "../models";
 import { logger } from "../utils/logHandler";
 
 import { handleList, handlePost, handleSuggest } from "./subcommands/qotd";
@@ -22,7 +21,7 @@ const qotdSuggestSubcommand = new SlashCommandSubcommandBuilder()
   .addStringOption((option) =>
     option
       .setName("question")
-      .setDescription("Your suggested question of the day.")
+      .setDescription("The question to suggest")
       .setRequired(true),
   );
 
@@ -32,28 +31,27 @@ const qotdListSubcommand = new SlashCommandSubcommandBuilder()
 
 const qotdPostSubcommand = new SlashCommandSubcommandBuilder()
   .setName("post")
-  .setDescription("Posts a QOTD thread in the channel.")
+  .setDescription("Posts a QOTD thread in the channel")
   .addStringOption((option) =>
-    option.setName("id").setDescription("ID of the QOTD").setRequired(false),
+    option.setName("id").setDescription("Id of the QOTD"),
   )
   .addChannelOption((option) =>
     option
       .setName("channel")
       .setDescription("Channel where QOTD will be posted.")
-      .setRequired(false)
       .addChannelTypes(ChannelType.GuildText),
   );
 
 export const qotd: Command = {
   data: new SlashCommandBuilder()
     .setName("qotd")
-    .setDescription("Handles QOTD commands")
+    .setDescription("For handling QOTD related commands")
     .addSubcommand(qotdSuggestSubcommand)
     .addSubcommand(qotdListSubcommand)
-    .addSubcommand(qotdPostSubcommand),
-  run: async (bot: Bot, interaction: ChatInputCommandInteraction) => {
+    .addSubcommand(qotdPostSubcommand)
+    .setDMPermission(false),
+  run: async (bot, interaction) => {
     try {
-      await interaction.deferReply({ ephemeral: true });
       const subCommand = interaction.options.getSubcommand();
       const handler = handlers[subCommand];
       await handler(bot, interaction);
@@ -61,4 +59,5 @@ export const qotd: Command = {
       logger.error(err, `Error processing command qotd`);
     }
   },
+  cooldown: 3,
 };

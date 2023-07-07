@@ -8,21 +8,14 @@ import {
   ChatInputCommandInteraction,
   Colors,
   EmbedBuilder,
+  ModalSubmitInteraction,
+  TimestampStyles,
   channelMention,
+  time,
   userMention,
 } from "discord.js";
 
 import { getAuthorString } from "./bookUtils";
-
-/**
- * Converts a javascript date object into unix timestamp.
- *
- * @param date A JS date object or a string.
- * @returns The unix timestamp string.
- */
-export const getUnixTimestamp = (date: Date | string) => {
-  return Math.floor(new Date(date).getTime() / 1000).toString();
-};
 
 /**
  * Converts a particpant array or a user array to a comma separated user mention string.
@@ -83,10 +76,16 @@ export function getEventsListEmbed(
         `> [Link](${event.book.url}) | __ID__: \`${event._id}\`` +
         `\n> __Type__: ${event.type} | __Status__: ${event.status}` +
         (event.dates.startDate !== undefined
-          ? `\n> __Start__: <t:${getUnixTimestamp(event.dates.startDate)}:D>`
+          ? `\n> __Start__: ${time(
+              new Date(event.dates.startDate),
+              TimestampStyles.LongDate,
+            )}`
           : "") +
         (event.dates.endDate !== undefined
-          ? ` | __End__: <t:${getUnixTimestamp(event.dates.endDate)}:D>`
+          ? ` | __End__: ${time(
+              new Date(event.dates.endDate),
+              TimestampStyles.LongDate,
+            )}`
           : ""),
       inline: false,
     };
@@ -125,18 +124,18 @@ export function getEventInfoEmbed(
   }
   embed.addFields({
     name: "Start Date",
-    value: `<t:${getUnixTimestamp(event.dates.startDate)}:D>`,
+    value: `${time(new Date(event.dates.startDate), TimestampStyles.LongDate)}`,
     inline: true,
   });
   embed.addFields({
     name: "End Date",
-    value: `<t:${getUnixTimestamp(event.dates.endDate)}:D>`,
+    value: `${time(new Date(event.dates.endDate), TimestampStyles.LongDate)}`,
     inline: true,
   });
   if (event.threads && event.threads.length > 0) {
     embed.addFields({
       name: "Thread",
-      value: `${channelMention(event.threads[0])}`,
+      value: `${event.threads.map((x) => channelMention(x)).join(", ")}`,
       inline: true,
     });
   }
@@ -178,7 +177,10 @@ export function getEventInfoEmbed(
  */
 export function getEventRequestEmbed(
   event: EventDocument,
-  interaction: ChatInputCommandInteraction | ButtonInteraction,
+  interaction:
+    | ChatInputCommandInteraction
+    | ButtonInteraction
+    | ModalSubmitInteraction,
 ) {
   const embed = new EmbedBuilder()
     .setTitle(`${event.book.title} - ${getAuthorString(event.book.authors)}`)
@@ -201,12 +203,12 @@ export function getEventRequestEmbed(
   }
   embed.addFields({
     name: "Start Date",
-    value: `<t:${getUnixTimestamp(event.dates.startDate)}:D>`,
+    value: `${time(new Date(event.dates.startDate), TimestampStyles.LongDate)}`,
     inline: true,
   });
   embed.addFields({
     name: "End Date",
-    value: `<t:${getUnixTimestamp(event.dates.endDate)}:D>`,
+    value: `${time(new Date(event.dates.endDate), TimestampStyles.LongDate)}`,
     inline: true,
   });
   embed.addFields({
@@ -252,4 +254,35 @@ export function participantToDto(participant: Participant) {
     user: participant.user._id,
   };
   return participantDto;
+}
+
+/**
+ * Returns the first day and the last day of the next month, considering year changes and varying month lengths.
+ *
+ * @param date The date.
+ * @returns A tupe of dates.
+ */
+export function getNextMonthRange(date: Date): [Date, Date] {
+  const currentMonth = date.getMonth();
+  const currentYear = date.getFullYear();
+  let nextMonth: number;
+  let nextYear: number;
+
+  if (currentMonth === 11) {
+    // If current month is December, go to next year
+    nextMonth = 0;
+    nextYear = currentYear + 1;
+  } else {
+    // Otherwise, go to next month in the same year
+    nextMonth = currentMonth + 1;
+    nextYear = currentYear;
+  }
+
+  // Get the first day of the next month
+  const firstDayOfNextMonth = new Date(nextYear, nextMonth, 1);
+
+  // Move to the next month and subtract 1 day to get the last day of the next month
+  const lastDayOfNextMonth = new Date(nextYear, nextMonth + 1, 0);
+
+  return [firstDayOfNextMonth, lastDayOfNextMonth];
 }

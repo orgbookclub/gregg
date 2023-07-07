@@ -6,30 +6,36 @@ import {
   User,
 } from "discord.js";
 
-import { CommandHandler, Bot } from "../../../models";
+import { CommandHandler } from "../../../models";
 import { logger } from "../../../utils/logHandler";
 
 /**
- * Gets the user info and returns an embed.
+ * Gets information about a user.
  *
  * @param bot The bot instance.
  * @param interaction The interaction.
  */
-const handleInfo: CommandHandler = async (
-  bot: Bot,
-  interaction: ChatInputCommandInteraction,
-) => {
+const handleInfo: CommandHandler = async (bot, interaction) => {
   try {
     await interaction.deferReply();
     const user = interaction.options.getUser("user") ?? interaction.user;
     const response = await bot.api.users.usersControllerFindOneByUserId({
       userid: user.id,
     });
-    const userDto = response.data;
-    const embed = getUserInfoEmbed(userDto, user, interaction);
+    if (!response) {
+      await interaction.editReply(
+        `No user found! Please check if the user ID ${user.id} is registered with the bot`,
+      );
+      return;
+    }
+    const userDoc = response.data;
+    const embed = getUserInfoEmbed(userDoc, user, interaction);
     await interaction.editReply({ embeds: [embed] });
   } catch (err) {
     logger.error(err, `Error in handleInfo`);
+    await interaction.editReply(
+      "Something went wrong! Please try again later.",
+    );
   }
 };
 
@@ -39,7 +45,7 @@ function getUserInfoEmbed(
   interaction: ChatInputCommandInteraction,
 ) {
   const embed = new EmbedBuilder()
-    .setTitle(`${user.username}#${user.discriminator}`)
+    .setTitle(`${user.username}`)
     .setAuthor({
       name: interaction.guild?.name ?? "Guild Name Unavailable",
       iconURL: interaction.guild?.iconURL() ?? undefined,

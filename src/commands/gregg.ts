@@ -1,10 +1,6 @@
-import {
-  ChatInputCommandInteraction,
-  SlashCommandBuilder,
-  SlashCommandSubcommandBuilder,
-} from "discord.js";
+import { SlashCommandBuilder, SlashCommandSubcommandBuilder } from "discord.js";
 
-import { CommandHandler, Command, Bot } from "../models";
+import { CommandHandler, Command } from "../models";
 import { logger } from "../utils/logHandler";
 
 import { handlePing, handleAbout } from "./subcommands/gregg";
@@ -13,20 +9,22 @@ const handlers: Record<string, CommandHandler> = {
   ping: handlePing,
   about: handleAbout,
 };
+
 const greggPingSubcommand = new SlashCommandSubcommandBuilder()
   .setName("ping")
   .setDescription("Replies with Pong!");
+
 const greggInfoSubcommand = new SlashCommandSubcommandBuilder()
   .setName("about")
-  .setDescription("Shows information about Gregg.");
+  .setDescription("Shows information about the bot");
 
 export const gregg: Command = {
   data: new SlashCommandBuilder()
     .setName("gregg")
-    .setDescription("Handles general commands about the bot")
+    .setDescription("For general commands")
     .addSubcommand(greggPingSubcommand)
     .addSubcommand(greggInfoSubcommand),
-  run: async (bot: Bot, interaction: ChatInputCommandInteraction) => {
+  run: async (bot, interaction) => {
     try {
       const subCommand = interaction.options.getSubcommand();
       const handler = handlers[subCommand];

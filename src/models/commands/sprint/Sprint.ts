@@ -1,37 +1,35 @@
-import { uuid4 } from "@sentry/utils";
-import { User, userMention } from "discord.js";
+import { userMention } from "discord.js";
 
-import { getUserMentionString } from "../utils/eventUtils";
+import { getUserMentionString } from "../../../utils/eventUtils";
 
-import { SprintStatus } from ".";
+import { SprintParticipant } from "./SprintParticipant";
+import { SprintStatus } from "./SprintStatus";
 
 /**
  * Represents a Sprint.
  */
 export class Sprint {
-  id: string;
-  threadId: string;
-  participants: Set<string>;
-  startCounts: Record<string, number>;
-  endCounts: Record<string, number>;
   duration: number;
-  timer?: NodeJS.Timeout;
+  threadId: string;
+  startedBy: string;
+  participants: Record<string, SprintParticipant>;
   status: SprintStatus;
+  timer?: NodeJS.Timeout;
+  startedOn?: Date;
+  endedOn?: Date;
 
   /**
    * Initializes a sprint object.
    *
    * @param duration The duration in minutes for the sprint.
-   * @param delayBy The duration in minutes for which to delay before the sprint starts.
    * @param threadId The ID of the channel or thread where the sprint will be.
+   * @param startedBy The ID of the user who started the sprint.
    */
-  constructor(duration: number, delayBy: number, threadId: string) {
-    this.id = uuid4();
+  constructor(duration: number, threadId: string, startedBy: string) {
     this.threadId = threadId;
     this.duration = duration;
-    this.participants = new Set();
-    this.startCounts = {};
-    this.endCounts = {};
+    this.startedBy = startedBy;
+    this.participants = {};
     this.timer = undefined;
     this.status = SprintStatus.Scheduled;
   }
@@ -39,32 +37,36 @@ export class Sprint {
   /**
    * Adds a user as a participant in a sprint, and marks their start count.
    *
-   * @param user The user object.
+   * @param userId The user Id.
    * @param startCount The initial start count of the user.
    */
-  join(user: User, startCount: number) {
-    this.participants.add(user.id);
-    this.startCounts[user.id] = startCount;
+  join(userId: string, startCount: number) {
+    this.participants[userId] = {
+      userId: userId,
+      startCount: startCount,
+      endCount: 0,
+      didFinish: false,
+    };
   }
 
   /**
    * Removes a user from a sprint.
    *
-   * @param user The user object.
+   * @param userId The user Id.
    */
-  leave(user: User) {
-    this.participants.delete(user.id);
-    delete this.startCounts[user.id];
+  leave(userId: string) {
+    delete this.participants[userId];
   }
 
   /**
    * Logs the end count of a sprint participant.
    *
-   * @param user The user object.
+   * @param userId The user Id.
    * @param endCount The end count of the user.
    */
-  finish(user: User, endCount: number) {
-    this.endCounts[user.id] = endCount;
+  finish(userId: string, endCount: number) {
+    this.participants[userId].endCount = endCount;
+    this.participants[userId].didFinish = true;
   }
 
   /**
@@ -86,7 +88,7 @@ export class Sprint {
       "\n" +
       `**Duration** : ${this.duration} minute(s)` +
       "\n" +
-      `**Number of participants**: ${this.participants.size}`
+      `**Number of participants**: ${Object.keys(this.participants).length}`
     );
   }
 
@@ -96,7 +98,11 @@ export class Sprint {
    * @returns The string representing the start announcement.
    */
   getStartMessage() {
-    return `Sprint started! Duration: ${this.duration} minutes`;
+    return (
+      `📚📚📚 **Sprint started!**  | Duration: ${this.duration} minutes 📚📚📚` +
+      "\n" +
+      "Please use the `/sprint join` command to join the sprint"
+    );
   }
 
   /**
@@ -106,9 +112,10 @@ export class Sprint {
    */
   getFinishMessage() {
     return (
-      `${getUserMentionString(Array.from(this.participants.keys()))}` +
+      // `${getUserMentionString(Array.from(this.participants.keys()))}` +
+      `${getUserMentionString(Object.keys(this.participants))}` +
       "\n" +
-      `Sprint Finished! Please log your end count`
+      `Sprint Finished! Please log your end count within the next 2 minutes using \`/sprint finish\``
     );
   }
 
@@ -119,9 +126,13 @@ export class Sprint {
    */
   calculateSprintScores(): [string, number][] {
     const scores: Record<string, number> = {};
-    for (const key of this.participants) {
-      if (this.endCounts[key] === undefined) continue;
-      scores[key] = Math.max(0, this.endCounts[key] - this.startCounts[key]);
+    for (const userId in this.participants) {
+      const currParticipant = this.participants[userId];
+      if (!currParticipant.didFinish) continue;
+      scores[userId] = Math.max(
+        0,
+        currParticipant.endCount - currParticipant.startCount,
+      );
     }
     const items: [string, number][] = Object.keys(scores).map((key) => [
       key,
@@ -134,19 +145,22 @@ export class Sprint {
   /**
    * Creates a message for the sprint ending announcement with the stats.
    *
+   * @param scores The sprint scores.
    * @returns The string representing the sprint ending stats.
    */
-  getEndMessage() {
-    const scoreStrings = this.calculateSprintScores().map((item, index) => {
-      const readingSpeed = (item[1] / this.duration).toFixed(2);
+  getEndMessage(scores: [string, number][]) {
+    const scoreStrings = scores.map((item, index) => {
+      const [userId, count] = item;
+      const position = index + 1;
+      const readingSpeed = (count / this.duration).toFixed(2);
       return (
-        `\`${index + 1}\` ${userMention(item[0])} - **${
-          item[1]
-        }** (*${readingSpeed}* per minute)` + "\n"
+        `\`${position}\` ${userMention(
+          userId,
+        )} --> **${count}** *(${readingSpeed} per minute)*` + "\n"
       );
     });
     return (
-      "Congratulations sprinters!" +
+      "Congratulations Sprinters!" +
       "\n" +
       "**SPRINT STATS**" +
       "\n" +

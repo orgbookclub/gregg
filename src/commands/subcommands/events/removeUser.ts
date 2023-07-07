@@ -1,8 +1,7 @@
 import { UpdateEventDto } from "@orgbookclub/ows-client";
-import { ChatInputCommandInteraction } from "discord.js";
 
-import { Bot, CommandHandler } from "../../../models";
-import { participantToDto } from "../../../utils/eventUtils";
+import { CommandHandler } from "../../../models";
+import { getEventInfoEmbed, participantToDto } from "../../../utils/eventUtils";
 import { logger } from "../../../utils/logHandler";
 
 /**
@@ -11,10 +10,7 @@ import { logger } from "../../../utils/logHandler";
  * @param bot The bot instance.
  * @param interaction The interaction.
  */
-const handleRemove: CommandHandler = async (
-  bot: Bot,
-  interaction: ChatInputCommandInteraction,
-) => {
+const handleRemoveUser: CommandHandler = async (bot, interaction) => {
   try {
     const id = interaction.options.getString("id", true);
     const user = interaction.options.getUser("user", true);
@@ -36,25 +32,26 @@ const handleRemove: CommandHandler = async (
       return;
     }
     const event = response.data;
-    const currentParticipantsWithoutCurrentUser = event[participantType].filter(
+    const participantsWithoutCurrentUser = event[participantType].filter(
       (x) => x.user.userId !== user.id,
     );
     const updateEventDto: UpdateEventDto = {};
 
-    updateEventDto[participantType] = currentParticipantsWithoutCurrentUser.map(
-      (x) => participantToDto(x),
+    updateEventDto[participantType] = participantsWithoutCurrentUser.map((x) =>
+      participantToDto(x),
     );
-    bot.emit("eventEdit", {
+    const updatedResponse = await bot.api.events.eventsControllerUpdate({
       id: id,
       updateEventDto: updateEventDto,
     });
-
     await interaction.editReply({
-      content: "Your event edit request has been submitted!",
+      content: "Removed user from event!",
+      embeds: [getEventInfoEmbed(updatedResponse.data, interaction)],
     });
   } catch (error) {
     logger.error(error, "Error in handleRemove");
+    await interaction.reply("Something went wrong! Please try again later");
   }
 };
 
-export { handleRemove };
+export { handleRemoveUser };

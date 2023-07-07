@@ -1,8 +1,7 @@
-import { ParticipantDto, UpdateEventDto } from "@orgbookclub/ows-client";
-import { ChatInputCommandInteraction } from "discord.js";
+import { UpdateEventDto } from "@orgbookclub/ows-client";
 
-import { Bot, CommandHandler } from "../../../models";
-import { participantToDto } from "../../../utils/eventUtils";
+import { CommandHandler } from "../../../models";
+import { getEventInfoEmbed, participantToDto } from "../../../utils/eventUtils";
 import { logger } from "../../../utils/logHandler";
 import { upsertUser } from "../../../utils/userUtils";
 
@@ -12,16 +11,13 @@ import { upsertUser } from "../../../utils/userUtils";
  * @param bot The bot instance.
  * @param interaction The interaction.
  */
-const handleAdd: CommandHandler = async (
-  bot: Bot,
-  interaction: ChatInputCommandInteraction,
-) => {
+const handleAddUser: CommandHandler = async (bot, interaction) => {
   try {
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply();
     const id = interaction.options.getString("id", true);
     const user = interaction.options.getUser("user", true);
-    const points = interaction.options.getInteger("points", false) ?? 5;
     const participantType = interaction.options.getString("type", true);
+    const points = interaction.options.getInteger("points") ?? 5;
 
     if (
       participantType !== "readers" &&
@@ -40,31 +36,34 @@ const handleAdd: CommandHandler = async (
     }
     const userDoc = await upsertUser(bot, user);
 
-    const event = response.data;
-    const currentParticipantsWithoutCurrentUser = event[participantType].filter(
+    const eventDoc = response.data;
+    const allParticipants = eventDoc[participantType];
+    const participantsWithoutCurrentUser = allParticipants.filter(
       (x) => x.user.userId !== user.id,
     );
+
     const updateEventDto: UpdateEventDto = {};
-    const currParticipantDto: ParticipantDto = {
+    const currParticipantDto = {
       user: userDoc._id,
       points: points,
     };
     updateEventDto[participantType] = [
-      ...currentParticipantsWithoutCurrentUser.map((x) => participantToDto(x)),
+      ...participantsWithoutCurrentUser.map((x) => participantToDto(x)),
       currParticipantDto,
     ];
 
-    bot.emit("eventEdit", {
+    const updatedResponse = await bot.api.events.eventsControllerUpdate({
       id: id,
       updateEventDto: updateEventDto,
     });
-
     await interaction.editReply({
-      content: "Your event edit request has been submitted!",
+      content: "Added user to event!",
+      embeds: [getEventInfoEmbed(updatedResponse.data, interaction)],
     });
   } catch (error) {
     logger.error(error, "Error in handleAdd");
+    await interaction.reply("Something went wrong! Please try again later");
   }
 };
 
-export { handleAdd };
+export { handleAddUser };

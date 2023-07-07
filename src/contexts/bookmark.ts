@@ -10,10 +10,10 @@ import {
   Message,
   TextChannel,
   User,
+  time,
 } from "discord.js";
 
 import { Context, Bot } from "../models";
-import { getUnixTimestamp } from "../utils/eventUtils";
 import { logger } from "../utils/logHandler";
 
 const bookmark: Context = {
@@ -44,9 +44,7 @@ const bookmark: Context = {
 
       await interaction.user
         .send({
-          content: `Bookmark created: ${`<t:${getUnixTimestamp(
-            new Date(),
-          )}>`}\n${message.url}`,
+          content: `Bookmark created: ${`${time(new Date())}`}\n${message.url}`,
           embeds: [bookmarkEmbed, ...message.embeds],
           components: [buttonRow],
         })
@@ -98,7 +96,7 @@ function createBookmarkEmbed(author: User, message: Message<boolean>) {
 
 function createDeleteBookmarkComponent() {
   const deleteButton = new ButtonBuilder()
-    .setCustomId("delete-bookmark")
+    .setCustomId("bookmark-delete")
     .setLabel("Delete")
     .setStyle(ButtonStyle.Danger);
   const row = new ActionRowBuilder<ButtonBuilder>().addComponents([

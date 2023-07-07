@@ -2,16 +2,15 @@ import {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
-  ChatInputCommandInteraction,
   Colors,
-  ComponentType,
   EmbedBuilder,
-  TextChannel,
   User,
 } from "discord.js";
 
 import { ChannelIds } from "../../../config";
-import { Bot, CommandHandler } from "../../../models";
+import { CommandHandler } from "../../../models";
+import { QotdSuggestion } from "../../../models/commands/qotd/QotdSuggestion";
+import { QotdSuggestionStatus } from "../../../models/commands/qotd/QotdSuggestionStatus";
 import { logger } from "../../../utils/logHandler";
 
 /**
@@ -20,62 +19,53 @@ import { logger } from "../../../utils/logHandler";
  * @param bot The bot instance.
  * @param interaction The interaction.
  */
-const handleSuggest: CommandHandler = async (
-  bot: Bot,
-  interaction: ChatInputCommandInteraction,
-) => {
+const handleSuggest: CommandHandler = async (bot, interaction) => {
   try {
+    await interaction.deferReply({ ephemeral: true });
     const question = interaction.options.getString("question", true);
 
     const channelId = ChannelIds.QotdSuggestionChannel;
     const channel = await bot.channels.fetch(channelId);
 
-    if (channel === null || !channel.isTextBased()) {
-      throw new Error(
-        "Unable to post qotd suggestion in the configured channel",
+    if (!channel?.isTextBased()) {
+      logger.error(
+        { threadId: channel },
+        `Unable to find qotd text channel/thread`,
       );
+      await interaction.editReply(
+        "Something went wrong while trying to log the question in the channel. Please contact staff",
+      );
+      return;
     }
+    if (!interaction.guild) return;
+
+    const qotdSuggestion: QotdSuggestion = {
+      question: question,
+      status: QotdSuggestionStatus.Requested,
+      serverId: interaction.guild.id,
+      userId: interaction.user.id,
+      suggestedOn: new Date(),
+    };
+    const qotdSuggestionDoc = await bot.db.qotds.create({
+      data: qotdSuggestion,
+    });
+    const id = qotdSuggestionDoc.id;
     const embed = getQotdSuggestionEmbed(question, interaction.user);
+    const buttonActionRow = getButtonActionRow(
+      `qs-${id}-approve`,
+      `qs-${id}-reject`,
+    );
 
-    const approveId = "approve";
-    const rejectId = "reject";
-    const buttonActionRow = getButtonActionRow(approveId, rejectId);
-
-    const message = await (channel as TextChannel).send({
+    await channel.send({
       embeds: [embed],
       components: [buttonActionRow],
     });
-
-    const buttonCollector = message.createMessageComponentCollector({
-      componentType: ComponentType.Button,
-    });
-
-    buttonCollector.on("collect", async (i) => {
-      if (i.customId === approveId) {
-        bot.emit("qotdApprove", {
-          question: question,
-          serverId: interaction.guild?.id ?? "",
-          userId: interaction.user.id,
-        });
-        await i.update({
-          content: "Approved",
-          embeds: [embed],
-          components: [],
-        });
-      } else if (i.customId === rejectId) {
-        await i.update({
-          content: "Rejected",
-          embeds: [embed],
-          components: [],
-        });
-      }
-    });
-
     await interaction.editReply({
       content: "Your suggestion has been submitted!",
     });
   } catch (err) {
     logger.error(err, "Error in handleSuggest");
+    await interaction.editReply("Something went wrong! Please try again later");
   }
 };
 
