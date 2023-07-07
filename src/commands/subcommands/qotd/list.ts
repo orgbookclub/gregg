@@ -1,8 +1,14 @@
-import { EmbedBuilder } from "@discordjs/builders";
 import { qotds } from "@prisma/client";
-import { ChatInputCommandInteraction, Colors } from "discord.js";
+import {
+  ChatInputCommandInteraction,
+  Colors,
+  EmbedBuilder,
+  time,
+  userMention,
+} from "discord.js";
 
-import { Bot, CommandHandler } from "../../../models";
+import { CommandHandler } from "../../../models";
+import { QotdSuggestionStatus } from "../../../models/commands/qotd/QotdSuggestionStatus";
 import { logger } from "../../../utils/logHandler";
 import { PaginationManager } from "../../../utils/paginationManager";
 
@@ -12,21 +18,20 @@ import { PaginationManager } from "../../../utils/paginationManager";
  * @param bot The bot instance.
  * @param interaction The interaction.
  */
-const handleList: CommandHandler = async (
-  bot: Bot,
-  interaction: ChatInputCommandInteraction,
-) => {
+const handleList: CommandHandler = async (bot, interaction) => {
   try {
+    await interaction.deferReply();
+
     const approvedQotdList: qotds[] = await bot.db.qotds.findMany({
       where: {
-        status: "Approved",
+        status: QotdSuggestionStatus.Approved,
       },
     });
     if (approvedQotdList.length === 0) {
       await interaction.reply("There are no available Qotds");
       return;
     }
-    const pageSize = 10;
+    const pageSize = 7;
     const pagedContentManager = new PaginationManager<qotds>(
       pageSize,
       approvedQotdList,
@@ -40,6 +45,7 @@ const handleList: CommandHandler = async (
     pagedContentManager.createCollectors(message, interaction, 5 * 60 * 1000);
   } catch (err) {
     logger.error(err, "Error in handleList");
+    await interaction.editReply("Something went wrong! Please try again later");
   }
 };
 
@@ -58,7 +64,11 @@ function getQotdListEmbed(
   qotdList.forEach((doc) => {
     embed.addFields({
       name: doc.question,
-      value: `> ID: \`${doc.id}\``,
+      value:
+        `> __ID__: \`${doc.id}\`` +
+        "\n" +
+        `> __By__: ${userMention(doc.userId)}` +
+        ` | __On__: ${time(doc.suggestedOn)}`,
       inline: false,
     });
   });

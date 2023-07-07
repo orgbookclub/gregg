@@ -98,7 +98,7 @@ function createBookmarkEmbed(author: User, message: Message<boolean>) {
 
 function createDeleteBookmarkComponent() {
   const deleteButton = new ButtonBuilder()
-    .setCustomId("delete-bookmark")
+    .setCustomId("bookmark-delete")
     .setLabel("Delete")
     .setStyle(ButtonStyle.Danger);
   const row = new ActionRowBuilder<ButtonBuilder>().addComponents([
