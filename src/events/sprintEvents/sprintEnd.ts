@@ -31,6 +31,7 @@ export const sprintEnd: Event = {
           threadId: sprint.threadId,
           startedBy: sprint.startedBy,
           participants: Object.values(sprint.participants),
+          startedOn: sprint.startedOn ?? new Date(),
         },
       });
     } catch (err) {

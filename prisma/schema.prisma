@@ -23,18 +23,11 @@ model qotds {
   userId      String
 }
 
-model servers {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-}
-
 model sprints {
   id           String                @id @default(auto()) @map("_id") @db.ObjectId
   duration     Int
   participants SprintsParticipants[]
   startedBy    String
   threadId     String
-}
-
-model users {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+  startedOn    DateTime              @db.Date
 }
