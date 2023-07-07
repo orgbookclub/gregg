@@ -1,6 +1,5 @@
 import {
   ChannelType,
-  ChatInputCommandInteraction,
   SlashCommandBuilder,
   SlashCommandSubcommandBuilder,
 } from "discord.js";
@@ -11,18 +10,18 @@ import {
   EventTypeOptions,
 } from "../config";
 import { EventParticipantOptions } from "../config/EventParticipantOptions";
-import { Bot, Command, CommandHandler } from "../models";
+import { Command, CommandHandler } from "../models";
 import { logger } from "../utils/logHandler";
 
 import {
-  handleAdd,
+  handleAddUser,
   handleAnnounce,
   handleBroadcast,
   handleCreateThread,
   handleEdit,
   handleInfo,
   handleList,
-  handleRemove,
+  handleRemoveUser,
   handleRequest,
   handleSearch,
   handleStats,
@@ -37,8 +36,8 @@ const handlers: Record<string, CommandHandler> = {
   announce: handleAnnounce,
   createthread: handleCreateThread,
   broadcast: handleBroadcast,
-  add: handleAdd,
-  remove: handleRemove,
+  addUser: handleAddUser,
+  removeUser: handleRemoveUser,
   stats: handleStats,
 };
 
@@ -59,6 +58,7 @@ const eventsListSubcommand = new SlashCommandSubcommandBuilder()
       .addChoices(...EventStatusOptions)
       .setRequired(true),
   );
+
 const eventsBroadcastSubcommand = new SlashCommandSubcommandBuilder()
   .setName("broadcast")
   .setDescription("Broadcasts a message to all the readers of an event")
@@ -69,15 +69,16 @@ const eventsBroadcastSubcommand = new SlashCommandSubcommandBuilder()
     option
       .setName("channel")
       .addChannelTypes(ChannelType.GuildText)
-      .setDescription("The channel to post the broadcast message in")
-      .setRequired(false),
+      .setDescription("The channel to post the broadcast message in"),
   );
+
 const eventsInfoSubcommand = new SlashCommandSubcommandBuilder()
   .setName("info")
   .setDescription("Shows detailed information for an event")
   .addStringOption((option) =>
     option.setName("id").setDescription("Event ID").setRequired(true),
   );
+
 const eventsRequestSubcommand = new SlashCommandSubcommandBuilder()
   .setName("request")
   .setDescription("Request a server reading event")
@@ -87,26 +88,6 @@ const eventsRequestSubcommand = new SlashCommandSubcommandBuilder()
       .setDescription("Event Type")
       .addChoices(...EventTypeOptions)
       .setRequired(true),
-  );
-
-const eventsCreateThreadSubcommand = new SlashCommandSubcommandBuilder()
-  .setName("createthread")
-  .setDescription("creates a forum post for an approved event")
-  .addStringOption((option) =>
-    option.setName("id").setDescription("Event ID").setRequired(true),
-  )
-  .addChannelOption((option) =>
-    option
-      .setName("thread")
-      .setDescription("The thread if it already exists")
-      .setRequired(false),
-  );
-
-const eventsAnnounceSubcommand = new SlashCommandSubcommandBuilder()
-  .setName("announce")
-  .setDescription("makes an announcement for an approved event")
-  .addStringOption((option) =>
-    option.setName("id").setDescription("Event ID").setRequired(true),
   );
 
 const eventsEditSubcommand = new SlashCommandSubcommandBuilder()
@@ -128,6 +109,34 @@ const eventsEditSubcommand = new SlashCommandSubcommandBuilder()
       .setDescription("The value which will be set in the field")
       .setRequired(true),
   );
+
+const eventsCreateThreadSubcommand = new SlashCommandSubcommandBuilder()
+  .setName("createthread")
+  .setDescription("creates a forum post for an approved event")
+  .addStringOption((option) =>
+    option.setName("id").setDescription("Event ID").setRequired(true),
+  )
+  .addChannelOption((option) =>
+    option
+      .setName("thread")
+      .setDescription("The thread if it already exists")
+      .addChannelTypes(ChannelType.PublicThread),
+  )
+  .addStringOption((option) =>
+    option
+      .setName("title")
+      .setDescription("The title for the forum post")
+      .setMinLength(2)
+      .setMaxLength(100),
+  );
+
+const eventsAnnounceSubcommand = new SlashCommandSubcommandBuilder()
+  .setName("announce")
+  .setDescription("makes an announcement for an approved event")
+  .addStringOption((option) =>
+    option.setName("id").setDescription("Event ID").setRequired(true),
+  );
+
 const eventsSearchSubcommand = new SlashCommandSubcommandBuilder()
   .setName("search")
   .setDescription("searches for events")
@@ -150,8 +159,8 @@ const eventsSearchSubcommand = new SlashCommandSubcommandBuilder()
       .addChoices(...EventStatusOptions),
   );
 
-const eventsAddSubcommand = new SlashCommandSubcommandBuilder()
-  .setName("add")
+const eventsAddUserSubcommand = new SlashCommandSubcommandBuilder()
+  .setName("adduser")
   .setDescription("Adds a participant to the event")
   .addStringOption((option) =>
     option.setName("id").setDescription("Event ID").setRequired(true),
@@ -178,8 +187,8 @@ const eventsAddSubcommand = new SlashCommandSubcommandBuilder()
       .setMaxValue(100),
   );
 
-const eventsRemoveSubcommand = new SlashCommandSubcommandBuilder()
-  .setName("remove")
+const eventsRemoveUserSubcommand = new SlashCommandSubcommandBuilder()
+  .setName("removeuser")
   .setDescription("Removes a participant from the event")
   .addStringOption((option) =>
     option.setName("id").setDescription("Event ID").setRequired(true),
@@ -209,19 +218,19 @@ export const events: Command = {
   data: new SlashCommandBuilder()
     .setName("events")
     .setDescription("Handles event-related features")
-    .addSubcommand(eventsRequestSubcommand)
     .addSubcommand(eventsListSubcommand)
+    .addSubcommand(eventsRequestSubcommand)
     .addSubcommand(eventsBroadcastSubcommand)
     .addSubcommand(eventsInfoSubcommand)
     .addSubcommand(eventsCreateThreadSubcommand)
     .addSubcommand(eventsAnnounceSubcommand)
     .addSubcommand(eventsEditSubcommand)
     .addSubcommand(eventsSearchSubcommand)
-    .addSubcommand(eventsAddSubcommand)
-    .addSubcommand(eventsRemoveSubcommand)
+    .addSubcommand(eventsAddUserSubcommand)
+    .addSubcommand(eventsRemoveUserSubcommand)
     .addSubcommand(eventsStatsSubcommand)
     .setDMPermission(false),
-  run: async (bot: Bot, interaction: ChatInputCommandInteraction) => {
+  run: async (bot, interaction) => {
     try {
       const subCommand = interaction.options.getSubcommand();
       const handler = handlers[subCommand];

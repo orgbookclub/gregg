@@ -3,9 +3,9 @@ import {
   EventDtoTypeEnum,
   UpdateEventDto,
 } from "@orgbookclub/ows-client";
-import { ChatInputCommandInteraction } from "discord.js";
 
 import { Bot, CommandHandler } from "../../../models";
+import { getEventInfoEmbed } from "../../../utils/eventUtils";
 import { logger } from "../../../utils/logHandler";
 
 /**
@@ -14,11 +14,9 @@ import { logger } from "../../../utils/logHandler";
  * @param bot The bot instance.
  * @param interaction The interaction.
  */
-const handleEdit: CommandHandler = async (
-  bot: Bot,
-  interaction: ChatInputCommandInteraction,
-) => {
+const handleEdit: CommandHandler = async (bot, interaction) => {
   try {
+    await interaction.deferReply();
     const id = interaction.options.getString("id", true);
     const field = interaction.options.getString("field", true);
     const value = interaction.options.getString("value", true);
@@ -27,11 +25,10 @@ const handleEdit: CommandHandler = async (
     if (!response) {
       await interaction.reply({
         content: "Invalid event ID! Please try again with a valid event ID.",
-        ephemeral: true,
       });
       return;
     }
-    const event = response.data;
+    const eventDoc = response.data;
     const updateEventDto: UpdateEventDto = {};
     if (field === "status") {
       if (
@@ -39,10 +36,7 @@ const handleEdit: CommandHandler = async (
           value as keyof typeof EventDtoStatusEnum,
         )
       ) {
-        await interaction.reply({
-          content: "Invalid event status!",
-          ephemeral: true,
-        });
+        await interaction.reply({ content: "Invalid event status!" });
         return;
       }
       const status = value as keyof typeof EventDtoStatusEnum;
@@ -54,10 +48,7 @@ const handleEdit: CommandHandler = async (
           value as keyof typeof EventDtoTypeEnum,
         )
       ) {
-        await interaction.reply({
-          content: "Invalid event type!",
-          ephemeral: true,
-        });
+        await interaction.reply({ content: "Invalid event type!" });
         return;
       }
       const type = value as keyof typeof EventDtoTypeEnum;
@@ -65,90 +56,94 @@ const handleEdit: CommandHandler = async (
     }
     if (field === "dates.startDate") {
       if (isNaN(Date.parse(value))) {
-        await interaction.reply({
-          content: "Invalid date format!",
-          ephemeral: true,
-        });
+        await interaction.reply({ content: "Invalid date format!" });
         return;
       }
       const startDate = new Date(value);
-      updateEventDto.dates = event.dates;
+      updateEventDto.dates = eventDoc.dates;
       updateEventDto.dates.startDate = startDate.toISOString();
     }
     if (field === "dates.endDate") {
       if (isNaN(Date.parse(value))) {
-        await interaction.reply({
-          content: "Invalid date format!",
-          ephemeral: true,
-        });
+        await interaction.reply({ content: "Invalid date format!" });
         return;
       }
       const endDate = new Date(value);
-      updateEventDto.dates = event.dates;
+      updateEventDto.dates = eventDoc.dates;
       updateEventDto.dates.endDate = endDate.toISOString();
     }
-    if (field === "book") {
-      await interaction.reply({
-        content: "Sorry, editing this field is currently not supported :(",
-        ephemeral: true,
-      });
-      return;
-    }
+    // if (field === "book") {
+    //   await interaction.reply({content: "Sorry, editing this field is currently not supported :("
+    //   });
+    //   return;
+    // }
     if (field === "threads") {
-      const threads = value.split(",");
+      const threads = value.split(",").map((x) => x.trim());
       updateEventDto.threads = threads;
     }
     if (field === "requestedBy") {
-      const user = await getValidUserById(bot, value);
-      if (user === undefined) {
-        await interaction.reply(`No user found with user ID: ${value}`);
+      const userDoc = await getUserByDiscordId(bot, value);
+      if (!userDoc) {
+        await interaction.reply(`No user found with user Id: ${value}`);
         return;
       }
-      updateEventDto.requestedBy = { ...event.requestedBy, user: user._id };
+      updateEventDto.requestedBy = {
+        user: userDoc._id,
+        points: 0,
+      };
     }
-    if (field === "interested") {
-      await interaction.reply({
-        content: "Sorry, editing this field is currently not supported :(",
-        ephemeral: true,
-      });
-      return;
-    }
-    if (field === "readers") {
-      await interaction.reply({
-        content: "Sorry, editing this field is currently not supported :(",
-        ephemeral: true,
-      });
-      return;
-    }
-    if (field === "leaders") {
-      await interaction.reply({
-        content: "Sorry, editing this field is currently not supported :(",
-        ephemeral: true,
-      });
-      return;
-    }
+    // if (field === "interested") {
+    //   await interaction.reply({
+    //     content: "Sorry, editing this field is currently not supported :(",
+    //     ephemeral: true,
+    //   });
+    //   return;
+    // }
+    // if (field === "readers") {
+    //   await interaction.reply({
+    //     content: "Sorry, editing this field is currently not supported :(",
+    //     ephemeral: true,
+    //   });
+    //   return;
+    // }
+    // if (field === "leaders") {
+    //   await interaction.reply({
+    //     content: "Sorry, editing this field is currently not supported :(",
+    //     ephemeral: true,
+    //   });
+    //   return;
+    // }
     if (field === "description") {
       updateEventDto.description = value;
     }
     if (field === "name") {
       updateEventDto.name = value;
     }
-    bot.emit("eventEdit", { id: id, updateEventDto: updateEventDto });
-    await interaction.reply({
-      content: "Your event edit request has been submitted!",
-      ephemeral: true,
+    const editResponse = await bot.api.events.eventsControllerUpdate({
+      id: id,
+      updateEventDto: updateEventDto,
+    });
+    if (!editResponse) {
+      await interaction.editReply(
+        "Something went wrong whiled updating the event :(",
+      );
+      return;
+    }
+    await interaction.editReply({
+      content: "Event edit successful!",
+      embeds: [getEventInfoEmbed(editResponse.data, interaction)],
     });
   } catch (err) {
     logger.error(err, `Error in handleEdit`);
-    await interaction.followUp({ content: `${err}`, ephemeral: true });
+    await interaction.editReply("Something went wrong! Please try again later");
   }
 };
 
-async function getValidUserById(bot: Bot, value: string) {
+async function getUserByDiscordId(bot: Bot, id: string) {
   const userResponse = await bot.api.users.usersControllerFindOneByUserId({
-    userid: value,
+    userid: id,
   });
-  if (!userResponse || !userResponse.data) {
+  if (!userResponse?.data) {
     return undefined;
   }
   const user = userResponse.data;

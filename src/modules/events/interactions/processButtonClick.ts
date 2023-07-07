@@ -3,7 +3,11 @@ import { ButtonInteraction, Message } from "discord.js";
 
 import { Bot } from "../../../models";
 import { QotdSuggestionStatus } from "../../../models/commands/qotd/QotdSuggestionStatus";
-import { participantToDto } from "../../../utils/eventUtils";
+import {
+  getEventInfoEmbed,
+  getEventRequestEmbed,
+  participantToDto,
+} from "../../../utils/eventUtils";
 import { logger } from "../../../utils/logHandler";
 import { upsertUser } from "../../../utils/userUtils";
 
@@ -125,18 +129,30 @@ async function handleEventActions(interaction: ButtonInteraction, bot: Bot) {
             .filter((x) => x.user.userId !== interaction.user.id)
             .map((x) => participantToDto(x)),
   };
-
-  bot.emit("eventEdit", {
+  const response = await bot.api.events.eventsControllerUpdate({
     id: eventId,
     updateEventDto: updateEventDto,
-    interaction: interaction,
-    updateEmbedType: embedType,
   });
+  const updatedEventDoc = response.data;
+  let updatedEmbed;
+
+  if (embedType === "er") {
+    updatedEmbed = getEventRequestEmbed(updatedEventDoc, interaction);
+  } else if (embedType === "ea") {
+    updatedEmbed = getEventInfoEmbed(updatedEventDoc, interaction);
+  }
+  if (!updatedEmbed) {
+    await interaction.editReply(
+      "Something went wrong while updating the embed",
+    );
+    return;
+  }
   await interaction.editReply({
     content:
       action === "interested"
         ? "You have been marked as an interested participant for this event!"
         : "You are no longer a participant of this event",
+    embeds: [updatedEmbed],
   });
 }
 

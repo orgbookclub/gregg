@@ -112,9 +112,13 @@ export class PaginationManager<T> {
    * Creates the message payload for a page.
    *
    * @param interaction The interaction instance.
+   * @param disableComponents Boolean indicating if message components should be shown. Useful when collector has timed out.
    * @returns The message payload.
    */
-  createMessagePayloadForPage(interaction: ChatInputCommandInteraction) {
+  createMessagePayloadForPage(
+    interaction: ChatInputCommandInteraction,
+    disableComponents = false,
+  ) {
     const { selectMenuActionRow, buttonActionRow } =
       this.createMessageComponentsForPage();
     const pageData = this.getPageData();
@@ -127,7 +131,9 @@ export class PaginationManager<T> {
     return {
       content: `Page ${this.currPageNum} out of ${this.totalPageNum}`,
       embeds: [embed],
-      components: [selectMenuActionRow, buttonActionRow],
+      components: disableComponents
+        ? []
+        : [selectMenuActionRow, buttonActionRow],
     };
   }
 
@@ -145,7 +151,7 @@ export class PaginationManager<T> {
   ) {
     const buttonCollector = message.createMessageComponentCollector({
       componentType: ComponentType.Button,
-      time: duration,
+      idle: duration,
     });
 
     buttonCollector.on("collect", async (i) => {
@@ -168,11 +174,13 @@ export class PaginationManager<T> {
       logger.debug(
         `Collected ${collected.size} interactions on button collector on message ${buttonCollector.messageId}`,
       );
+      const payload = this.createMessagePayloadForPage(interaction, true);
+      message.edit(payload);
     });
 
     const selectMenuCollector = message.createMessageComponentCollector({
       componentType: ComponentType.StringSelect,
-      time: duration,
+      idle: duration,
     });
 
     selectMenuCollector.on("collect", async (i) => {
