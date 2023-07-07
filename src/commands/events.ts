@@ -43,7 +43,7 @@ const handlers: Record<string, CommandHandler> = {
 
 const eventsListSubcommand = new SlashCommandSubcommandBuilder()
   .setName("list")
-  .setDescription("Shows a list of events")
+  .setDescription("Fetches the list of events")
   .addStringOption((option) =>
     option
       .setName("type")
@@ -61,7 +61,7 @@ const eventsListSubcommand = new SlashCommandSubcommandBuilder()
 
 const eventsBroadcastSubcommand = new SlashCommandSubcommandBuilder()
   .setName("broadcast")
-  .setDescription("Broadcasts a message to all the readers of an event")
+  .setDescription("Broadcasts a message to all the participants of an event")
   .addStringOption((option) =>
     option.setName("id").setDescription("Event ID").setRequired(true),
   )
@@ -74,14 +74,14 @@ const eventsBroadcastSubcommand = new SlashCommandSubcommandBuilder()
 
 const eventsInfoSubcommand = new SlashCommandSubcommandBuilder()
   .setName("info")
-  .setDescription("Shows detailed information for an event")
+  .setDescription("Fetches information for a single event")
   .addStringOption((option) =>
     option.setName("id").setDescription("Event ID").setRequired(true),
   );
 
 const eventsRequestSubcommand = new SlashCommandSubcommandBuilder()
   .setName("request")
-  .setDescription("Request a server reading event")
+  .setDescription("Makes a request for a server reading event")
   .addStringOption((option) =>
     option
       .setName("type")
@@ -92,7 +92,7 @@ const eventsRequestSubcommand = new SlashCommandSubcommandBuilder()
 
 const eventsEditSubcommand = new SlashCommandSubcommandBuilder()
   .setName("edit")
-  .setDescription("edit an event")
+  .setDescription("Edits an event")
   .addStringOption((option) =>
     option.setName("id").setDescription("Event ID").setRequired(true),
   )
@@ -112,34 +112,40 @@ const eventsEditSubcommand = new SlashCommandSubcommandBuilder()
 
 const eventsCreateThreadSubcommand = new SlashCommandSubcommandBuilder()
   .setName("createthread")
-  .setDescription("creates a forum post for an approved event")
+  .setDescription("Creates or updates a thread for an event")
   .addStringOption((option) =>
     option.setName("id").setDescription("Event ID").setRequired(true),
   )
   .addChannelOption((option) =>
     option
-      .setName("thread")
-      .setDescription("The thread if it already exists")
-      .addChannelTypes(ChannelType.PublicThread),
+      .setName("channel")
+      .setDescription("A channel to create the thread in or a thread to update")
+      .addChannelTypes(ChannelType.GuildForum | ChannelType.PublicThread),
   )
   .addStringOption((option) =>
     option
       .setName("title")
-      .setDescription("The title for the forum post")
+      .setDescription("The title for the thread")
       .setMinLength(2)
       .setMaxLength(100),
   );
 
 const eventsAnnounceSubcommand = new SlashCommandSubcommandBuilder()
   .setName("announce")
-  .setDescription("makes an announcement for an approved event")
+  .setDescription("Makes an announcement for an approved event")
   .addStringOption((option) =>
     option.setName("id").setDescription("Event ID").setRequired(true),
+  )
+  .addChannelOption((option) =>
+    option
+      .setName("channel")
+      .setDescription("The channel to post the announcement in")
+      .addChannelTypes(ChannelType.GuildAnnouncement),
   );
 
 const eventsSearchSubcommand = new SlashCommandSubcommandBuilder()
   .setName("search")
-  .setDescription("searches for events")
+  .setDescription("Fetches a list of events according to the query")
   .addStringOption((option) =>
     option
       .setName("query")
@@ -161,7 +167,7 @@ const eventsSearchSubcommand = new SlashCommandSubcommandBuilder()
 
 const eventsAddUserSubcommand = new SlashCommandSubcommandBuilder()
   .setName("adduser")
-  .setDescription("Adds a participant to the event")
+  .setDescription("Adds a user as participant to the event")
   .addStringOption((option) =>
     option.setName("id").setDescription("Event ID").setRequired(true),
   )
@@ -189,7 +195,7 @@ const eventsAddUserSubcommand = new SlashCommandSubcommandBuilder()
 
 const eventsRemoveUserSubcommand = new SlashCommandSubcommandBuilder()
   .setName("removeuser")
-  .setDescription("Removes a participant from the event")
+  .setDescription("Removes a user as participant from the event")
   .addStringOption((option) =>
     option.setName("id").setDescription("Event ID").setRequired(true),
   )
@@ -209,7 +215,7 @@ const eventsRemoveUserSubcommand = new SlashCommandSubcommandBuilder()
 
 const eventsStatsSubcommand = new SlashCommandSubcommandBuilder()
   .setName("stats")
-  .setDescription("Gets the server event stats for a user")
+  .setDescription("Fetches the server event stats for a user")
   .addUserOption((option) =>
     option.setName("user").setDescription("User for which to fetch info"),
   );
@@ -218,17 +224,17 @@ export const events: Command = {
   data: new SlashCommandBuilder()
     .setName("events")
     .setDescription("Handles event-related features")
+    .addSubcommand(eventsInfoSubcommand)
     .addSubcommand(eventsListSubcommand)
+    .addSubcommand(eventsSearchSubcommand)
+    .addSubcommand(eventsStatsSubcommand)
     .addSubcommand(eventsRequestSubcommand)
     .addSubcommand(eventsBroadcastSubcommand)
-    .addSubcommand(eventsInfoSubcommand)
+    .addSubcommand(eventsEditSubcommand)
     .addSubcommand(eventsCreateThreadSubcommand)
     .addSubcommand(eventsAnnounceSubcommand)
-    .addSubcommand(eventsEditSubcommand)
-    .addSubcommand(eventsSearchSubcommand)
     .addSubcommand(eventsAddUserSubcommand)
     .addSubcommand(eventsRemoveUserSubcommand)
-    .addSubcommand(eventsStatsSubcommand)
     .setDMPermission(false),
   run: async (bot, interaction) => {
     try {

@@ -31,8 +31,9 @@ const handleCreateThread: CommandHandler = async (bot, interaction) => {
   try {
     await interaction.deferReply();
     const id = interaction.options.getString("id", true);
-    const thread =
-      interaction.options.getChannel<ChannelType.PublicThread>("thread");
+    const channel = interaction.options.getChannel<
+      ChannelType.GuildForum | ChannelType.PublicThread
+    >("channel");
     const threadTitle = interaction.options.getString("title");
 
     // Validate event
@@ -49,11 +50,15 @@ const handleCreateThread: CommandHandler = async (bot, interaction) => {
       return;
     }
 
-    if (!thread) {
-      const forum = await getForumChannel(bot, eventDoc.type);
+    // Create a new thread in a forum
+    if (!channel || channel.type === ChannelType.GuildForum) {
+      let forum = channel;
+      if (!channel) {
+        forum = await getConfiguredForumChannel(bot, eventDoc.type);
+      }
       if (!forum) {
         await interaction.editReply(
-          "Unable to find a configured forum channel!",
+          "Unable to find a configured/inputted forum channel!",
         );
         return;
       }
@@ -70,23 +75,29 @@ const handleCreateThread: CommandHandler = async (bot, interaction) => {
         },
       });
       await interaction.editReply(`Created ${channelMention(post.id)}`);
+      return;
+    }
+
+    // Update an already existing thread
+    if (!eventDoc.threads.includes(channel.id)) {
+      const eventResponse = await bot.api.events.eventsControllerUpdate({
+        id: eventDoc._id,
+        updateEventDto: {
+          threads: [...eventDoc.threads, channel.id],
+        },
+      });
+
+      await channel.send({
+        embeds: [getEventInfoEmbed(eventResponse.data, interaction)],
+      });
     } else {
-      if (!eventDoc.threads.includes(thread.id)) {
-        const eventResponse = await bot.api.events.eventsControllerUpdate({
-          id: eventDoc._id,
-          updateEventDto: {
-            threads: [...eventDoc.threads, thread.id],
-          },
-        });
-        await thread.send({
-          embeds: [getEventInfoEmbed(eventResponse.data, interaction)],
-        });
-      } else {
-        await thread.send({
-          embeds: [getEventInfoEmbed(eventDoc, interaction)],
-        });
+      await channel.send({
+        embeds: [getEventInfoEmbed(eventDoc, interaction)],
+      });
+      if (threadTitle) {
+        await channel.edit({ name: threadTitle });
       }
-      await interaction.editReply(`Updated ${channelMention(thread.id)}`);
+      await interaction.editReply(`Updated ${channelMention(channel.id)}`);
     }
   } catch (err) {
     logger.error(err, `Error in handleCreateThread`);
@@ -94,7 +105,10 @@ const handleCreateThread: CommandHandler = async (bot, interaction) => {
   }
 };
 
-async function getForumChannel(bot: Bot, type: EventDocumentTypeEnum) {
+async function getConfiguredForumChannel(
+  bot: Bot,
+  type: EventDocumentTypeEnum,
+) {
   let eventForum;
   if (type === EventDocumentTypeEnum.BuddyRead) {
     eventForum = await bot.channels.fetch(ChannelIds.BRForumChannel);
@@ -102,7 +116,7 @@ async function getForumChannel(bot: Bot, type: EventDocumentTypeEnum) {
     eventForum = await bot.channels.fetch(ChannelIds.MRForumChannel);
   }
   if (!eventForum || eventForum.type !== ChannelType.GuildForum) {
-    return undefined;
+    return null;
   }
   return eventForum;
 }

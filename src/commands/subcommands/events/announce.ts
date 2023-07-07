@@ -22,6 +22,8 @@ const handleAnnounce: CommandHandler = async (bot, interaction) => {
   try {
     await interaction.deferReply();
     const id = interaction.options.getString("id", true);
+    const channel =
+      interaction.options.getChannel<ChannelType.GuildAnnouncement>("channel");
 
     const response = await bot.api.events.eventsControllerFindOne({ id: id });
     if (!response) {
@@ -36,20 +38,24 @@ const handleAnnounce: CommandHandler = async (bot, interaction) => {
       );
       return;
     }
-
-    const announcementChannel = await bot.channels.fetch(
-      ChannelIds.EventAnnouncementChannel,
-    );
-
-    if (
-      !announcementChannel ||
-      announcementChannel.type !== ChannelType.GuildAnnouncement
-    ) {
-      await interaction.editReply(
-        "Configured announcement channel is not valid :(",
+    let announcementChannel = channel;
+    if (!channel) {
+      const configuredChannel = await bot.channels.fetch(
+        ChannelIds.EventAnnouncementChannel,
       );
-      return;
+
+      if (
+        !configuredChannel ||
+        configuredChannel.type !== ChannelType.GuildAnnouncement
+      ) {
+        await interaction.editReply(
+          "Configured announcement channel is not valid :(",
+        );
+        return;
+      }
+      announcementChannel = configuredChannel;
     }
+    if (!announcementChannel) return;
 
     const message = await announcementChannel.send({
       content:
