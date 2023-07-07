@@ -12,6 +12,8 @@ import { logger } from "../../../utils/logHandler";
  */
 export const handleLeave: CommandHandler = async (bot, interaction) => {
   try {
+    await interaction.deferReply();
+
     const threadId = interaction.channelId;
     const user = interaction.user;
     if (
