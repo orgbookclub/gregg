@@ -1,7 +1,5 @@
-import { ChatInputCommandInteraction } from "discord.js";
-
-import { Bot, SprintStatus } from "../../../models";
 import { CommandHandler } from "../../../models/CommandHandler";
+import { SprintStatus } from "../../../models/commands/sprint/SprintStatus";
 import { logger } from "../../../utils/logHandler";
 
 /**
@@ -10,11 +8,10 @@ import { logger } from "../../../utils/logHandler";
  * @param bot The bot instance.
  * @param interaction The interaction.
  */
-export const handleStatus: CommandHandler = async (
-  bot: Bot,
-  interaction: ChatInputCommandInteraction,
-) => {
+export const handleStatus: CommandHandler = async (bot, interaction) => {
   try {
+    await interaction.deferReply();
+
     const threadId = interaction.channelId;
     if (
       !bot.dataCache.sprintManager.isSprintPresent(
@@ -24,10 +21,14 @@ export const handleStatus: CommandHandler = async (
       !bot.dataCache.sprintManager.isSprintPresent(
         threadId,
         SprintStatus.Ongoing,
+      ) &&
+      !bot.dataCache.sprintManager.isSprintPresent(
+        threadId,
+        SprintStatus.Finished,
       )
     ) {
       await interaction.editReply({
-        content: "There are no active sprints in this thread!",
+        content: "There are no ongoing sprints in this thread!",
       });
       return;
     }
@@ -37,5 +38,6 @@ export const handleStatus: CommandHandler = async (
     });
   } catch (err) {
     logger.error(err, `Error in handleStatus`);
+    await interaction.editReply("Something went wrong! Please try again later");
   }
 };

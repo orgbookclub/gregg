@@ -7,8 +7,8 @@ import {
 } from "discord.js";
 
 import { CommandHandler } from "../../../models";
-import { Stats } from "../../../models/commands/user/Stats";
-import { UserEventStats } from "../../../models/commands/user/UserEventStats";
+import { Stats } from "../../../models/commands/events/Stats";
+import { UserEventStats } from "../../../models/commands/events/UserEventStats";
 import { logger } from "../../../utils/logHandler";
 
 /**
@@ -102,7 +102,7 @@ function getUserEventStatsEmbed(
   interaction: ChatInputCommandInteraction,
 ) {
   const embed = new EmbedBuilder()
-    .setTitle(`${user.username}`)
+    .setTitle(`${user.username} | Event Stats`)
     .setAuthor({
       name: interaction.guild?.name ?? "Guild Name Unavailable",
       iconURL: interaction.guild?.iconURL() ?? undefined,

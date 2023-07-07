@@ -25,6 +25,7 @@ import {
   handleRemove,
   handleRequest,
   handleSearch,
+  handleStats,
 } from "./subcommands/events";
 
 const handlers: Record<string, CommandHandler> = {
@@ -38,6 +39,7 @@ const handlers: Record<string, CommandHandler> = {
   broadcast: handleBroadcast,
   add: handleAdd,
   remove: handleRemove,
+  stats: handleStats,
 };
 
 const eventsListSubcommand = new SlashCommandSubcommandBuilder()
@@ -195,6 +197,14 @@ const eventsRemoveSubcommand = new SlashCommandSubcommandBuilder()
       .addChoices(...EventParticipantOptions)
       .setRequired(true),
   );
+
+const eventsStatsSubcommand = new SlashCommandSubcommandBuilder()
+  .setName("stats")
+  .setDescription("Gets the server event stats for a user")
+  .addUserOption((option) =>
+    option.setName("user").setDescription("User for which to fetch info"),
+  );
+
 export const events: Command = {
   data: new SlashCommandBuilder()
     .setName("events")
@@ -209,6 +219,7 @@ export const events: Command = {
     .addSubcommand(eventsSearchSubcommand)
     .addSubcommand(eventsAddSubcommand)
     .addSubcommand(eventsRemoveSubcommand)
+    .addSubcommand(eventsStatsSubcommand)
     .setDMPermission(false),
   run: async (bot: Bot, interaction: ChatInputCommandInteraction) => {
     try {

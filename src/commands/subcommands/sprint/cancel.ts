@@ -1,6 +1,7 @@
-import { ChatInputCommandInteraction, userMention } from "discord.js";
+import { userMention } from "discord.js";
 
-import { CommandHandler, Bot, SprintStatus } from "../../../models";
+import { CommandHandler } from "../../../models";
+import { SprintStatus } from "../../../models/commands/sprint/SprintStatus";
 import { logger } from "../../../utils/logHandler";
 
 /**
@@ -9,19 +10,18 @@ import { logger } from "../../../utils/logHandler";
  * @param bot The bot instance.
  * @param interaction The interaction.
  */
-export const handleCancel: CommandHandler = async (
-  bot: Bot,
-  interaction: ChatInputCommandInteraction,
-) => {
+export const handleCancel: CommandHandler = async (bot, interaction) => {
   try {
+    await interaction.deferReply();
+
     const threadId = interaction.channelId;
     const user = interaction.user;
     if (
-      bot.dataCache.sprintManager.isSprintPresent(
+      !bot.dataCache.sprintManager.isSprintPresent(
         threadId,
         SprintStatus.Scheduled,
-      ) ||
-      bot.dataCache.sprintManager.isSprintPresent(
+      ) &&
+      !bot.dataCache.sprintManager.isSprintPresent(
         threadId,
         SprintStatus.Ongoing,
       )
@@ -39,5 +39,6 @@ export const handleCancel: CommandHandler = async (
     });
   } catch (err) {
     logger.error(err, `Error in handleCancel`);
+    await interaction.editReply("Something went wrong! Please try again later");
   }
 };

@@ -1,6 +1,6 @@
-import { ChatInputCommandInteraction } from "discord.js";
-
-import { CommandHandler, Bot, SprintStatus, Sprint } from "../../../models";
+import { CommandHandler } from "../../../models";
+import { Sprint } from "../../../models/commands/sprint/Sprint";
+import { SprintStatus } from "../../../models/commands/sprint/SprintStatus";
 import { logger } from "../../../utils/logHandler";
 
 /**
@@ -9,13 +9,13 @@ import { logger } from "../../../utils/logHandler";
  * @param bot The bot instance.
  * @param interaction The interaction.
  */
-export const handleStart: CommandHandler = async (
-  bot: Bot,
-  interaction: ChatInputCommandInteraction,
-) => {
+export const handleStart: CommandHandler = async (bot, interaction) => {
   try {
+    await interaction.deferReply();
+
     const duration = interaction.options.getInteger("duration", true);
     const delay = interaction.options.getInteger("delay") ?? 0;
+
     const threadId = interaction.channelId;
     if (
       bot.dataCache.sprintManager.isSprintPresent(
@@ -37,13 +37,21 @@ export const handleStart: CommandHandler = async (
       });
       return;
     }
-    const sprint = new Sprint(duration, delay, threadId);
+    const sprint = new Sprint(duration, threadId, interaction.user.id);
     bot.dataCache.sprintManager.add(sprint);
-    bot.emit("sprintSchedule", sprint, delay);
-    await interaction.editReply({
-      content: `A Sprint of ${duration} minutes will start in ${delay} minutes!`,
-    });
+    if (delay > 0) {
+      bot.emit("sprintSchedule", sprint.threadId, delay);
+      await interaction.editReply({
+        content: `Sprint of ${duration} minutes will start in ${delay} minute(s)!`,
+      });
+    } else {
+      bot.emit("sprintStart", sprint.threadId, delay);
+      await interaction.editReply(
+        `Sprint of ${duration} minutes starting now!`,
+      );
+    }
   } catch (err) {
     logger.error(err, `Error in handleStart`);
+    await interaction.editReply("Something went wrong! Please try again later");
   }
 };

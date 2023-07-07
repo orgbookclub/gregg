@@ -5,7 +5,6 @@ import { CommandHandler, Command } from "../models";
 import { logger } from "../utils/logHandler";
 
 import {
-  handleStats,
   handleReaderboard,
   handleEvents,
   handleInfo,
@@ -13,16 +12,15 @@ import {
 
 const handlers: Record<string, CommandHandler> = {
   info: handleInfo,
-  stats: handleStats,
   events: handleEvents,
   readerboard: handleReaderboard,
 };
 
-const userReaderboardCommand = new SlashCommandSubcommandBuilder()
+const userReaderboardSubcommand = new SlashCommandSubcommandBuilder()
   .setName("readerboard")
   .setDescription("Shows the server reading leaderboard");
 
-const userEventsCommand = new SlashCommandSubcommandBuilder()
+const userEventsSubcommand = new SlashCommandSubcommandBuilder()
   .setName("events")
   .setDescription("Gets the server events for the user")
   .addStringOption((option) =>
@@ -43,14 +41,7 @@ const userEventsCommand = new SlashCommandSubcommandBuilder()
     option.setName("user").setDescription("User for which to fetch info"),
   );
 
-const userStatsCommand = new SlashCommandSubcommandBuilder()
-  .setName("stats")
-  .setDescription("Gets the server event stats for a user")
-  .addUserOption((option) =>
-    option.setName("user").setDescription("User for which to fetch info"),
-  );
-
-const userInfoCommand = new SlashCommandSubcommandBuilder()
+const userInfoSubcommand = new SlashCommandSubcommandBuilder()
   .setName("info")
   .setDescription("Gets information about a user")
   .addUserOption((option) =>
@@ -61,10 +52,9 @@ export const user: Command = {
   data: new SlashCommandBuilder()
     .setName("user")
     .setDescription("Handles user commands")
-    .addSubcommand(userEventsCommand)
-    .addSubcommand(userInfoCommand)
-    .addSubcommand(userReaderboardCommand)
-    .addSubcommand(userStatsCommand)
+    .addSubcommand(userEventsSubcommand)
+    .addSubcommand(userInfoSubcommand)
+    .addSubcommand(userReaderboardSubcommand)
     .setDMPermission(false),
   run: async (bot, interaction) => {
     try {

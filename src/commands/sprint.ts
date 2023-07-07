@@ -1,10 +1,6 @@
-import {
-  ChatInputCommandInteraction,
-  SlashCommandBuilder,
-  SlashCommandSubcommandBuilder,
-} from "discord.js";
+import { SlashCommandBuilder, SlashCommandSubcommandBuilder } from "discord.js";
 
-import { CommandHandler, Command, Bot } from "../models";
+import { CommandHandler, Command } from "../models";
 import { logger } from "../utils/logHandler";
 
 import {
@@ -14,6 +10,7 @@ import {
   handleCancel,
   handleStatus,
   handleFinish,
+  handleStats,
 } from "./subcommands/sprint";
 
 const handlers: Record<string, CommandHandler> = {
@@ -23,10 +20,9 @@ const handlers: Record<string, CommandHandler> = {
   cancel: handleCancel,
   status: handleStatus,
   finish: handleFinish,
-  // TODO: Handle sprint stats command
+  stats: handleStats,
 };
 
-// TODO: Handle cooldown for this command
 const sprintStartSubcommand = new SlashCommandSubcommandBuilder()
   .setName("start")
   .setDescription("Starts a reading sprint")
@@ -45,18 +41,21 @@ const sprintStartSubcommand = new SlashCommandSubcommandBuilder()
       .setMinValue(0)
       .setMaxValue(15),
   );
+
 const sprintJoinSubcommand = new SlashCommandSubcommandBuilder()
   .setName("join")
   .setDescription("Join the ongoing sprint")
   .addIntegerOption((option) =>
     option.setName("count").setDescription("The initial count"),
   );
+
 const sprintFinishSubcommand = new SlashCommandSubcommandBuilder()
   .setName("finish")
   .setDescription("Gives your final count to the bot at the end of a sprint.")
   .addIntegerOption((option) =>
     option.setName("count").setDescription("The final count"),
   );
+
 const sprintStatsSubcommand = new SlashCommandSubcommandBuilder()
   .setName("stats")
   .setDescription("Shows the total sprint stats of a user")
@@ -65,12 +64,15 @@ const sprintStatsSubcommand = new SlashCommandSubcommandBuilder()
       .setName("user")
       .setDescription("User for which stats should be shown"),
   );
+
 const sprintStatusSubcommand = new SlashCommandSubcommandBuilder()
   .setName("status")
   .setDescription("Shows the current status of the ongoing sprint");
+
 const sprintCancelSubcommand = new SlashCommandSubcommandBuilder()
   .setName("cancel")
   .setDescription("Cancels an ongoing sprint in the channel");
+
 const sprintLeaveSubcommand = new SlashCommandSubcommandBuilder()
   .setName("leave")
   .setDescription("Leave an ongoing sprint in the channel");
@@ -87,9 +89,8 @@ export const sprint: Command = {
     .addSubcommand(sprintCancelSubcommand)
     .addSubcommand(sprintLeaveSubcommand)
     .setDMPermission(false),
-  run: async (bot: Bot, interaction: ChatInputCommandInteraction) => {
+  run: async (bot, interaction) => {
     try {
-      await interaction.deferReply();
       const subCommand = interaction.options.getSubcommand();
       const handler = handlers[subCommand];
       await handler(bot, interaction);
@@ -97,4 +98,5 @@ export const sprint: Command = {
       logger.error(err, `Error processing command sprint`);
     }
   },
+  cooldown: 3,
 };

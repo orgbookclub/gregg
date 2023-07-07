@@ -1,6 +1,5 @@
-import { ChatInputCommandInteraction } from "discord.js";
-
-import { CommandHandler, Bot, SprintStatus } from "../../../models";
+import { CommandHandler } from "../../../models";
+import { SprintStatus } from "../../../models/commands/sprint/SprintStatus";
 import { logger } from "../../../utils/logHandler";
 
 /**
@@ -9,12 +8,12 @@ import { logger } from "../../../utils/logHandler";
  * @param bot The bot instance.
  * @param interaction The interaction.
  */
-export const handleFinish: CommandHandler = async (
-  bot: Bot,
-  interaction: ChatInputCommandInteraction,
-) => {
+export const handleFinish: CommandHandler = async (bot, interaction) => {
   try {
+    await interaction.deferReply({ ephemeral: true });
+
     const count = interaction.options.getInteger("count") ?? 0;
+
     const threadId = interaction.channelId;
     const user = interaction.user;
     if (
@@ -29,18 +28,20 @@ export const handleFinish: CommandHandler = async (
       });
       return;
     }
+
     const sprint = bot.dataCache.sprintManager.getSprint(threadId);
-    if (!sprint.participants.has(user.id)) {
+    if (!sprint.participants[user.id]) {
       await interaction.editReply({
         content: "You were not a participant of this sprint!",
       });
       return;
     }
-    sprint.finish(user, count);
+    sprint.finish(user.id, count);
     await interaction.editReply({
-      content: `Successfully logged end count: ${count}`,
+      content: `Successfully logged your end count as ${count}!`,
     });
   } catch (err) {
     logger.error(err, `Error in handleFinish`);
+    await interaction.editReply("Something went wrong! Please try again later");
   }
 };

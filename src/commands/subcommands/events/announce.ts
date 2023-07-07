@@ -41,9 +41,11 @@ const handleAnnounce: CommandHandler = async (
       return;
     }
 
-    const announcementChannel = (await bot.channels.fetch(
+    const announcementChannel = await bot.channels.fetch(
       ChannelIds.EventAnnouncementChannel,
-    )) as TextChannel;
+    );
+
+    if (!announcementChannel?.isTextBased()) return;
 
     const message = await announcementChannel.send({
       content: `New Server Event! Please click on the button if you'd like to be pinged for discussions.\nDiscussion will take place in ${channelMention(
