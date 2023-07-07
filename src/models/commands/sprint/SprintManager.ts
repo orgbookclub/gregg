@@ -85,6 +85,77 @@ export class SprintManager {
   }
 
   /**
+   * Returns the participants of the sprint.
+   *
+   * @param sprintId The ID of the sprint.
+   * @returns A dictionary of participants.
+   */
+  getSprintParticipants(sprintId: string) {
+    if (!this.sprints[sprintId]) {
+      throw new Error("Unable to find the sprint!");
+    }
+    return this.sprints[sprintId].participants;
+  }
+
+  /**
+   * Logs the start count of a user.
+   *
+   * @param sprintId The Id of the sprint.
+   * @param userId The ID of the user.
+   * @param count The count to log.
+   */
+  logStartCount(sprintId: string, userId: string, count: number) {
+    if (!this.sprints[sprintId]) {
+      throw new Error("Unable to find the sprint!");
+    }
+    const sprint = this.sprints[sprintId];
+    sprint.join(userId, count);
+  }
+
+  /**
+   * Logs the end count of a user.
+   *
+   * @param sprintId The Id of the sprint.
+   * @param userId The ID of the user.
+   * @param count The count to log.
+   */
+  logEndCount(sprintId: string, userId: string, count: number) {
+    if (!this.sprints[sprintId]) {
+      throw new Error("Unable to find the sprint!");
+    }
+    const sprint = this.sprints[sprintId];
+
+    sprint.finish(userId, count);
+  }
+
+  /**
+   * Removes a user from the sprint.
+   *
+   * @param sprintId The id of the sprint.
+   * @param userId The user id.
+   */
+  removeUserFromSprint(sprintId: string, userId: string) {
+    if (!this.sprints[sprintId]) {
+      throw new Error("Unable to find the sprint!");
+    }
+    const sprint = this.sprints[sprintId];
+    sprint.leave(userId);
+  }
+
+  /**
+   * Gets the sprint status message.
+   *
+   * @param sprintId The id of the sprint.
+   * @returns The status message.
+   */
+  getSprintStatus(sprintId: string) {
+    if (!this.sprints[sprintId]) {
+      throw new Error("Unable to find the sprint!");
+    }
+    const sprint = this.sprints[sprintId];
+    return sprint.getStatusMessage();
+  }
+  /**
    * Cancels a sprint from the store.
    *
    * @param sprintId The Id of the sprint to be deleted.

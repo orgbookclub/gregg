@@ -29,14 +29,16 @@ export const handleFinish: CommandHandler = async (bot, interaction) => {
       return;
     }
 
-    const sprint = bot.dataCache.sprintManager.getSprint(threadId);
-    if (!sprint.participants[user.id]) {
+    // const sprint = bot.dataCache.sprintManager.getSprint(threadId);
+    const participants =
+      bot.dataCache.sprintManager.getSprintParticipants(threadId);
+    if (!participants[user.id]) {
       await interaction.editReply({
         content: "You were not a participant of this sprint!",
       });
       return;
     }
-    sprint.finish(user.id, count);
+    bot.dataCache.sprintManager.logEndCount(threadId, user.id, count);
     await interaction.editReply({
       content: `Successfully logged your end count as ${count}!`,
     });

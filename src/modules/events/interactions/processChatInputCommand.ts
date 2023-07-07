@@ -86,7 +86,7 @@ async function upsertCommandUsageInDb(
     create: {
       command: interaction.commandName,
       subcommand: interaction.options.getSubcommand(false) ?? "no subcommand",
-      uses: 0,
+      uses: 1,
     },
   });
 }

@@ -32,9 +32,8 @@ export const handleStatus: CommandHandler = async (bot, interaction) => {
       });
       return;
     }
-    const sprint = bot.dataCache.sprintManager.getSprint(threadId);
     await interaction.editReply({
-      content: sprint.getStatusMessage(),
+      content: bot.dataCache.sprintManager.getSprintStatus(threadId),
     });
   } catch (err) {
     logger.error(err, `Error in handleStatus`);

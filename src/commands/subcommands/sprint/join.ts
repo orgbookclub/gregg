@@ -31,9 +31,7 @@ export const handleJoin: CommandHandler = async (bot, interaction) => {
       });
       return;
     }
-
-    const sprint = bot.dataCache.sprintManager.getSprint(threadId);
-    sprint.join(user.id, startCount);
+    bot.dataCache.sprintManager.logStartCount(threadId, user.id, startCount);
     await interaction.editReply({
       content: `${userMention(
         user.id,

@@ -45,6 +45,7 @@ async function upsertMessageCountInDb(bot: Bot, message: Message) {
       guildId: guild.id,
       userId: author.id,
       channelId: channel.id,
+      count: 1,
     },
   });
 }

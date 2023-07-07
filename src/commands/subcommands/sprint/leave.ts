@@ -27,8 +27,7 @@ export const handleLeave: CommandHandler = async (bot, interaction) => {
       });
       return;
     }
-    const sprint = bot.dataCache.sprintManager.getSprint(threadId);
-    sprint.leave(user.id);
+    bot.dataCache.sprintManager.removeUserFromSprint(threadId, user.id);
     await interaction.editReply({
       content: `${userMention(user.id)} has left the sprint`,
     });
