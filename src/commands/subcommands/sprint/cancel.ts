@@ -31,9 +31,8 @@ export const handleCancel: CommandHandler = async (bot, interaction) => {
       });
       return;
     }
-    const sprint = bot.dataCache.sprintManager.getSprint(threadId);
-    sprint.cancel();
-    bot.dataCache.sprintManager.remove(sprint);
+
+    await bot.dataCache.sprintManager.cancelSprint(threadId, bot);
     await interaction.editReply({
       content: `Sprint cancelled by ${userMention(user.id)}`,
     });

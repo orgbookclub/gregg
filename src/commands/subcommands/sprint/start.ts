@@ -1,5 +1,4 @@
 import { CommandHandler } from "../../../models";
-import { Sprint } from "../../../models/commands/sprint/Sprint";
 import { SprintStatus } from "../../../models/commands/sprint/SprintStatus";
 import { logger } from "../../../utils/logHandler";
 
@@ -37,15 +36,19 @@ export const handleStart: CommandHandler = async (bot, interaction) => {
       });
       return;
     }
-    const sprint = new Sprint(duration, threadId, interaction.user.id);
-    bot.dataCache.sprintManager.add(sprint);
+    const sprintId = bot.dataCache.sprintManager.createSprint(
+      duration,
+      threadId,
+      interaction.user.id,
+    );
+
     if (delay > 0) {
-      bot.emit("sprintSchedule", sprint.threadId, delay);
+      bot.dataCache.sprintManager.scheduleSprint(sprintId, bot, delay);
       await interaction.editReply({
         content: `Sprint of ${duration} minutes will start in ${delay} minute(s)!`,
       });
     } else {
-      bot.emit("sprintStart", sprint.threadId, delay);
+      await bot.dataCache.sprintManager.startSprint(sprintId, bot);
       await interaction.editReply(
         `Sprint of ${duration} minutes starting now!`,
       );

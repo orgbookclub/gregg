@@ -1,27 +1,19 @@
+import { Bot } from "../..";
+
 import { Sprint } from "./Sprint";
 import { SprintStatus } from "./SprintStatus";
 
 /**
- * Handles the storage and access of running sprints.
+ * Handles the sprints.
  */
 export class SprintManager {
+  private sprints: Record<string, Sprint>;
+
   /**
    * Initializes a SprintStore.
    */
   constructor() {
     this.sprints = {};
-  }
-
-  sprints: Record<string, Sprint>;
-
-  /**
-   * Returns the sprint with the given thread id.
-   *
-   * @param threadId The ID of the channel or thread.
-   * @returns Found sprint object.
-   */
-  getSprint(threadId: string) {
-    return this.sprints[threadId];
   }
 
   /**
@@ -36,20 +28,158 @@ export class SprintManager {
   }
 
   /**
-   * Adds a sprint to the store.
+   * Creates a sprint and adds it to the store.
    *
-   * @param sprint Input sprint object.
+   * @param duration The duration of the sprint.
+   * @param threadId The thread Id where the sprint is.
+   * @param userId The Id of the user who started the sprint.
+   * @returns The created sprint ID.
    */
-  add(sprint: Sprint) {
+  createSprint(duration: number, threadId: string, userId: string) {
+    if (this.sprints[threadId] !== undefined) {
+      throw new Error("A sprint is already active in this thread!");
+    }
+    const sprint = new Sprint(duration, threadId, userId);
     this.sprints[sprint.threadId] = sprint;
+    return sprint.threadId;
   }
 
   /**
-   * Removes a sprint from the store.
+   * Schedules a sprint.
    *
-   * @param sprint The sprint to be deleted.
+   * @param sprintId The id of a sprint.
+   * @param bot The bot instance.
+   * @param delayBy The minutes to delay the start of the sprint.
    */
-  remove(sprint: Sprint) {
-    delete this.sprints[sprint.threadId];
+  scheduleSprint(sprintId: string, bot: Bot, delayBy: number) {
+    if (!this.sprints[sprintId]) {
+      throw new Error("Unable to find the sprint!");
+    }
+    const sprint = this.sprints[sprintId];
+    sprint.status = SprintStatus.Scheduled;
+    sprint.timer = setTimeout(() => {
+      bot.dataCache.sprintManager.startSprint(sprintId, bot);
+    }, delayBy * 60 * 1000);
+  }
+
+  /**
+   * Marks a sprint as Ongoing, sets the timer for the sprint finish, and posts the start message in the thread.
+   *
+   * @param sprintId The id of the sprint.
+   * @param bot The bot instance.
+   */
+  async startSprint(sprintId: string, bot: Bot) {
+    if (!this.sprints[sprintId]) {
+      throw new Error("Unable to find the sprint!");
+    }
+    const sprint = this.sprints[sprintId];
+    sprint.status = SprintStatus.Ongoing;
+    sprint.startedOn = new Date();
+
+    const channel = await this.fetchSprintChannel(bot, sprint.threadId);
+    await channel.send({ content: sprint.getStartMessage() });
+
+    sprint.timer = setTimeout(() => {
+      bot.dataCache.sprintManager.finishSprint(sprintId, bot);
+    }, sprint.duration * 60 * 1000);
+  }
+
+  /**
+   * Cancels a sprint from the store.
+   *
+   * @param sprintId The Id of the sprint to be deleted.
+   * @param bot The bot instance.
+   */
+  async cancelSprint(sprintId: string, bot: Bot) {
+    if (!this.sprints[sprintId]) {
+      throw new Error("Unable to find the sprint!");
+    }
+    const sprint = this.sprints[sprintId];
+    sprint.status = SprintStatus.Cancelled;
+
+    sprint.cancel();
+    await bot.db.sprints.create({
+      data: {
+        duration: sprint.duration,
+        threadId: sprint.threadId,
+        startedBy: sprint.startedBy,
+        participants: Object.values(sprint.participants),
+        startedOn: sprint.startedOn ?? new Date(),
+        endedOn: sprint.endedOn ?? new Date(),
+        status: sprint.status,
+      },
+    });
+    delete this.sprints[sprintId];
+  }
+
+  /**
+   * Marks a sprint as finished, starts the timer for sprint end, and posts the finish message in the thread.
+   *
+   * @param sprintId The ID of the sprint.
+   * @param bot The bot instance.
+   */
+  async finishSprint(sprintId: string, bot: Bot) {
+    if (!this.sprints[sprintId]) {
+      throw new Error("Unable to find the sprint!");
+    }
+    const sprint = this.sprints[sprintId];
+    sprint.status = SprintStatus.Finished;
+
+    const channel = await this.fetchSprintChannel(bot, sprint.threadId);
+    await channel.send({ content: sprint.getFinishMessage() });
+
+    sprint.timer = setTimeout(() => {
+      bot.dataCache.sprintManager.endSprint(sprintId, bot);
+    }, 2 * 60 * 1000);
+  }
+
+  /**
+   * Marks a sprint as completed, calculates and sends the scores in the thread, and stores it in the db.
+   *
+   * @param sprintId The Id of the sprint.
+   * @param bot The bot instance.
+   */
+  async endSprint(sprintId: string, bot: Bot) {
+    if (!this.sprints[sprintId]) {
+      throw new Error("Unable to find the sprint!");
+    }
+    const sprint = this.sprints[sprintId];
+    sprint.endedOn = new Date();
+    sprint.status = SprintStatus.Completed;
+
+    const scores = sprint.calculateSprintScores();
+    const channel = await this.fetchSprintChannel(bot, sprint.threadId);
+    await channel.send({
+      content: `${sprint.getEndMessage(scores)}`,
+    });
+
+    await bot.db.sprints.create({
+      data: {
+        duration: sprint.duration,
+        threadId: sprint.threadId,
+        startedBy: sprint.startedBy,
+        participants: Object.values(sprint.participants),
+        startedOn: sprint.startedOn ?? new Date(),
+        endedOn: sprint.endedOn ?? new Date(),
+        status: sprint.status,
+      },
+    });
+  }
+
+  /**
+   * Fetches the channel for the sprint.
+   *
+   * @param bot The bot instance.
+   * @param threadId The thread Id.
+   * @returns The text channel.
+   */
+  private async fetchSprintChannel(bot: Bot, threadId: string) {
+    const channel = await bot.channels.fetch(threadId);
+    if (!channel?.isTextBased()) {
+      throw new Error(
+        `Unable to find sprint text channel or thread ${threadId}`,
+      );
+    }
+    return channel;
   }
 }
