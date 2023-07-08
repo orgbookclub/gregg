@@ -1,5 +1,5 @@
 import { init } from "@sentry/node";
-import { ActivityType, Client } from "discord.js";
+import { ActivityType, Client, WebhookClient } from "discord.js";
 
 import { IntentOptions } from "./config";
 import { connectPrisma } from "./database/connectPrisma";
@@ -31,6 +31,8 @@ void (async () => {
   logger.debug("Validating environment variables...");
   bot.configs = validateEnv();
 
+  logger.debug("Initializing debug webhook...");
+  bot.debugHook = new WebhookClient({ url: bot.configs.whUrl });
   /**
    * Fallthrough error handlers. These fire in rare cases where something throws
    * in a way that our standard catch block cannot see it.
