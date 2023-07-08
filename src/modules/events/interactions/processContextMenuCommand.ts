@@ -58,7 +58,7 @@ export async function processContextMenuCommand(
       bot,
       "interactionCreate > processContextMenuCommand",
       error,
-      interaction.guild?.id,
+      interaction.guild?.name,
       undefined,
       interaction,
     );
