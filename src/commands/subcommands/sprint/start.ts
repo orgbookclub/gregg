@@ -27,8 +27,13 @@ export const handleStart: CommandHandler = async (bot, interaction) => {
       });
       return;
     }
+    if (!interaction.guild) {
+      await interaction.editReply("You are not in a guild!");
+      return;
+    }
     const sprintId = bot.sprintManager.createSprint(
       duration,
+      interaction.guild?.id,
       threadId,
       interaction.user.id,
     );

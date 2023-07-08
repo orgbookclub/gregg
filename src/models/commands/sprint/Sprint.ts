@@ -10,8 +10,9 @@ import { SprintStatus } from "./SprintStatus";
  */
 export class Sprint {
   duration: number;
-  threadId: string;
-  startedBy: string;
+  channelId: string;
+  guildId: string;
+  userId: string;
   participants: Record<string, SprintParticipant>;
   status: SprintStatus;
   timer?: NodeJS.Timeout;
@@ -23,12 +24,19 @@ export class Sprint {
    *
    * @param duration The duration in minutes for the sprint.
    * @param threadId The ID of the channel or thread where the sprint will be.
+   * @param guildId The guild Id.
    * @param startedBy The ID of the user who started the sprint.
    */
-  constructor(duration: number, threadId: string, startedBy: string) {
-    this.threadId = threadId;
+  constructor(
+    duration: number,
+    threadId: string,
+    guildId: string,
+    startedBy: string,
+  ) {
+    this.channelId = threadId;
+    this.guildId = guildId;
     this.duration = duration;
-    this.startedBy = startedBy;
+    this.userId = startedBy;
     this.participants = {};
     this.timer = undefined;
     this.status = SprintStatus.Scheduled;

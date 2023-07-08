@@ -41,7 +41,7 @@ const handleSuggest: CommandHandler = async (bot, interaction) => {
     const qotdSuggestion: QotdSuggestion = {
       question: question,
       status: QotdSuggestionStatus.Requested,
-      serverId: interaction.guild.id,
+      guildId: interaction.guild.id,
       userId: interaction.user.id,
       createdOn: new Date(),
     };

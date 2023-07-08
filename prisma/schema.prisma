@@ -22,7 +22,7 @@ type GuildsReaderRoles {
 model qotds {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   question  String   @default("")
-  serverId  String
+  guildId  String
   userId    String
   status    String   @default("Requested")
   createdOn DateTime @db.Date
@@ -34,8 +34,9 @@ model sprints {
   id           String                @id @default(auto()) @map("_id") @db.ObjectId
   duration     Int                   @default(0)
   participants SprintsParticipants[]
-  startedBy    String
-  threadId     String
+  userId       String
+  guildId      String
+  channelId    String
   startedOn    DateTime              @db.Date
   endedOn      DateTime              @db.Date
   status       String

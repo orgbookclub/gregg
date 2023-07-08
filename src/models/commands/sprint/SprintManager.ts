@@ -31,17 +31,23 @@ export class SprintManager {
    * Creates a sprint and adds it to the store.
    *
    * @param duration The duration of the sprint.
+   * @param guildId The guild Id.
    * @param threadId The thread Id where the sprint is.
    * @param userId The Id of the user who started the sprint.
    * @returns The created sprint ID.
    */
-  createSprint(duration: number, threadId: string, userId: string) {
+  createSprint(
+    duration: number,
+    guildId: string,
+    threadId: string,
+    userId: string,
+  ) {
     if (this.sprints[threadId] !== undefined) {
       throw new Error("A sprint is already active in this thread!");
     }
-    const sprint = new Sprint(duration, threadId, userId);
-    this.sprints[sprint.threadId] = sprint;
-    return sprint.threadId;
+    const sprint = new Sprint(duration, threadId, guildId, userId);
+    this.sprints[sprint.channelId] = sprint;
+    return sprint.channelId;
   }
 
   /**
@@ -76,7 +82,7 @@ export class SprintManager {
     sprint.status = SprintStatus.Ongoing;
     sprint.startedOn = new Date();
 
-    const channel = await this.fetchSprintChannel(bot, sprint.threadId);
+    const channel = await this.fetchSprintChannel(bot, sprint.channelId);
     await channel.send({ content: sprint.getStartMessage() });
 
     sprint.timer = setTimeout(() => {
@@ -173,8 +179,9 @@ export class SprintManager {
     await bot.db.sprints.create({
       data: {
         duration: sprint.duration,
-        threadId: sprint.threadId,
-        startedBy: sprint.startedBy,
+        channelId: sprint.channelId,
+        userId: sprint.userId,
+        guildId: sprint.guildId,
         participants: Object.values(sprint.participants),
         startedOn: sprint.startedOn ?? new Date(),
         endedOn: sprint.endedOn ?? new Date(),
@@ -197,7 +204,7 @@ export class SprintManager {
     const sprint = this.sprints[sprintId];
     sprint.status = SprintStatus.Finished;
 
-    const channel = await this.fetchSprintChannel(bot, sprint.threadId);
+    const channel = await this.fetchSprintChannel(bot, sprint.channelId);
     await channel.send({ content: sprint.getFinishMessage() });
 
     sprint.timer = setTimeout(() => {
@@ -220,7 +227,7 @@ export class SprintManager {
     sprint.status = SprintStatus.Completed;
 
     const scores = sprint.calculateSprintScores();
-    const channel = await this.fetchSprintChannel(bot, sprint.threadId);
+    const channel = await this.fetchSprintChannel(bot, sprint.channelId);
     await channel.send({
       content: `${sprint.getEndMessage(scores)}`,
     });
@@ -228,8 +235,9 @@ export class SprintManager {
     await bot.db.sprints.create({
       data: {
         duration: sprint.duration,
-        threadId: sprint.threadId,
-        startedBy: sprint.startedBy,
+        channelId: sprint.channelId,
+        userId: sprint.userId,
+        guildId: sprint.guildId,
         participants: Object.values(sprint.participants),
         startedOn: sprint.startedOn ?? new Date(),
         endedOn: sprint.endedOn ?? new Date(),
