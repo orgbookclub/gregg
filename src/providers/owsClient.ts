@@ -19,7 +19,7 @@ const CLIENT_SECRET = process.env.CLIENT_SECRET ?? "";
  * This client will be responsible for all interactions with the backend.
  */
 export class OWSClient {
-  private baseUrl = process.env.OWS_URL;
+  private baseUrl: string;
   private accessToken: string;
   private cronJob: CronJob;
 
@@ -32,8 +32,11 @@ export class OWSClient {
   /**
    * Initializes an instance of the API client.
    * Sets up a cron job to run every hour to refresh the access token.
+   *
+   * @param baseUrl The base url.
    */
-  constructor() {
+  constructor(baseUrl: string) {
+    this.baseUrl = baseUrl;
     this.accessToken = "";
     this.cronJob = new CronJob("*/60 * * * *", async () => {
       try {
