@@ -10,7 +10,7 @@ import { logger } from "./logHandler";
  */
 export const loadApiClient = async (bot: Bot) => {
   try {
-    const client = new OWSClient();
+    const client = new OWSClient(bot.configs.apiUrl);
     await client.initialize();
     bot.api = client;
   } catch (err) {
