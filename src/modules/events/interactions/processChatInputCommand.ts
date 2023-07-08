@@ -1,12 +1,7 @@
-import {
-  ChatInputCommandInteraction,
-  Events,
-  TimestampStyles,
-  time,
-} from "discord.js";
+import { ChatInputCommandInteraction, TimestampStyles, time } from "discord.js";
 
 import { Bot } from "../../../models";
-import { logger } from "../../../utils/logHandler";
+import { errorHandler } from "../../../utils/errorHandler";
 
 /**
  * Handles all slash commands.
@@ -66,7 +61,14 @@ async function processChatInputCommand(
 
     await upsertCommandUsageInDb(bot, interaction);
   } catch (error) {
-    logger.error(error, `Error in ${Events.InteractionCreate}`);
+    errorHandler(
+      bot,
+      "interactionCreate > processChatInputCommand",
+      error,
+      interaction.guild?.id,
+      undefined,
+      interaction,
+    );
   }
 }
 

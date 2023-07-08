@@ -2,12 +2,12 @@ import { ButtonInteraction } from "discord.js";
 
 import { Bot } from "../../../models";
 import { QotdSuggestionStatus } from "../../../models/commands/qotd/QotdSuggestionStatus";
+import { errorHandler } from "../../../utils/errorHandler";
 import {
   getEventInfoEmbed,
   getEventRequestEmbed,
   participantToDto,
 } from "../../../utils/eventUtils";
-import { logger } from "../../../utils/logHandler";
 import { upsertUser } from "../../../utils/userUtils";
 
 /**
@@ -29,7 +29,14 @@ const processButtonClick = async (bot: Bot, interaction: ButtonInteraction) => {
       await handleQotdSuggestionActions(interaction, bot);
     }
   } catch (error) {
-    logger.error(error, `Error processing button click`);
+    errorHandler(
+      bot,
+      "interactionCreate > processButtonClick",
+      error,
+      interaction.guild?.id,
+      interaction.message,
+      undefined,
+    );
   }
 };
 

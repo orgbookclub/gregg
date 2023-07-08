@@ -1,7 +1,7 @@
 import { ContextMenuCommandInteraction } from "discord.js";
 
 import { Bot } from "../../../models";
-import { logger } from "../../../utils/logHandler";
+import { errorHandler } from "../../../utils/errorHandler";
 
 /**
  * Handles all context commands.
@@ -54,6 +54,13 @@ export async function processContextMenuCommand(
     await command.run(bot, interaction);
     // TODO: Usage logging
   } catch (error) {
-    logger.error(error, `Error executing context command`);
+    errorHandler(
+      bot,
+      "interactionCreate > processContextMenuCommand",
+      error,
+      interaction.guild?.id,
+      undefined,
+      interaction,
+    );
   }
 }

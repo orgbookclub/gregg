@@ -1,6 +1,7 @@
 import { Events, Guild } from "discord.js";
 
 import { Bot, Event } from "../../models";
+import { errorHandler } from "../../utils/errorHandler";
 import { logger } from "../../utils/logHandler";
 
 const guildDelete: Event = {
@@ -12,7 +13,7 @@ const guildDelete: Event = {
       );
       await deleteGuildFromDb(bot, guild);
     } catch (error) {
-      logger.error(error, `Error in ${Events.GuildDelete}`);
+      errorHandler(bot, `events > ${Events.GuildDelete}`, error, guild.name);
     }
   },
 };

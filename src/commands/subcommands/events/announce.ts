@@ -85,7 +85,6 @@ const handleAnnounce: CommandHandler = async (bot, interaction) => {
       content: `Announcement posted: ${message.url} and event status changed to 'Announced'`,
     });
   } catch (err) {
-    logger.error(err, `Error in handleAnnounce`);
     await interaction.reply("Something went wrong! Please try again later");
     errorHandler(
       bot,

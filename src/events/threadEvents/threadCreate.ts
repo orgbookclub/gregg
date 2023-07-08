@@ -1,7 +1,7 @@
 import { Events, ThreadChannel } from "discord.js";
 
 import { Bot, Event } from "../../models";
-import { logger } from "../../utils/logHandler";
+import { errorHandler } from "../../utils/errorHandler";
 
 export const threadCreate: Event = {
   name: Events.ThreadCreate,
@@ -11,7 +11,12 @@ export const threadCreate: Event = {
         await thread.join();
       }
     } catch (error) {
-      logger.error(error, `Error in ${Events.ThreadCreate}`);
+      errorHandler(
+        bot,
+        `events > ${Events.ThreadCreate}`,
+        error,
+        thread.guild.name,
+      );
     }
   },
 };

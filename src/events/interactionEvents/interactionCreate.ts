@@ -6,7 +6,7 @@ import { processChatInputCommand } from "../../modules/events/interactions/proce
 import { processContextMenuCommand } from "../../modules/events/interactions/processContextMenuCommand";
 import { processModalSubmit } from "../../modules/events/interactions/processModalSubmit";
 import { processStringSelectMenu } from "../../modules/events/interactions/processStringSelectMenu";
-import { logger } from "../../utils/logHandler";
+import { errorHandler } from "../../utils/errorHandler";
 
 const interactionCreate: Event = {
   name: Events.InteractionCreate,
@@ -23,8 +23,13 @@ const interactionCreate: Event = {
       } else if (interaction.isModalSubmit()) {
         await processModalSubmit(bot, interaction);
       }
-    } catch (err) {
-      logger.error(err, `Error in ${Events.InteractionCreate}`);
+    } catch (error) {
+      errorHandler(
+        bot,
+        `events > ${Events.InteractionCreate}`,
+        error,
+        interaction.guild?.name,
+      );
     }
   },
 };

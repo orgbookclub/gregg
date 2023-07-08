@@ -1,7 +1,7 @@
 import { Events, GuildMember, PartialGuildMember, User } from "discord.js";
 
 import { Bot, Event } from "../../models";
-import { logger } from "../../utils/logHandler";
+import { errorHandler } from "../../utils/errorHandler";
 
 const guildMemberAdd: Event = {
   name: Events.GuildMemberAdd,
@@ -16,7 +16,12 @@ const guildMemberAdd: Event = {
       await upsertUserInDb(bot, member.user);
       await upsertMemberInDb(bot, member);
     } catch (error) {
-      logger.error(error, `Error in ${Events.GuildMemberAdd}`);
+      errorHandler(
+        bot,
+        `events > ${Events.GuildMemberAdd}`,
+        error,
+        member.guild.name,
+      );
     }
   },
 };

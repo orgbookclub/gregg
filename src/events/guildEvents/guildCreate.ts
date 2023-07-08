@@ -1,6 +1,7 @@
 import { Events, Guild } from "discord.js";
 
 import { Bot, Event } from "../../models";
+import { errorHandler } from "../../utils/errorHandler";
 import { logger } from "../../utils/logHandler";
 
 const guildCreate: Event = {
@@ -13,7 +14,7 @@ const guildCreate: Event = {
 
       await createGuildInDb(bot, guild);
     } catch (error) {
-      logger.error(error, `Error in ${Events.GuildCreate}`);
+      errorHandler(bot, `events > ${Events.GuildCreate}`, error, guild.name);
     }
   },
 };

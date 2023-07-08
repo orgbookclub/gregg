@@ -16,10 +16,5 @@ export async function processModalSubmit(
 ) {
   try {
     // TODO: ... figure out something to do here.
-  } catch (error) {
-    logger.error(
-      error,
-      `Error while processing modal submit from interactionCreate event`,
-    );
-  }
+  } catch (error) {}
 }

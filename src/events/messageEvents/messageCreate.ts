@@ -1,7 +1,7 @@
 import { ChannelType, Events, Message } from "discord.js";
 
 import { Bot, Event } from "../../models";
-import { logger } from "../../utils/logHandler";
+import { errorHandler } from "../../utils/errorHandler";
 
 const messageCreate: Event = {
   name: Events.MessageCreate,
@@ -14,7 +14,13 @@ const messageCreate: Event = {
 
       await upsertMessageCountInDb(bot, message);
     } catch (error) {
-      logger.error(error, `Error in ${Events.MessageCreate}`);
+      errorHandler(
+        bot,
+        `events > ${Events.MessageCreate}`,
+        error,
+        message.guild?.name,
+        message,
+      );
     }
   },
 };

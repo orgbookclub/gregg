@@ -16,10 +16,5 @@ export async function processStringSelectMenu(
 ) {
   try {
     // TODO: ... okay nothing to do here.
-  } catch (error) {
-    logger.error(
-      error,
-      `Error while processing string select menu from interactionCreate event`,
-    );
-  }
+  } catch (error) {}
 }
