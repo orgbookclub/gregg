@@ -27,15 +27,29 @@ const handleBook: CommandHandler = async (bot, interaction) => {
     const embed = getGoodreadsBookEmbed(response.data);
     await interaction.editReply({ embeds: [embed] });
   } catch (err) {
-    await interaction.editReply("Something went wrong! Please try again later");
-    errorHandler(
-      bot,
-      "commands > goodreads > book",
-      err,
-      interaction.guild?.name,
-      undefined,
-      interaction,
-    );
+    const error = err as Error;
+    if (
+      error.name === "AxiosError" &&
+      error.message === "Request failed with status code 503"
+    ) {
+      await interaction.editReply(
+        "Unfortunately, due to Goodreads being Goodreads, I cannot complete your request at the moment :(" +
+          "\n" +
+          "Please try again later, or use Storygraph instead �",
+      );
+    } else {
+      await interaction.editReply(
+        "Something went wrong! Please try again later",
+      );
+      errorHandler(
+        bot,
+        "commands > goodreads > book",
+        err,
+        interaction.guild?.name,
+        undefined,
+        interaction,
+      );
+    }
   }
 };
 
