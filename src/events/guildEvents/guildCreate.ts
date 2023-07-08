@@ -22,7 +22,7 @@ const guildCreate: Event = {
 async function createGuildInDb(bot: Bot, guild: Guild) {
   await bot.db.guilds.create({
     data: {
-      id: guild.id,
+      guildId: guild.id,
       name: guild.name,
       ownerId: guild.ownerId,
       region: guild.preferredLocale,

@@ -29,11 +29,11 @@ const guildMemberAdd: Event = {
 async function upsertUserInDb(bot: Bot, user: User) {
   await bot.db.users.upsert({
     where: {
-      id: user.id,
+      userId: user.id,
     },
     update: {},
     create: {
-      id: user.id,
+      userId: user.id,
       username: user.username,
     },
   });
