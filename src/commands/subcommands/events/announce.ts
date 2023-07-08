@@ -11,7 +11,6 @@ import { CommandHandler } from "../../../models";
 import { getGuildFromDb } from "../../../utils/dbUtils";
 import { errorHandler } from "../../../utils/errorHandler";
 import { getEventInfoEmbed } from "../../../utils/eventUtils";
-import { logger } from "../../../utils/logHandler";
 
 /**
  * Announces an approved event.

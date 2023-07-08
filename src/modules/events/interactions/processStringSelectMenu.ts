@@ -1,7 +1,6 @@
 import { StringSelectMenuInteraction } from "discord.js";
 
 import { Bot } from "../../../models";
-import { logger } from "../../../utils/logHandler";
 
 /**
  * Handles Select Menu interactions.
@@ -16,5 +15,7 @@ export async function processStringSelectMenu(
 ) {
   try {
     // TODO: ... okay nothing to do here.
-  } catch (error) {}
+  } catch (error) {
+    //
+  }
 }

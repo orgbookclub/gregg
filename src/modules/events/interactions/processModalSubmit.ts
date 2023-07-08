@@ -1,7 +1,6 @@
 import { ModalSubmitInteraction } from "discord.js";
 
 import { Bot } from "../../../models";
-import { logger } from "../../../utils/logHandler";
 
 /**
  * Handles modal submissions.
@@ -16,5 +15,7 @@ export async function processModalSubmit(
 ) {
   try {
     // TODO: ... figure out something to do here.
-  } catch (error) {}
+  } catch (error) {
+    //
+  }
 }
