@@ -28,7 +28,7 @@ const handleList: CommandHandler = async (bot, interaction) => {
       },
     });
     if (approvedQotdList.length === 0) {
-      await interaction.reply("There are no available Qotds");
+      await interaction.editReply("There are no available Qotds");
       return;
     }
     const pageSize = 7;

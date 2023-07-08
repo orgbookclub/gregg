@@ -22,7 +22,7 @@ type GuildsReaderRoles {
 model qotds {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   question  String   @default("")
-  guildId  String
+  guildId   String
   userId    String
   status    String   @default("Requested")
   createdOn DateTime @db.Date
@@ -45,6 +45,7 @@ model sprints {
 
 model guilds {
   id                       String              @id @default(auto()) @map("_id") @db.ObjectId
+  guildId                  String
   name                     String              @default("")
   ownerId                  String
   region                   String              @default("")
@@ -58,12 +59,17 @@ model guilds {
   qotdChannel              String              @default("")
   readerRoles              GuildsReaderRoles[]
   v                        Int?                @map("__v") @ignore
+
+  @@unique([guildId], map: "guildId_1")
 }
 
 model users {
   id       String @id @default(auto()) @map("_id") @db.ObjectId
+  userId   String
   username String
   v        Int?   @map("__v") @ignore
+
+  @@unique([userId], map: "userId_1")
 }
 
 model members {

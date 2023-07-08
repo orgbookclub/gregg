@@ -20,7 +20,7 @@ const guildDelete: Event = {
 
 async function deleteGuildFromDb(bot: Bot, guild: Guild) {
   await bot.db.guilds.delete({
-    where: { id: guild.id },
+    where: { guildId: guild.id },
   });
 }
 

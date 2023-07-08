@@ -9,6 +9,6 @@ import { Bot } from "../models";
  */
 export async function getGuildFromDb(bot: Bot, guildId: string) {
   return await bot.db.guilds.findUnique({
-    where: { id: guildId },
+    where: { guildId: guildId },
   });
 }

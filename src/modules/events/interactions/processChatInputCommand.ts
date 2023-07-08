@@ -65,7 +65,7 @@ async function processChatInputCommand(
       bot,
       "interactionCreate > processChatInputCommand",
       error,
-      interaction.guild?.id,
+      interaction.guild?.name,
       undefined,
       interaction,
     );

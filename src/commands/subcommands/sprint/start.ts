@@ -41,12 +41,12 @@ export const handleStart: CommandHandler = async (bot, interaction) => {
     if (delay > 0) {
       bot.sprintManager.scheduleSprint(sprintId, bot, delay);
       await interaction.editReply({
-        content: `Sprint of ${duration} minutes will start in ${delay} minute(s)!`,
+        content: `A Sprint of ${duration} minutes will start in ${delay} minute(s)!`,
       });
     } else {
       await bot.sprintManager.startSprint(sprintId, bot);
       await interaction.editReply(
-        `Sprint of ${duration} minutes starting now!`,
+        `Sprint started! ${duration} minutes to go ⏳`,
       );
     }
   } catch (err) {

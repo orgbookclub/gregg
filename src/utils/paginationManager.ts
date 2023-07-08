@@ -67,13 +67,13 @@ export class PaginationManager<T> {
    */
   createMessageComponentsForPage() {
     const backButton = new ButtonBuilder()
-      .setLabel("Next")
+      .setLabel("Previous")
       .setEmoji({ name: "◀️" })
       .setStyle(ButtonStyle.Secondary)
       .setCustomId(this.backId)
       .setDisabled(this.currPageNum === 1);
     const forwardButton = new ButtonBuilder()
-      .setLabel("Previous")
+      .setLabel("Next")
       .setEmoji({ name: "▶️" })
       .setStyle(ButtonStyle.Secondary)
       .setCustomId(this.forwardId)

@@ -33,7 +33,7 @@ const processButtonClick = async (bot: Bot, interaction: ButtonInteraction) => {
       bot,
       "interactionCreate > processButtonClick",
       error,
-      interaction.guild?.id,
+      interaction.guild?.name,
       interaction.message,
       undefined,
     );
