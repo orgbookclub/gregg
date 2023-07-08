@@ -1,4 +1,9 @@
-import { ChatInputCommandInteraction, Events } from "discord.js";
+import {
+  ChatInputCommandInteraction,
+  Events,
+  TimestampStyles,
+  time,
+} from "discord.js";
 
 import { Bot } from "../../../models";
 import { logger } from "../../../utils/logHandler";
@@ -40,7 +45,12 @@ async function processChatInputCommand(
       if (now < expirationTime) {
         const expiredTimestamp = Math.round(expirationTime / 1000);
         interaction.reply({
-          content: `Please wait, you are on a cooldown for \`${command.data.name}\`. You can use it again <t:${expiredTimestamp}:R>.`,
+          content: `Please wait, you are on a cooldown for \`${
+            command.data.name
+          }\`. You can use it again ${time(
+            expiredTimestamp,
+            TimestampStyles.RelativeTime,
+          )}.`,
           ephemeral: true,
         });
         return;
@@ -82,11 +92,14 @@ async function upsertCommandUsageInDb(
       uses: {
         increment: 1,
       },
+      updatedOn: new Date(),
     },
     create: {
       command: interaction.commandName,
       subcommand: interaction.options.getSubcommand(false) ?? "no subcommand",
       uses: 1,
+      createdOn: new Date(),
+      updatedOn: new Date(),
     },
   });
 }

@@ -54,9 +54,6 @@ export async function processContextMenuCommand(
     await command.run(bot, interaction);
     // TODO: Usage logging
   } catch (error) {
-    logger.error(
-      error,
-      `Error while executing context command from interactionCreate event`,
-    );
+    logger.error(error, `Error executing context command`);
   }
 }

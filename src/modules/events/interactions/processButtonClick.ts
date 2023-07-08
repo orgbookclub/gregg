@@ -1,5 +1,4 @@
-import { ParticipantDto, UpdateEventDto } from "@orgbookclub/ows-client";
-import { ButtonInteraction, Message } from "discord.js";
+import { ButtonInteraction } from "discord.js";
 
 import { Bot } from "../../../models";
 import { QotdSuggestionStatus } from "../../../models/commands/qotd/QotdSuggestionStatus";
@@ -21,21 +20,16 @@ const processButtonClick = async (bot: Bot, interaction: ButtonInteraction) => {
   try {
     if (interaction.customId === "bookmark-delete") {
       await handleBookmarkDelete(interaction);
-    }
-    if (
+    } else if (
       interaction.customId.startsWith("er-") ||
       interaction.customId.startsWith("ea-")
     ) {
       await handleEventActions(interaction, bot);
-    }
-    if (interaction.customId.startsWith("qs-")) {
+    } else if (interaction.customId.startsWith("qs-")) {
       await handleQotdSuggestionActions(interaction, bot);
     }
   } catch (error) {
-    logger.error(
-      error,
-      `Error while processing button click from interactionCreate event`,
-    );
+    logger.error(error, `Error processing button click`);
   }
 };
 
@@ -44,47 +38,38 @@ async function handleQotdSuggestionActions(
   bot: Bot,
 ) {
   await interaction.deferReply();
-  const parts = interaction.customId.split("-");
-  const qotdId = parts[1];
-  const action = parts[2];
+  const [_, qotdId, action] = interaction.customId.split("-");
 
   if (action === "approve") {
     await bot.db.qotds.update({
       where: { id: qotdId },
-      data: {
-        status: QotdSuggestionStatus.Approved,
-      },
+      data: { status: QotdSuggestionStatus.Approved },
     });
     await interaction.message.edit({
       content: "Approved",
       embeds: interaction.message.embeds,
       components: [],
     });
-    await interaction.editReply("Approved QOTD");
+    await interaction.editReply(`Approved QOTD \`${qotdId}\``);
   } else if (action === "reject") {
     await bot.db.qotds.update({
       where: { id: qotdId },
-      data: {
-        status: QotdSuggestionStatus.Rejected,
-      },
+      data: { status: QotdSuggestionStatus.Rejected },
     });
     await interaction.message.edit({
       content: "Rejected",
       embeds: interaction.message.embeds,
       components: [],
     });
-    await interaction.editReply("Rejected QOTD");
+    await interaction.editReply(`Rejected QOTD \`${qotdId}\``);
   }
 }
 
 async function handleEventActions(interaction: ButtonInteraction, bot: Bot) {
   await interaction.deferReply({ ephemeral: true });
-  const parts = interaction.customId.split("-");
-  const embedType = parts[0];
-  const eventId = parts[1];
-  const action = parts[2];
+  const [embedType, eventId, action] = interaction.customId.split("-");
 
-  const user = await upsertUser(bot, interaction.user);
+  const userDoc = await upsertUser(bot, interaction.user);
 
   const eventResponse = await bot.api.events.eventsControllerFindOne({
     id: eventId,
@@ -103,22 +88,21 @@ async function handleEventActions(interaction: ButtonInteraction, bot: Bot) {
   if (action === "interested" && isUserInterestedInEvent) {
     await interaction.editReply({
       content:
-        "You are already marked as an interested participant of the event!",
+        "You are already marked as an interested participant of this event!",
     });
     return;
-  }
-  if (action === "notInterested" && !isUserInterestedInEvent) {
+  } else if (action === "notInterested" && !isUserInterestedInEvent) {
     await interaction.editReply({
       content:
         "You were never marked as an interested participant of this event!",
     });
     return;
   }
-  const participantDto: ParticipantDto = {
+  const participantDto = {
     points: 0,
-    user: user._id,
+    user: userDoc._id,
   };
-  const updateEventDto: UpdateEventDto = {
+  const updateEventDto = {
     interested:
       action === "interested"
         ? [
@@ -157,7 +141,7 @@ async function handleEventActions(interaction: ButtonInteraction, bot: Bot) {
 }
 
 async function handleBookmarkDelete(interaction: ButtonInteraction) {
-  await (interaction.message as Message).delete();
+  await interaction.message.delete();
 }
 
 export { processButtonClick };

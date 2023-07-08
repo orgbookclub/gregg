@@ -1,13 +1,11 @@
 import {
+  ModalSubmitInteraction,
+  TextInputStyle,
+  ChannelType,
   ActionRowBuilder,
   ModalActionRowComponentBuilder,
   ModalBuilder,
   TextInputBuilder,
-} from "@discordjs/builders";
-import {
-  ModalSubmitInteraction,
-  TextInputStyle,
-  ChannelType,
 } from "discord.js";
 
 import { CommandHandler } from "../../../models";

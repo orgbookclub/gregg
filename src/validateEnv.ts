@@ -9,11 +9,10 @@ import { logger } from "./utils/logHandler";
  * @returns The bots config object.
  */
 export const validateEnv = (): Bot["configs"] => {
-  if (!process.env.BOT_TOKEN) {
+  if (!process.env.DISCORD_TOKEN) {
     logger.error("Missing Discord token");
     process.exit(1);
   }
-
   if (!process.env.CLIENT_ID) {
     logger.error("Missing Bot's Client ID");
     process.exit(1);
@@ -22,11 +21,10 @@ export const validateEnv = (): Bot["configs"] => {
     logger.error("Missing Bot's Client secret");
     process.exit(1);
   }
-  if (!process.env.OWS_URL) {
-    logger.error("Missing OWS Url");
+  if (!process.env.API_URL) {
+    logger.error("Missing API Url");
     process.exit(1);
   }
-
   if (!process.env.SENTRY_DSN) {
     logger.error("Missing Sentry DSN");
     process.exit(1);
@@ -35,33 +33,16 @@ export const validateEnv = (): Bot["configs"] => {
     logger.error("Missing MongoDB URI");
     process.exit(1);
   }
-
-  if (!process.env.HOME_GUILD_ID) {
-    logger.error("Missing Bot's Home Guild ID");
-    process.exit(1);
-  }
-  if (!process.env.QOTD_SUGGESTION_CHANNEL_ID) {
-    logger.error("Missing QOTD_SUGGESTION_CHANNEL_ID");
-    process.exit(1);
-  }
-  if (!process.env.QOTD_SUGGESTION_CHANNEL_ID) {
-    logger.error("Missing QOTD_SUGGESTION_CHANNEL_ID");
-    process.exit(1);
-  }
-  if (!process.env.QOTD_CHANNEL) {
-    logger.error("Missing QOTD_CHANNEL");
-    process.exit(1);
-  }
   if (!process.env.WH_URL) {
-    logger.error("Missing WH_URL");
+    logger.error("Missing Debug Webhook URL");
     process.exit(1);
   }
 
   return {
-    token: process.env.BOT_TOKEN,
+    token: process.env.DISCORD_TOKEN,
     clientId: process.env.CLIENT_ID,
-    homeGuildId: process.env.HOME_GUILD_ID,
-    owsUrl: process.env.OWS_URL,
     clientSecret: process.env.CLIENT_SECRET,
+    apiUrl: process.env.API_URL,
+    whUrl: process.env.WH_URL,
   };
 };

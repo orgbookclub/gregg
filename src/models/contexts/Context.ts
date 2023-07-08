@@ -3,7 +3,7 @@ import {
   ContextMenuCommandInteraction,
 } from "discord.js";
 
-import { Bot } from ".";
+import { Bot } from "..";
 
 export interface Context {
   data: ContextMenuCommandBuilder;

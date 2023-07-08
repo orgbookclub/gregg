@@ -20,20 +20,21 @@ type GuildsReaderRoles {
 }
 
 model qotds {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  question    String   @default("")
-  serverId    String
-  userId      String
-  status      String   @default("Requested")
-  suggestedOn DateTime @db.Date
-  v           Int?     @map("__v") @ignore
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  question  String   @default("")
+  serverId  String
+  userId    String
+  status    String   @default("Requested")
+  createdOn DateTime @db.Date
+  updatedOn DateTime @db.Date
+  v         Int?     @map("__v") @ignore
 }
 
 model sprints {
   id           String                @id @default(auto()) @map("_id") @db.ObjectId
   duration     Int                   @default(0)
   participants SprintsParticipants[]
-  startedBy    String 
+  startedBy    String
   threadId     String
   startedOn    DateTime              @db.Date
   endedOn      DateTime              @db.Date
@@ -75,22 +76,26 @@ model members {
 }
 
 model messageCounts {
-  id        String @id @default(auto()) @map("_id") @db.ObjectId
-  v         Int?   @map("__v") @ignore
-  count     Int    @default(0)
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  v         Int?     @map("__v") @ignore
+  count     Int      @default(0)
   guildId   String
   userId    String
   channelId String
+  createdOn DateTime @db.Date
+  updatedOn DateTime @db.Date
 
   @@unique([guildId, userId, channelId], map: "guildId_1_userId_1_channelId_1")
 }
 
 model commandUsages {
-  id         String @id @default(auto()) @map("_id") @db.ObjectId
-  v          Int?   @map("__v") @ignore
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  v          Int?     @map("__v") @ignore
   command    String
   subcommand String
-  uses       Int    @default(0)
+  uses       Int      @default(0)
+  createdOn  DateTime @db.Date
+  updatedOn  DateTime @db.Date
 
   @@unique([command, subcommand], map: "command_1_subcommand_1")
 }

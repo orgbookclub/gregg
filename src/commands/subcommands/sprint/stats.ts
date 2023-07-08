@@ -6,7 +6,7 @@ import {
   User,
 } from "discord.js";
 
-import { CommandHandler } from "../../../models/CommandHandler";
+import { CommandHandler } from "../../../models/commands/CommandHandler";
 import { SprintStats } from "../../../models/commands/sprint/SprintStats";
 import { logger } from "../../../utils/logHandler";
 

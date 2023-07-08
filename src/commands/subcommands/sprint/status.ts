@@ -1,4 +1,4 @@
-import { CommandHandler } from "../../../models/CommandHandler";
+import { CommandHandler } from "../../../models/commands/CommandHandler";
 import { SprintStatus } from "../../../models/commands/sprint/SprintStatus";
 import { logger } from "../../../utils/logHandler";
 
