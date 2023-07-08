@@ -43,7 +43,7 @@ async function handleQotdSuggestionActions(
   if (action === "approve") {
     await bot.db.qotds.update({
       where: { id: qotdId },
-      data: { status: QotdSuggestionStatus.Approved },
+      data: { status: QotdSuggestionStatus.Approved, updatedOn: new Date() },
     });
     await interaction.message.edit({
       content: "Approved",
@@ -54,7 +54,7 @@ async function handleQotdSuggestionActions(
   } else if (action === "reject") {
     await bot.db.qotds.update({
       where: { id: qotdId },
-      data: { status: QotdSuggestionStatus.Rejected },
+      data: { status: QotdSuggestionStatus.Rejected, updatedOn: new Date() },
     });
     await interaction.message.edit({
       content: "Rejected",

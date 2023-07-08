@@ -64,7 +64,7 @@ const handlePost: CommandHandler = async (bot, interaction) => {
     });
     await bot.db.qotds.update({
       where: { id: qotd.id },
-      data: { status: QotdSuggestionStatus.Posted },
+      data: { status: QotdSuggestionStatus.Posted, updatedOn: new Date() },
     });
     await interaction.editReply({
       content: `QOTD Posted for ${new Date().toDateString()}`,
