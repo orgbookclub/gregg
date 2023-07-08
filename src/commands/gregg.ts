@@ -1,4 +1,8 @@
-import { SlashCommandBuilder, SlashCommandSubcommandBuilder } from "discord.js";
+import {
+  ChannelType,
+  SlashCommandBuilder,
+  SlashCommandSubcommandBuilder,
+} from "discord.js";
 
 import { CommandHandler, Command } from "../models";
 import { errorHandler } from "../utils/errorHandler";
@@ -32,7 +36,8 @@ const greggEchoSubcommand = new SlashCommandSubcommandBuilder()
   .addChannelOption((option) =>
     option
       .setName("channel")
-      .setDescription("The channel to send the message in"),
+      .setDescription("The channel to send the message in")
+      .addChannelTypes(ChannelType.GuildText),
   );
 export const gregg: Command = {
   data: new SlashCommandBuilder()
