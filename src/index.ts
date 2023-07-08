@@ -1,5 +1,5 @@
 import { init } from "@sentry/node";
-import { ActivityType, Client } from "discord.js";
+import { ActivityType, Client, WebhookClient } from "discord.js";
 
 import { IntentOptions } from "./config";
 import { connectPrisma } from "./database/connectPrisma";
@@ -15,9 +15,6 @@ import { validateEnv } from "./validateEnv";
 
 init({
   dsn: process.env.SENTRY_DSN,
-  // Set tracesSampleRate to 1.0 to capture 100%
-  // of transactions for performance monitoring.
-  // We recommend adjusting this value in production
   tracesSampleRate: 1.0,
   release: `gregg@v${process.env.npm_package_version}`,
   environment: "development",
@@ -29,13 +26,13 @@ init({
  */
 void (async () => {
   logger.debug("Starting process...");
-  const bot = new Client({
-    intents: IntentOptions,
-  }) as Bot;
+  const bot = new Client({ intents: IntentOptions }) as Bot;
 
   logger.debug("Validating environment variables...");
   bot.configs = validateEnv();
 
+  logger.debug("Initializing debug webhook...");
+  bot.debugHook = new WebhookClient({ url: bot.configs.whUrl });
   /**
    * Fallthrough error handlers. These fire in rare cases where something throws
    * in a way that our standard catch block cannot see it.
@@ -48,27 +45,26 @@ void (async () => {
     errorHandler(bot, "Uncaught Exception Error", error);
   });
 
-  logger.debug("Loading Commands...");
-  const commands = await loadCommands();
-  const contexts = await loadContexts();
-  bot.commands = commands;
-  bot.contexts = contexts;
-  if (!commands.length || !contexts.length) {
+  logger.debug("Loading commands...");
+  bot.commands = await loadCommands();
+  bot.contexts = await loadContexts();
+  if (!bot.commands.length || !bot.contexts.length) {
     logger.error("Failed to import commands");
     return;
   }
-
-  logger.debug("Registering Commands...");
-  const success = await registerCommands(bot);
-  if (!success) {
-    return;
+  if (process.env.NODE_ENV !== "production") {
+    logger.debug("Registering commands in development...");
+    const success = await registerCommands(bot);
+    if (!success) {
+      return;
+    }
   }
 
   logger.debug("Initializing database...");
   bot.db = await connectPrisma();
 
-  logger.debug("Initializing Cache...");
-  bot.dataCache = { sprintManager: new SprintManager() };
+  logger.debug("Initializing sprint manager...");
+  bot.sprintManager = new SprintManager();
   bot.cooldowns = {};
 
   logger.debug("Attaching event listeners...");

@@ -5,8 +5,8 @@ import {
 } from "@orgbookclub/ows-client";
 
 import { CommandHandler } from "../../../models";
+import { errorHandler } from "../../../utils/errorHandler";
 import { getEventsListEmbed } from "../../../utils/eventUtils";
-import { logger } from "../../../utils/logHandler";
 import { PaginationManager } from "../../../utils/paginationManager";
 
 /**
@@ -64,9 +64,14 @@ export const handleEvents: CommandHandler = async (bot, interaction) => {
     );
     pagedContentManager.createCollectors(message, interaction, 5 * 60 * 1000);
   } catch (err) {
-    logger.error(err, `Error in handleEvents`);
-    await interaction.editReply(
-      "Something went wrong! Please try again later.",
+    await interaction.editReply("Something went wrong! Please try again later");
+    errorHandler(
+      bot,
+      "commands > user > events",
+      err,
+      interaction.guild?.name,
+      undefined,
+      interaction,
     );
   }
 };

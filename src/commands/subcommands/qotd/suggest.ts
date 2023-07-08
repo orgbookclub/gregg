@@ -7,11 +7,11 @@ import {
   User,
 } from "discord.js";
 
-import { ChannelIds } from "../../../config";
 import { CommandHandler } from "../../../models";
 import { QotdSuggestion } from "../../../models/commands/qotd/QotdSuggestion";
 import { QotdSuggestionStatus } from "../../../models/commands/qotd/QotdSuggestionStatus";
-import { logger } from "../../../utils/logHandler";
+import { getGuildFromDb } from "../../../utils/dbUtils";
+import { errorHandler } from "../../../utils/errorHandler";
 
 /**
  * Adds a QOTD suggestion.
@@ -24,30 +24,29 @@ const handleSuggest: CommandHandler = async (bot, interaction) => {
     await interaction.deferReply({ ephemeral: true });
     const question = interaction.options.getString("question", true);
 
-    const channelId = ChannelIds.QotdSuggestionChannel;
+    if (!interaction.guild) return;
+    const guildDoc = await getGuildFromDb(bot, interaction.guild.id);
+    const channelId = guildDoc?.qotdSuggestionChannel ?? "Not set";
+
     const channel = await bot.channels.fetch(channelId);
 
     if (!channel?.isTextBased()) {
-      logger.error(
-        { threadId: channel },
-        `Unable to find qotd text channel/thread`,
-      );
       await interaction.editReply(
         "Something went wrong while trying to log the question in the channel. Please contact staff",
       );
-      return;
+      throw new Error(`Unable to find qotd text channel/thread`);
     }
     if (!interaction.guild) return;
 
     const qotdSuggestion: QotdSuggestion = {
       question: question,
       status: QotdSuggestionStatus.Requested,
-      serverId: interaction.guild.id,
+      guildId: interaction.guild.id,
       userId: interaction.user.id,
-      suggestedOn: new Date(),
+      createdOn: new Date(),
     };
     const qotdSuggestionDoc = await bot.db.qotds.create({
-      data: qotdSuggestion,
+      data: { ...qotdSuggestion, updatedOn: qotdSuggestion.createdOn },
     });
     const id = qotdSuggestionDoc.id;
     const embed = getQotdSuggestionEmbed(question, interaction.user);
@@ -64,8 +63,15 @@ const handleSuggest: CommandHandler = async (bot, interaction) => {
       content: "Your suggestion has been submitted!",
     });
   } catch (err) {
-    logger.error(err, "Error in handleSuggest");
     await interaction.editReply("Something went wrong! Please try again later");
+    errorHandler(
+      bot,
+      "commands > qotd > suggest",
+      err,
+      interaction.guild?.name,
+      undefined,
+      interaction,
+    );
   }
 };
 

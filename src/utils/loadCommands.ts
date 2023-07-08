@@ -17,7 +17,7 @@ const loadCommands = async () => {
     const filePathExp = `./${OUT_DIR}/commands/*.js`;
     return await parseCommandFiles<Command>(filePathExp);
   } catch (err) {
-    logger.error(`Error while loading commands: ${err}`);
+    logger.error(err, `Error while loading commands`);
     return [];
   }
 };
@@ -33,7 +33,7 @@ const loadContexts = async () => {
     const filePathExp = `./${OUT_DIR}/contexts/*.js`;
     return await parseCommandFiles<Context>(filePathExp);
   } catch (err) {
-    logger.error(`Error while loading context commands: ${err}`);
+    logger.error(err, `Error while loading context commands`);
     return [];
   }
 };
@@ -42,7 +42,6 @@ async function parseCommandFiles<T>(filePathExp: string) {
   const commands: T[] = [];
   const files = glob.sync(filePathExp, { realpath: true });
   for (const file of files) {
-    logger.debug(`Looking in file: ${file}`);
     const mod = await import(file);
     const name = file.split("/").at(-1)?.split(".")[0] ?? "";
     commands.push(mod[name] as T);

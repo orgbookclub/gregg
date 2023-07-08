@@ -7,7 +7,7 @@ import {
 } from "discord.js";
 
 import { CommandHandler } from "../../../models";
-import { logger } from "../../../utils/logHandler";
+import { errorHandler } from "../../../utils/errorHandler";
 
 /**
  * Gets information about a user.
@@ -32,9 +32,14 @@ const handleInfo: CommandHandler = async (bot, interaction) => {
     const embed = getUserInfoEmbed(userDoc, user, interaction);
     await interaction.editReply({ embeds: [embed] });
   } catch (err) {
-    logger.error(err, `Error in handleInfo`);
-    await interaction.editReply(
-      "Something went wrong! Please try again later.",
+    await interaction.editReply("Something went wrong! Please try again later");
+    errorHandler(
+      bot,
+      "commands > user > info",
+      err,
+      interaction.guild?.name,
+      undefined,
+      interaction,
     );
   }
 };

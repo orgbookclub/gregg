@@ -1,8 +1,8 @@
 import { UpdateEventDto } from "@orgbookclub/ows-client";
 
 import { CommandHandler } from "../../../models";
+import { errorHandler } from "../../../utils/errorHandler";
 import { getEventInfoEmbed, participantToDto } from "../../../utils/eventUtils";
-import { logger } from "../../../utils/logHandler";
 import { upsertUser } from "../../../utils/userUtils";
 
 /**
@@ -60,9 +60,16 @@ const handleAddUser: CommandHandler = async (bot, interaction) => {
       content: "Added user to event!",
       embeds: [getEventInfoEmbed(updatedResponse.data, interaction)],
     });
-  } catch (error) {
-    logger.error(error, "Error in handleAdd");
+  } catch (err) {
     await interaction.reply("Something went wrong! Please try again later");
+    errorHandler(
+      bot,
+      "commands > events > addUser",
+      err,
+      interaction.guild?.name,
+      undefined,
+      interaction,
+    );
   }
 };
 

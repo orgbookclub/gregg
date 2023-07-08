@@ -5,8 +5,8 @@ import {
 } from "@orgbookclub/ows-client";
 
 import { Bot, CommandHandler } from "../../../models";
+import { errorHandler } from "../../../utils/errorHandler";
 import { getEventInfoEmbed } from "../../../utils/eventUtils";
-import { logger } from "../../../utils/logHandler";
 
 /**
  * Gives ability to edit an event.
@@ -134,8 +134,15 @@ const handleEdit: CommandHandler = async (bot, interaction) => {
       embeds: [getEventInfoEmbed(editResponse.data, interaction)],
     });
   } catch (err) {
-    logger.error(err, `Error in handleEdit`);
     await interaction.editReply("Something went wrong! Please try again later");
+    errorHandler(
+      bot,
+      "commands > events > edit",
+      err,
+      interaction.guild?.name,
+      undefined,
+      interaction,
+    );
   }
 };
 

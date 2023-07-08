@@ -1,5 +1,5 @@
 import { CommandHandler } from "../../../models";
-import { logger } from "../../../utils/logHandler";
+import { errorHandler } from "../../../utils/errorHandler";
 
 /**
  * Fetches cover of a book from GR.
@@ -22,7 +22,14 @@ export const handleCover: CommandHandler = async (bot, interaction) => {
 
     await interaction.editReply({ content: response.data.coverUrl });
   } catch (err) {
-    logger.error(err, `Error in handleCover`);
     await interaction.editReply("Something went wrong! Please try again later");
+    errorHandler(
+      bot,
+      "commands > goodreads > cover",
+      err,
+      interaction.guild?.name,
+      undefined,
+      interaction,
+    );
   }
 };

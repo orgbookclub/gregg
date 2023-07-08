@@ -1,6 +1,6 @@
-import { CommandHandler } from "../../../models/CommandHandler";
+import { CommandHandler } from "../../../models/commands/CommandHandler";
 import { SprintStatus } from "../../../models/commands/sprint/SprintStatus";
-import { logger } from "../../../utils/logHandler";
+import { errorHandler } from "../../../utils/errorHandler";
 
 /**
  * Gets the status of the current ongoing sprint in the current channel/thread.
@@ -14,30 +14,27 @@ export const handleStatus: CommandHandler = async (bot, interaction) => {
 
     const threadId = interaction.channelId;
     if (
-      !bot.dataCache.sprintManager.isSprintPresent(
-        threadId,
-        SprintStatus.Scheduled,
-      ) &&
-      !bot.dataCache.sprintManager.isSprintPresent(
-        threadId,
-        SprintStatus.Ongoing,
-      ) &&
-      !bot.dataCache.sprintManager.isSprintPresent(
-        threadId,
-        SprintStatus.Finished,
-      )
+      !bot.sprintManager.isSprintPresent(threadId, SprintStatus.Scheduled) &&
+      !bot.sprintManager.isSprintPresent(threadId, SprintStatus.Ongoing) &&
+      !bot.sprintManager.isSprintPresent(threadId, SprintStatus.Finished)
     ) {
       await interaction.editReply({
         content: "There are no ongoing sprints in this thread!",
       });
       return;
     }
-    const sprint = bot.dataCache.sprintManager.getSprint(threadId);
     await interaction.editReply({
-      content: sprint.getStatusMessage(),
+      content: bot.sprintManager.getSprintStatus(threadId),
     });
   } catch (err) {
-    logger.error(err, `Error in handleStatus`);
     await interaction.editReply("Something went wrong! Please try again later");
+    errorHandler(
+      bot,
+      "commands > sprint > status",
+      err,
+      interaction.guild?.name,
+      undefined,
+      interaction,
+    );
   }
 };

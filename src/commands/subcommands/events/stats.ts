@@ -9,7 +9,7 @@ import {
 import { CommandHandler } from "../../../models";
 import { Stats } from "../../../models/commands/events/Stats";
 import { UserEventStats } from "../../../models/commands/events/UserEventStats";
-import { logger } from "../../../utils/logHandler";
+import { errorHandler } from "../../../utils/errorHandler";
 
 /**
  * Gets the server event stats for a user.
@@ -46,7 +46,15 @@ const handleStats: CommandHandler = async (bot, interaction) => {
     const embed = getUserEventStatsEmbed(stats, userId, user, interaction);
     await interaction.editReply({ embeds: [embed] });
   } catch (err) {
-    logger.error(err, `Error in handleStats`);
+    await interaction.editReply("Something went wrong! Please try again later");
+    errorHandler(
+      bot,
+      "commands > events > stats",
+      err,
+      interaction.guild?.name,
+      undefined,
+      interaction,
+    );
   }
 };
 

@@ -5,7 +5,7 @@ import {
 } from "discord.js";
 
 import { Command, CommandHandler } from "../models";
-import { logger } from "../utils/logHandler";
+import { errorHandler } from "../utils/errorHandler";
 
 import { handleList, handlePost, handleSuggest } from "./subcommands/qotd";
 
@@ -56,7 +56,14 @@ export const qotd: Command = {
       const handler = handlers[subCommand];
       await handler(bot, interaction);
     } catch (err) {
-      logger.error(err, `Error processing command qotd`);
+      errorHandler(
+        bot,
+        "commands > qotd",
+        err,
+        interaction.guild?.name,
+        undefined,
+        interaction,
+      );
     }
   },
   cooldown: 3,

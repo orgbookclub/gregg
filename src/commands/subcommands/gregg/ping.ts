@@ -1,5 +1,5 @@
 import { CommandHandler } from "../../../models";
-import { logger } from "../../../utils/logHandler";
+import { errorHandler } from "../../../utils/errorHandler";
 
 /**
  * Replies to the user with 'Pong!'.
@@ -11,7 +11,14 @@ export const handlePing: CommandHandler = async (bot, interaction) => {
   try {
     await interaction.reply("Pong!");
   } catch (err) {
-    logger.error(err, `Error in handlePing`);
     await interaction.reply("Something went wrong! Please try again later.");
+    errorHandler(
+      bot,
+      "commands > gregg > ping",
+      err,
+      interaction.guild?.name,
+      undefined,
+      interaction,
+    );
   }
 };

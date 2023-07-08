@@ -1,7 +1,7 @@
 import { Colors, EmbedBuilder } from "discord.js";
 
 import { CommandHandler } from "../../../models";
-import { logger } from "../../../utils/logHandler";
+import { errorHandler } from "../../../utils/errorHandler";
 
 /**
  * Generates an embed containing information about Gregg.
@@ -21,7 +21,14 @@ export const handleAbout: CommandHandler = async (bot, interaction) => {
       .setThumbnail(bot.user?.displayAvatarURL() ?? null);
     await interaction.reply({ embeds: [aboutEmbed] });
   } catch (err) {
-    logger.error(err, `Error in handleAbout`);
     await interaction.reply("Something went wrong! Please try again later.");
+    errorHandler(
+      bot,
+      "commands > gregg > about",
+      err,
+      interaction.guild?.name,
+      undefined,
+      interaction,
+    );
   }
 };

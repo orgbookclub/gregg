@@ -21,9 +21,7 @@ export async function upsertUser(bot: Bot, user: User) {
         userId: user.id,
         name: user.username,
         joinDate: new Date().toISOString(),
-        profile: {
-          bio: "",
-        },
+        profile: { bio: "" },
       },
     });
     userDoc = userCreateResponse.data;

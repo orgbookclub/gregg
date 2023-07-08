@@ -35,7 +35,7 @@ export class OWSClient {
    */
   constructor() {
     this.accessToken = "";
-    this.cronJob = new CronJob("*/5 * * * *", async () => {
+    this.cronJob = new CronJob("*/60 * * * *", async () => {
       try {
         await this.initialize();
       } catch (err) {
@@ -44,7 +44,6 @@ export class OWSClient {
     });
 
     this.auth = new AuthApi(new Configuration({ basePath: this.baseUrl }));
-    // Start job
     if (!this.cronJob.running) {
       this.cronJob.start();
     }

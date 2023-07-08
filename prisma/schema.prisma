@@ -8,33 +8,95 @@ datasource db {
 }
 
 type SprintsParticipants {
-  didFinish  Boolean
-  endCount   Int
-  startCount Int
+  didFinish  Boolean @default(false)
+  endCount   Int     @default(0)
+  startCount Int     @default(0)
   userId     String
 }
 
-model qotds {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  question    String
-  serverId    String
-  status      String
-  suggestedOn DateTime @db.Date
-  userId      String
+type GuildsReaderRoles {
+  points Int    @default(0)
+  role   String @default("")
 }
 
-model servers {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+model qotds {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  question  String   @default("")
+  guildId  String
+  userId    String
+  status    String   @default("Requested")
+  createdOn DateTime @db.Date
+  updatedOn DateTime @db.Date
+  v         Int?     @map("__v") @ignore
 }
 
 model sprints {
   id           String                @id @default(auto()) @map("_id") @db.ObjectId
-  duration     Int
+  duration     Int                   @default(0)
   participants SprintsParticipants[]
-  startedBy    String
-  threadId     String
+  userId       String
+  guildId      String
+  channelId    String
+  startedOn    DateTime              @db.Date
+  endedOn      DateTime              @db.Date
+  status       String
+  v            Int?                  @map("__v") @ignore
+}
+
+model guilds {
+  id                       String              @id @default(auto()) @map("_id") @db.ObjectId
+  name                     String              @default("")
+  ownerId                  String
+  region                   String              @default("")
+  createdAt                DateTime            @db.Date
+  joinedAt                 DateTime            @db.Date
+  brRequestChannel         String              @default("")
+  brForumChannel           String              @default("")
+  mrForumChannel           String              @default("")
+  eventAnnouncementChannel String              @default("")
+  qotdSuggestionChannel    String              @default("")
+  qotdChannel              String              @default("")
+  readerRoles              GuildsReaderRoles[]
+  v                        Int?                @map("__v") @ignore
 }
 
 model users {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  username String
+  v        Int?   @map("__v") @ignore
+}
+
+model members {
+  id       String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId   String
+  guildId  String
+  joinedAt DateTime @db.Date
+  v        Int?     @map("__v") @ignore
+
+  @@unique([guildId, userId], map: "guildId_1_userId_1")
+}
+
+model messageCounts {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  v         Int?     @map("__v") @ignore
+  count     Int      @default(0)
+  guildId   String
+  userId    String
+  channelId String
+  createdOn DateTime @db.Date
+  updatedOn DateTime @db.Date
+
+  @@unique([guildId, userId, channelId], map: "guildId_1_userId_1_channelId_1")
+}
+
+model commandUsages {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  v          Int?     @map("__v") @ignore
+  command    String
+  subcommand String
+  uses       Int      @default(0)
+  createdOn  DateTime @db.Date
+  updatedOn  DateTime @db.Date
+
+  @@unique([command, subcommand], map: "command_1_subcommand_1")
 }

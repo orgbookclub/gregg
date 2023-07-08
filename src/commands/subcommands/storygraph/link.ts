@@ -1,5 +1,5 @@
 import { CommandHandler } from "../../../models";
-import { logger } from "../../../utils/logHandler";
+import { errorHandler } from "../../../utils/errorHandler";
 
 /**
  * Fetches a single book link from SG.
@@ -24,7 +24,14 @@ export const handleLink: CommandHandler = async (bot, interaction) => {
 
     await interaction.editReply({ content: response.data[0].url });
   } catch (err) {
-    logger.error(err, `Error in handleLink`);
     await interaction.editReply("Something went wrong! Please try again later");
+    errorHandler(
+      bot,
+      "commands > storygraph > link",
+      err,
+      interaction.guild?.name,
+      undefined,
+      interaction,
+    );
   }
 };

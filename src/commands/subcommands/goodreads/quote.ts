@@ -1,5 +1,5 @@
 import { CommandHandler } from "../../../models";
-import { logger } from "../../../utils/logHandler";
+import { errorHandler } from "../../../utils/errorHandler";
 
 /**
  * Fetches a random quote from GR.
@@ -26,7 +26,14 @@ export const handleQuote: CommandHandler = async (bot, interaction) => {
     }
     await interaction.editReply({ content: quote });
   } catch (err) {
-    logger.error(err, `Error in handleQuote`);
     await interaction.editReply("Something went wrong! Please try again later");
+    errorHandler(
+      bot,
+      "commands > goodreads > quote",
+      err,
+      interaction.guild?.name,
+      undefined,
+      interaction,
+    );
   }
 };

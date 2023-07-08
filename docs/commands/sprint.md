@@ -14,14 +14,7 @@ The `/sprint` commands are related to interacting with reading sprints in the se
 | `leave`  |                                     | Enables a user to leave an ongoing sprint                                                                 |
 | `stats`  | `user: User`                        | Shows the total sprint stats of a user                                                                    |
 
-## Events
-
-| Event            | Description                                                                       |
-| ---------------- | --------------------------------------------------------------------------------- |
-| `sprintSchedule` | Fired when a sprint is scheduled with a `delay`. Invokes `sprintStart` afterwards |
-| `sprintStart`    | Fired when a sprint is started. Invokes `sprintFinish` afterwards                 |
-| `sprintFinish`   | Fired once a sprint has finished. Fires `sprintEnd` after a 2 minute gap          |
-| `sprintEnd`      | Fired at the end of a sprint. Logs the sprint to the database                     |
+## Sprint Lifecycle
 
 ## What are Reading Sprints?
 

@@ -1,6 +1,6 @@
 import { CommandHandler } from "../../../models";
+import { errorHandler } from "../../../utils/errorHandler";
 import { getEventInfoEmbed } from "../../../utils/eventUtils";
-import { logger } from "../../../utils/logHandler";
 
 /**
  * Shows detailed information for an event.
@@ -20,7 +20,14 @@ export const handleInfo: CommandHandler = async (bot, interaction) => {
       embeds: [embed],
     });
   } catch (err) {
-    logger.error(err, `Error in handleInfo`);
     await interaction.editReply("Something went wrong! Please try again later");
+    errorHandler(
+      bot,
+      "commands > events > info",
+      err,
+      interaction.guild?.name,
+      undefined,
+      interaction,
+    );
   }
 };

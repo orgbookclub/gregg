@@ -1,7 +1,7 @@
 import { hideLinkEmbed } from "discord.js";
 
 import { CommandHandler } from "../../../models";
-import { logger } from "../../../utils/logHandler";
+import { errorHandler } from "../../../utils/errorHandler";
 
 /**
  * Fetches a single book link from GR.
@@ -26,7 +26,14 @@ export const handleLink: CommandHandler = async (bot, interaction) => {
       content: hideLinkEmbed(response.data[0].url),
     });
   } catch (err) {
-    logger.error(err, `Error in handleLink`);
     await interaction.editReply("Something went wrong! Please try again later");
+    errorHandler(
+      bot,
+      "commands > goodreads > link",
+      err,
+      interaction.guild?.name,
+      undefined,
+      interaction,
+    );
   }
 };

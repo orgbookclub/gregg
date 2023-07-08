@@ -1,6 +1,6 @@
-import { ButtonBuilder } from "@discordjs/builders";
 import {
   ActionRowBuilder,
+  ButtonBuilder,
   ButtonStyle,
   ChatInputCommandInteraction,
   ComponentType,
@@ -10,8 +10,6 @@ import {
 } from "discord.js";
 
 import { Bot } from "../models";
-
-import { logger } from "./logHandler";
 
 /**
  * Handles all pagination related for a given array of data.
@@ -69,11 +67,13 @@ export class PaginationManager<T> {
    */
   createMessageComponentsForPage() {
     const backButton = new ButtonBuilder()
+      .setLabel("Next")
       .setEmoji({ name: "◀️" })
       .setStyle(ButtonStyle.Secondary)
       .setCustomId(this.backId)
       .setDisabled(this.currPageNum === 1);
     const forwardButton = new ButtonBuilder()
+      .setLabel("Previous")
       .setEmoji({ name: "▶️" })
       .setStyle(ButtonStyle.Secondary)
       .setCustomId(this.forwardId)
@@ -170,10 +170,7 @@ export class PaginationManager<T> {
       }
     });
 
-    buttonCollector.on("end", (collected) => {
-      logger.debug(
-        `Collected ${collected.size} interactions on button collector on message ${buttonCollector.messageId}`,
-      );
+    buttonCollector.on("end", (_) => {
       const payload = this.createMessagePayloadForPage(interaction, true);
       message.edit(payload);
     });
@@ -195,12 +192,6 @@ export class PaginationManager<T> {
           ephemeral: true,
         });
       }
-    });
-
-    selectMenuCollector.on("end", (collected) => {
-      logger.debug(
-        `Collected ${collected.size} interactions on select menu collector on message ${selectMenuCollector.messageId}`,
-      );
     });
   }
 }

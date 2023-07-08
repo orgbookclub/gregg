@@ -1,6 +1,6 @@
 import { CommandHandler } from "../../../models";
 import { SprintStatus } from "../../../models/commands/sprint/SprintStatus";
-import { logger } from "../../../utils/logHandler";
+import { errorHandler } from "../../../utils/errorHandler";
 
 /**
  * Enables a user to log their count at the end of a sprint.
@@ -16,12 +16,7 @@ export const handleFinish: CommandHandler = async (bot, interaction) => {
 
     const threadId = interaction.channelId;
     const user = interaction.user;
-    if (
-      !bot.dataCache.sprintManager.isSprintPresent(
-        threadId,
-        SprintStatus.Finished,
-      )
-    ) {
+    if (!bot.sprintManager.isSprintPresent(threadId, SprintStatus.Finished)) {
       await interaction.editReply({
         content:
           "There are no finished sprints to log end counts in this thread!",
@@ -29,19 +24,27 @@ export const handleFinish: CommandHandler = async (bot, interaction) => {
       return;
     }
 
-    const sprint = bot.dataCache.sprintManager.getSprint(threadId);
-    if (!sprint.participants[user.id]) {
+    // const sprint = bot.dataCache.sprintManager.getSprint(threadId);
+    const participants = bot.sprintManager.getSprintParticipants(threadId);
+    if (!participants[user.id]) {
       await interaction.editReply({
         content: "You were not a participant of this sprint!",
       });
       return;
     }
-    sprint.finish(user.id, count);
+    bot.sprintManager.logEndCount(threadId, user.id, count);
     await interaction.editReply({
       content: `Successfully logged your end count as ${count}!`,
     });
   } catch (err) {
-    logger.error(err, `Error in handleFinish`);
     await interaction.editReply("Something went wrong! Please try again later");
+    errorHandler(
+      bot,
+      "commands > sprint > finish",
+      err,
+      interaction.guild?.name,
+      undefined,
+      interaction,
+    );
   }
 };

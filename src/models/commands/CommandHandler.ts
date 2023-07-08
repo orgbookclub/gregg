@@ -1,8 +1,8 @@
 import { ChatInputCommandInteraction } from "discord.js";
 
-import { Bot } from ".";
+import { Bot } from "..";
 
 export type CommandHandler = (
-  Becca: Bot,
+  bot: Bot,
   interaction: ChatInputCommandInteraction,
 ) => Promise<void>;

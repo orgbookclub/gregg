@@ -1,7 +1,7 @@
 import { SlashCommandBuilder, SlashCommandSubcommandBuilder } from "discord.js";
 
 import { CommandHandler, Command } from "../models";
-import { logger } from "../utils/logHandler";
+import { errorHandler } from "../utils/errorHandler";
 
 import {
   handleStart,
@@ -44,21 +44,21 @@ const sprintStartSubcommand = new SlashCommandSubcommandBuilder()
 
 const sprintJoinSubcommand = new SlashCommandSubcommandBuilder()
   .setName("join")
-  .setDescription("Join the ongoing sprint")
+  .setDescription("Adds the user as a participant of the ongoing sprint")
   .addIntegerOption((option) =>
     option.setName("count").setDescription("The initial count"),
   );
 
 const sprintFinishSubcommand = new SlashCommandSubcommandBuilder()
   .setName("finish")
-  .setDescription("Gives your final count to the bot at the end of a sprint.")
+  .setDescription("Logs the final count for a user at the end of a sprint")
   .addIntegerOption((option) =>
     option.setName("count").setDescription("The final count"),
   );
 
 const sprintStatsSubcommand = new SlashCommandSubcommandBuilder()
   .setName("stats")
-  .setDescription("Shows the total sprint stats of a user")
+  .setDescription("Fetches total sprint stats of a user")
   .addUserOption((option) =>
     option
       .setName("user")
@@ -67,15 +67,15 @@ const sprintStatsSubcommand = new SlashCommandSubcommandBuilder()
 
 const sprintStatusSubcommand = new SlashCommandSubcommandBuilder()
   .setName("status")
-  .setDescription("Shows the current status of the ongoing sprint");
+  .setDescription("Fetches the status of the ongoing sprint");
 
 const sprintCancelSubcommand = new SlashCommandSubcommandBuilder()
   .setName("cancel")
-  .setDescription("Cancels an ongoing sprint in the channel");
+  .setDescription("Cancels an ongoing sprint");
 
 const sprintLeaveSubcommand = new SlashCommandSubcommandBuilder()
   .setName("leave")
-  .setDescription("Leave an ongoing sprint in the channel");
+  .setDescription("Removes a user from the ongoing sprint");
 
 export const sprint: Command = {
   data: new SlashCommandBuilder()
@@ -95,7 +95,14 @@ export const sprint: Command = {
       const handler = handlers[subCommand];
       await handler(bot, interaction);
     } catch (err) {
-      logger.error(err, `Error processing command sprint`);
+      errorHandler(
+        bot,
+        "commands > sprint",
+        err,
+        interaction.guild?.name,
+        undefined,
+        interaction,
+      );
     }
   },
   cooldown: 3,

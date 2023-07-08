@@ -1,6 +1,6 @@
 import { CommandHandler } from "../../../models";
 import { getBookSearchEmbed } from "../../../utils/bookUtils";
-import { logger } from "../../../utils/logHandler";
+import { errorHandler } from "../../../utils/errorHandler";
 
 /**
  * Fetches a list of book links from GR.
@@ -27,8 +27,15 @@ const handleSearch: CommandHandler = async (bot, interaction) => {
     const embed = getBookSearchEmbed(query, response.data, "Goodreads");
     await interaction.editReply({ embeds: [embed] });
   } catch (err) {
-    logger.error(err, `Error in handleSearch`);
     await interaction.editReply("Something went wrong! Please try again later");
+    errorHandler(
+      bot,
+      "commands > goodreads > search",
+      err,
+      interaction.guild?.name,
+      undefined,
+      interaction,
+    );
   }
 };
 

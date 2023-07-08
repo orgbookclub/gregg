@@ -7,7 +7,7 @@ import {
 } from "discord.js";
 
 import { CommandHandler } from "../../../models";
-import { logger } from "../../../utils/logHandler";
+import { errorHandler } from "../../../utils/errorHandler";
 import { PaginationManager } from "../../../utils/paginationManager";
 
 /**
@@ -40,9 +40,14 @@ const handleReaderboard: CommandHandler = async (bot, interaction) => {
     );
     pagedContentManager.createCollectors(message, interaction, 5 * 60 * 1000);
   } catch (err) {
-    logger.error(err, `Error in handleReaderboard`);
-    await interaction.editReply(
-      "Something went wrong! Please try again later.",
+    await interaction.editReply("Something went wrong! Please try again later");
+    errorHandler(
+      bot,
+      "commands > user > readerboard",
+      err,
+      interaction.guild?.name,
+      undefined,
+      interaction,
     );
   }
 };

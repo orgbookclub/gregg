@@ -1,6 +1,8 @@
 name: Gregg Deploy to Railway
 on: 
   workflow_dispatch: 
+  release:
+    types: [published]
 
 jobs: 
   deploy:

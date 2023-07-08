@@ -11,7 +11,7 @@ import {
 } from "../config";
 import { EventParticipantOptions } from "../config/EventParticipantOptions";
 import { Command, CommandHandler } from "../models";
-import { logger } from "../utils/logHandler";
+import { errorHandler } from "../utils/errorHandler";
 
 import {
   handleAddUser,
@@ -242,7 +242,14 @@ export const events: Command = {
       const handler = handlers[subCommand];
       await handler(bot, interaction);
     } catch (err) {
-      logger.error(err, `Error processing command events`);
+      errorHandler(
+        bot,
+        "commands > events",
+        err,
+        interaction.guild?.name,
+        undefined,
+        interaction,
+      );
     }
   },
 };
