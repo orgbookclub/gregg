@@ -14,21 +14,17 @@ const interactionCreate: Event = {
     try {
       if (interaction.isChatInputCommand()) {
         await processChatInputCommand(bot, interaction);
-      }
-      if (interaction.isContextMenuCommand()) {
+      } else if (interaction.isContextMenuCommand()) {
         await processContextMenuCommand(bot, interaction);
-      }
-      if (interaction.isButton()) {
+      } else if (interaction.isButton()) {
         await processButtonClick(bot, interaction);
-      }
-      if (interaction.isStringSelectMenu()) {
+      } else if (interaction.isStringSelectMenu()) {
         await processStringSelectMenu(bot, interaction);
-      }
-      if (interaction.isModalSubmit()) {
+      } else if (interaction.isModalSubmit()) {
         await processModalSubmit(bot, interaction);
       }
     } catch (err) {
-      logger.error(err, `Error while handling interactionCreate event`);
+      logger.error(err, `Error in ${Events.InteractionCreate}`);
     }
   },
 };

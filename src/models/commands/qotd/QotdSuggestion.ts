@@ -5,5 +5,5 @@ export interface QotdSuggestion {
   status: keyof typeof QotdSuggestionStatus;
   serverId: string;
   userId: string;
-  suggestedOn: Date;
+  createdOn: Date;
 }

@@ -8,13 +8,11 @@ import {
   ContextMenuCommandInteraction,
   EmbedBuilder,
   Message,
-  TextChannel,
-  User,
   time,
 } from "discord.js";
 
 import { Context, Bot } from "../models";
-import { logger } from "../utils/logHandler";
+import { errorHandler } from "../utils/errorHandler";
 
 const bookmark: Context = {
   data: new ContextMenuCommandBuilder()
@@ -23,23 +21,21 @@ const bookmark: Context = {
   run: async (bot: Bot, interaction: ContextMenuCommandInteraction) => {
     try {
       await interaction.deferReply({ ephemeral: true });
+
       if (!interaction.isMessageContextMenuCommand()) {
         await interaction.editReply("Something went wrong!");
         return;
       }
       const message = interaction.targetMessage;
-      const channel = interaction.channel as TextChannel;
+      const channel = interaction.channel;
       const guild = interaction.guild;
 
-      if (!message || !channel || !guild) {
+      if (!message || !channel || !guild || !channel.isTextBased()) {
         await interaction.editReply("Bookmarking failed!");
         return;
       }
 
-      const author = message.author as User;
-
-      const bookmarkEmbed = createBookmarkEmbed(author, message);
-
+      const bookmarkEmbed = createBookmarkEmbed(message);
       const buttonRow = createDeleteBookmarkComponent();
 
       await interaction.user
@@ -53,20 +49,29 @@ const bookmark: Context = {
         })
         .catch(async () => {
           await interaction.editReply(
-            "Unable to bookmark! Please make sure you have settings configured to enable DMs from members of the server",
+            "Unable to bookmark! Please make sure you have settings configured to enable DMs",
           );
         });
     } catch (err) {
-      logger.error(err, "Error handling bookmark context command");
+      await errorHandler(
+        bot,
+        "contexts > bookmark",
+        err,
+        interaction.guild?.name,
+        interaction.isMessageContextMenuCommand()
+          ? interaction.targetMessage
+          : undefined,
+        interaction,
+      );
     }
   },
 };
 
-function createBookmarkEmbed(author: User, message: Message<boolean>) {
+function createBookmarkEmbed(message: Message<boolean>) {
   const embed = new EmbedBuilder()
     .setAuthor({
-      name: author.tag,
-      iconURL: author.displayAvatarURL(),
+      name: message.author.tag,
+      iconURL: message.author.displayAvatarURL(),
     })
     .setColor(Colors.Red);
   if (message.content) {

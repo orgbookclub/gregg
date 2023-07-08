@@ -1,7 +1,7 @@
 import { SlashCommandBuilder, SlashCommandSubcommandBuilder } from "discord.js";
 
 import { CommandHandler, Command } from "../models";
-import { logger } from "../utils/logHandler";
+import { errorHandler } from "../utils/errorHandler";
 
 import {
   handleBook,
@@ -104,14 +104,22 @@ export const storygraph: Command = {
     .addSubcommand(storygraphSearchSubcommand)
     .addSubcommand(storygraphLinkSubcommand)
     .addSubcommand(storygraphBookSubcommand)
-    .addSubcommand(storygraphCoverSubcommand),
+    .addSubcommand(storygraphCoverSubcommand)
+    .setDMPermission(false),
   run: async (bot, interaction) => {
     try {
       const subCommand = interaction.options.getSubcommand();
       const handler = handlers[subCommand];
       await handler(bot, interaction);
     } catch (err) {
-      logger.error(err, `Error processing command storygraph`);
+      errorHandler(
+        bot,
+        "commands > storygraph",
+        err,
+        interaction.guild?.name,
+        undefined,
+        interaction,
+      );
     }
   },
   cooldown: 3,

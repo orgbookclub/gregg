@@ -9,8 +9,8 @@ import {
 } from "discord.js";
 
 import { CommandHandler } from "../../../models";
+import { errorHandler } from "../../../utils/errorHandler";
 import { getUserMentionString } from "../../../utils/eventUtils";
-import { logger } from "../../../utils/logHandler";
 
 const EVENT_BROADCAST_MODAL_ID = "eventBroadcastModal";
 const MESSAGE_FIELD_ID = "message";
@@ -86,8 +86,15 @@ const handleBroadcast: CommandHandler = async (bot, interaction) => {
       ephemeral: true,
     });
   } catch (err) {
-    logger.error(err, `Error in handleBroadcast`);
     await interaction.editReply("Something went wrong! Please try again later");
+    errorHandler(
+      bot,
+      "commands > events > broadcast",
+      err,
+      interaction.guild?.name,
+      undefined,
+      interaction,
+    );
   }
 };
 

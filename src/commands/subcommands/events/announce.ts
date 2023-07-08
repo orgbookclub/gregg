@@ -7,8 +7,9 @@ import {
   channelMention,
 } from "discord.js";
 
-import { ChannelIds } from "../../../config";
 import { CommandHandler } from "../../../models";
+import { getGuildFromDb } from "../../../utils/dbUtils";
+import { errorHandler } from "../../../utils/errorHandler";
 import { getEventInfoEmbed } from "../../../utils/eventUtils";
 import { logger } from "../../../utils/logHandler";
 
@@ -40,9 +41,10 @@ const handleAnnounce: CommandHandler = async (bot, interaction) => {
     }
     let announcementChannel = channel;
     if (!channel) {
-      const configuredChannel = await bot.channels.fetch(
-        ChannelIds.EventAnnouncementChannel,
-      );
+      if (!interaction.guild) return;
+      const guildDoc = await getGuildFromDb(bot, interaction.guild.id);
+      const channelId = guildDoc?.eventAnnouncementChannel ?? "Not set";
+      const configuredChannel = await bot.channels.fetch(channelId);
 
       if (
         !configuredChannel ||
@@ -85,6 +87,14 @@ const handleAnnounce: CommandHandler = async (bot, interaction) => {
   } catch (err) {
     logger.error(err, `Error in handleAnnounce`);
     await interaction.reply("Something went wrong! Please try again later");
+    errorHandler(
+      bot,
+      "commands > events > announce",
+      err,
+      interaction.guild?.name,
+      undefined,
+      interaction,
+    );
   }
 };
 

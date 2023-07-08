@@ -32,7 +32,7 @@ const errorHandler = async (
   interaction?: CommandInteraction | ContextMenuCommandInteraction,
 ) => {
   const error = err as Error;
-  logger.error(error);
+  logger.error(error, `Error in ${context}`);
 
   captureException(error);
 

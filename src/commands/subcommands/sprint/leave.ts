@@ -2,7 +2,7 @@ import { userMention } from "discord.js";
 
 import { CommandHandler } from "../../../models";
 import { SprintStatus } from "../../../models/commands/sprint/SprintStatus";
-import { logger } from "../../../utils/logHandler";
+import { errorHandler } from "../../../utils/errorHandler";
 
 /**
  * Enables a user to leave an ongoing sprint.
@@ -16,23 +16,25 @@ export const handleLeave: CommandHandler = async (bot, interaction) => {
 
     const threadId = interaction.channelId;
     const user = interaction.user;
-    if (
-      !bot.dataCache.sprintManager.isSprintPresent(
-        threadId,
-        SprintStatus.Ongoing,
-      )
-    ) {
+    if (!bot.sprintManager.isSprintPresent(threadId, SprintStatus.Ongoing)) {
       await interaction.editReply({
         content: "There are no ongoing sprints to leave in this thread!",
       });
       return;
     }
-    bot.dataCache.sprintManager.removeUserFromSprint(threadId, user.id);
+    bot.sprintManager.removeUserFromSprint(threadId, user.id);
     await interaction.editReply({
       content: `${userMention(user.id)} has left the sprint`,
     });
   } catch (err) {
-    logger.error(err, `Error in handleLeave`);
     await interaction.editReply("Something went wrong! Please try again later");
+    errorHandler(
+      bot,
+      "commands > sprint > leave",
+      err,
+      interaction.guild?.name,
+      undefined,
+      interaction,
+    );
   }
 };

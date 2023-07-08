@@ -5,10 +5,10 @@ import {
   ThreadAutoArchiveDuration,
 } from "discord.js";
 
-import { ChannelIds } from "../../../config";
 import { CommandHandler } from "../../../models";
 import { QotdSuggestionStatus } from "../../../models/commands/qotd/QotdSuggestionStatus";
-import { logger } from "../../../utils/logHandler";
+import { getGuildFromDb } from "../../../utils/dbUtils";
+import { errorHandler } from "../../../utils/errorHandler";
 
 /**
  * Posts a QOTD with the given ID, in the given channel.
@@ -21,6 +21,7 @@ import { logger } from "../../../utils/logHandler";
 const handlePost: CommandHandler = async (bot, interaction) => {
   try {
     await interaction.deferReply();
+    if (!interaction.guild) return;
 
     const id = interaction.options.getString("id", false);
     let channel =
@@ -48,7 +49,8 @@ const handlePost: CommandHandler = async (bot, interaction) => {
       qotd = selectedQotd;
     }
     if (!channel) {
-      const channelId = ChannelIds.QotdChannel;
+      const guildDoc = await getGuildFromDb(bot, interaction.guild.id);
+      const channelId = guildDoc?.qotdChannel ?? "Not set";
       const qotdChannel = await bot.channels.fetch(channelId);
       if (!qotdChannel?.isTextBased()) {
         throw new Error("Unable to post QOTD in the configured channel");
@@ -68,8 +70,15 @@ const handlePost: CommandHandler = async (bot, interaction) => {
       content: `QOTD Posted for ${new Date().toDateString()}`,
     });
   } catch (err) {
-    logger.error(err, "Error in handlePost");
     await interaction.editReply("Something went wrong! Please try again later");
+    errorHandler(
+      bot,
+      "commands > qotd > post",
+      err,
+      interaction.guild?.name,
+      undefined,
+      interaction,
+    );
   }
 };
 

@@ -2,7 +2,7 @@ import { SlashCommandBuilder, SlashCommandSubcommandBuilder } from "discord.js";
 
 import { EventTypeOptions, EventStatusOptions } from "../config";
 import { CommandHandler, Command } from "../models";
-import { logger } from "../utils/logHandler";
+import { errorHandler } from "../utils/errorHandler";
 
 import {
   handleReaderboard,
@@ -22,7 +22,7 @@ const userReaderboardSubcommand = new SlashCommandSubcommandBuilder()
 
 const userEventsSubcommand = new SlashCommandSubcommandBuilder()
   .setName("events")
-  .setDescription("Gets the server events for the user")
+  .setDescription("Fetches the server events for a user")
   .addStringOption((option) =>
     option
       .setName("type")
@@ -43,7 +43,7 @@ const userEventsSubcommand = new SlashCommandSubcommandBuilder()
 
 const userInfoSubcommand = new SlashCommandSubcommandBuilder()
   .setName("info")
-  .setDescription("Gets information about a user")
+  .setDescription("Fetches information about a user")
   .addUserOption((option) =>
     option.setName("user").setDescription("User for which to fetch info"),
   );
@@ -62,7 +62,14 @@ export const user: Command = {
       const handler = handlers[subCommand];
       await handler(bot, interaction);
     } catch (err) {
-      logger.error(err, `Error processing command user`);
+      errorHandler(
+        bot,
+        "commands > user",
+        err,
+        interaction.guild?.name,
+        undefined,
+        interaction,
+      );
     }
   },
   cooldown: 15,

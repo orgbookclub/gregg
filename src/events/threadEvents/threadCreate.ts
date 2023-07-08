@@ -11,7 +11,7 @@ export const threadCreate: Event = {
         await thread.join();
       }
     } catch (error) {
-      logger.error(error, "Error while handling threadCreate event");
+      logger.error(error, `Error in ${Events.ThreadCreate}`);
     }
   },
 };

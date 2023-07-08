@@ -1,7 +1,7 @@
 import { SlashCommandBuilder, SlashCommandSubcommandBuilder } from "discord.js";
 
 import { CommandHandler, Command } from "../models";
-import { logger } from "../utils/logHandler";
+import { errorHandler } from "../utils/errorHandler";
 
 import {
   handleStart,
@@ -95,7 +95,14 @@ export const sprint: Command = {
       const handler = handlers[subCommand];
       await handler(bot, interaction);
     } catch (err) {
-      logger.error(err, `Error processing command sprint`);
+      errorHandler(
+        bot,
+        "commands > sprint",
+        err,
+        interaction.guild?.name,
+        undefined,
+        interaction,
+      );
     }
   },
   cooldown: 3,

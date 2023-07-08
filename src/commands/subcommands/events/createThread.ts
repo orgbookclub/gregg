@@ -11,14 +11,14 @@ import {
   TimestampStyles,
 } from "discord.js";
 
-import { ChannelIds } from "../../../config";
 import { Bot, CommandHandler } from "../../../models";
+import { getGuildFromDb } from "../../../utils/dbUtils";
+import { errorHandler } from "../../../utils/errorHandler";
 import {
   getEventInfoEmbed,
   getThreadTitle,
   getUserMentionString,
 } from "../../../utils/eventUtils";
-import { logger } from "../../../utils/logHandler";
 
 /**
  * Creates thread(s) for an approved event, and writes information about the event on the thread.
@@ -54,7 +54,11 @@ const handleCreateThread: CommandHandler = async (bot, interaction) => {
     if (!channel || channel.type === ChannelType.GuildForum) {
       let forum = channel;
       if (!channel) {
-        forum = await getConfiguredForumChannel(bot, eventDoc.type);
+        forum = await getConfiguredForumChannel(
+          bot,
+          eventDoc.type,
+          interaction.guild?.id,
+        );
       }
       if (!forum) {
         await interaction.editReply(
@@ -100,20 +104,32 @@ const handleCreateThread: CommandHandler = async (bot, interaction) => {
       await interaction.editReply(`Updated ${channelMention(channel.id)}`);
     }
   } catch (err) {
-    logger.error(err, `Error in handleCreateThread`);
     await interaction.editReply("Something went wrong! Please try again later");
+    errorHandler(
+      bot,
+      "commands > events > createThread",
+      err,
+      interaction.guild?.name,
+      undefined,
+      interaction,
+    );
   }
 };
 
 async function getConfiguredForumChannel(
   bot: Bot,
   type: EventDocumentTypeEnum,
+  guildId?: string,
 ) {
   let eventForum;
+  if (!guildId) return null;
+  const guildDoc = await getGuildFromDb(bot, guildId);
   if (type === EventDocumentTypeEnum.BuddyRead) {
-    eventForum = await bot.channels.fetch(ChannelIds.BRForumChannel);
+    const channelId = guildDoc?.brForumChannel ?? "Not set";
+    eventForum = await bot.channels.fetch(channelId);
   } else if (type === EventDocumentTypeEnum.MonthlyRead) {
-    eventForum = await bot.channels.fetch(ChannelIds.MRForumChannel);
+    const channelId = guildDoc?.mrForumChannel ?? "Not set";
+    eventForum = await bot.channels.fetch(channelId);
   }
   if (!eventForum || eventForum.type !== ChannelType.GuildForum) {
     return null;

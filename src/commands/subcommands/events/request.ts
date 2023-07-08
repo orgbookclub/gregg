@@ -13,14 +13,14 @@ import {
   TextInputStyle,
 } from "discord.js";
 
-import { ChannelIds } from "../../../config";
 import { Bot, CommandHandler } from "../../../models";
 import { EventRequestSubmission } from "../../../models/commands/events/EventRequestSubmission";
+import { getGuildFromDb } from "../../../utils/dbUtils";
+import { errorHandler } from "../../../utils/errorHandler";
 import {
   getEventRequestEmbed,
   getNextMonthRange,
 } from "../../../utils/eventUtils";
-import { logger } from "../../../utils/logHandler";
 import { upsertUser } from "../../../utils/userUtils";
 
 const EVENT_REQUEST_MODAL_ID = "eventRequestModal";
@@ -85,7 +85,9 @@ const handleRequest: CommandHandler = async (bot, interaction) => {
 
     const eventDoc = eventResponse.data;
     if (eventDoc.type === EventDocumentTypeEnum.BuddyRead) {
-      const channelId = ChannelIds.BRRequestChannel;
+      if (!interaction.guild) return;
+      const guildDoc = await getGuildFromDb(bot, interaction.guild.id);
+      const channelId = guildDoc?.brRequestChannel ?? "Not set";
       const channel = await bot.channels.fetch(channelId);
       if (!channel?.isTextBased()) {
         await modalSubmitInteraction.editReply(
@@ -105,8 +107,14 @@ const handleRequest: CommandHandler = async (bot, interaction) => {
       content: "Event request successful!",
     });
   } catch (err) {
-    logger.error(err, `Error in handleRequest`);
-    await interaction.reply("Something went wrong! Please try again later");
+    errorHandler(
+      bot,
+      "commands > events > request",
+      err,
+      interaction.guild?.name,
+      undefined,
+      interaction,
+    );
   }
 };
 

@@ -1,8 +1,8 @@
 import { UpdateEventDto } from "@orgbookclub/ows-client";
 
 import { CommandHandler } from "../../../models";
+import { errorHandler } from "../../../utils/errorHandler";
 import { getEventInfoEmbed, participantToDto } from "../../../utils/eventUtils";
-import { logger } from "../../../utils/logHandler";
 
 /**
  * Removes a user as a participant to an event.
@@ -48,9 +48,16 @@ const handleRemoveUser: CommandHandler = async (bot, interaction) => {
       content: "Removed user from event!",
       embeds: [getEventInfoEmbed(updatedResponse.data, interaction)],
     });
-  } catch (error) {
-    logger.error(error, "Error in handleRemove");
+  } catch (err) {
     await interaction.reply("Something went wrong! Please try again later");
+    errorHandler(
+      bot,
+      "commands > events > removeUser",
+      err,
+      interaction.guild?.name,
+      undefined,
+      interaction,
+    );
   }
 };
 

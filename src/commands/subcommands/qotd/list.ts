@@ -9,7 +9,7 @@ import {
 
 import { CommandHandler } from "../../../models";
 import { QotdSuggestionStatus } from "../../../models/commands/qotd/QotdSuggestionStatus";
-import { logger } from "../../../utils/logHandler";
+import { errorHandler } from "../../../utils/errorHandler";
 import { PaginationManager } from "../../../utils/paginationManager";
 
 /**
@@ -44,8 +44,15 @@ const handleList: CommandHandler = async (bot, interaction) => {
     );
     pagedContentManager.createCollectors(message, interaction, 5 * 60 * 1000);
   } catch (err) {
-    logger.error(err, "Error in handleList");
     await interaction.editReply("Something went wrong! Please try again later");
+    errorHandler(
+      bot,
+      "commands > qotd > list",
+      err,
+      interaction.guild?.name,
+      undefined,
+      interaction,
+    );
   }
 };
 
@@ -68,7 +75,7 @@ function getQotdListEmbed(
         `> __ID__: \`${doc.id}\`` +
         "\n" +
         `> __By__: ${userMention(doc.userId)}` +
-        ` | __On__: ${time(doc.suggestedOn)}`,
+        ` | __On__: ${time(doc.createdOn)}`,
       inline: false,
     });
   });

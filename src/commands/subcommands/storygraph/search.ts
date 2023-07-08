@@ -2,7 +2,7 @@ import { ChatInputCommandInteraction } from "discord.js";
 
 import { CommandHandler, Bot } from "../../../models";
 import { getBookSearchEmbed } from "../../../utils/bookUtils";
-import { logger } from "../../../utils/logHandler";
+import { errorHandler } from "../../../utils/errorHandler";
 
 /**
  * Fetches a list of book links from SG.
@@ -32,8 +32,15 @@ const handleSearch: CommandHandler = async (
     const embed = getBookSearchEmbed(query, response.data, "Storygraph");
     await interaction.editReply({ embeds: [embed] });
   } catch (err) {
-    logger.error(err, `Error in handleSearch`);
     await interaction.editReply("Something went wrong! Please try again later");
+    errorHandler(
+      bot,
+      "commands > storygraph > search",
+      err,
+      interaction.guild?.name,
+      undefined,
+      interaction,
+    );
   }
 };
 

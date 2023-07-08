@@ -58,7 +58,7 @@ export class SprintManager {
     const sprint = this.sprints[sprintId];
     sprint.status = SprintStatus.Scheduled;
     sprint.timer = setTimeout(() => {
-      bot.dataCache.sprintManager.startSprint(sprintId, bot);
+      bot.sprintManager.startSprint(sprintId, bot);
     }, delayBy * 60 * 1000);
   }
 
@@ -80,7 +80,7 @@ export class SprintManager {
     await channel.send({ content: sprint.getStartMessage() });
 
     sprint.timer = setTimeout(() => {
-      bot.dataCache.sprintManager.finishSprint(sprintId, bot);
+      bot.sprintManager.finishSprint(sprintId, bot);
     }, sprint.duration * 60 * 1000);
   }
 
@@ -155,6 +155,7 @@ export class SprintManager {
     const sprint = this.sprints[sprintId];
     return sprint.getStatusMessage();
   }
+
   /**
    * Cancels a sprint from the store.
    *
@@ -200,7 +201,7 @@ export class SprintManager {
     await channel.send({ content: sprint.getFinishMessage() });
 
     sprint.timer = setTimeout(() => {
-      bot.dataCache.sprintManager.endSprint(sprintId, bot);
+      bot.sprintManager.endSprint(sprintId, bot);
     }, 2 * 60 * 1000);
   }
 

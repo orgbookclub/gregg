@@ -1,6 +1,6 @@
 import { CommandHandler } from "../../../models";
 import { SprintStatus } from "../../../models/commands/sprint/SprintStatus";
-import { logger } from "../../../utils/logHandler";
+import { errorHandler } from "../../../utils/errorHandler";
 
 /**
  * Schedules a sprint to start in the current channel/thread.
@@ -17,18 +17,9 @@ export const handleStart: CommandHandler = async (bot, interaction) => {
 
     const threadId = interaction.channelId;
     if (
-      bot.dataCache.sprintManager.isSprintPresent(
-        threadId,
-        SprintStatus.Scheduled,
-      ) ||
-      bot.dataCache.sprintManager.isSprintPresent(
-        threadId,
-        SprintStatus.Ongoing,
-      ) ||
-      bot.dataCache.sprintManager.isSprintPresent(
-        threadId,
-        SprintStatus.Finished,
-      )
+      bot.sprintManager.isSprintPresent(threadId, SprintStatus.Scheduled) ||
+      bot.sprintManager.isSprintPresent(threadId, SprintStatus.Ongoing) ||
+      bot.sprintManager.isSprintPresent(threadId, SprintStatus.Finished)
     ) {
       await interaction.editReply({
         content:
@@ -36,25 +27,32 @@ export const handleStart: CommandHandler = async (bot, interaction) => {
       });
       return;
     }
-    const sprintId = bot.dataCache.sprintManager.createSprint(
+    const sprintId = bot.sprintManager.createSprint(
       duration,
       threadId,
       interaction.user.id,
     );
 
     if (delay > 0) {
-      bot.dataCache.sprintManager.scheduleSprint(sprintId, bot, delay);
+      bot.sprintManager.scheduleSprint(sprintId, bot, delay);
       await interaction.editReply({
         content: `Sprint of ${duration} minutes will start in ${delay} minute(s)!`,
       });
     } else {
-      await bot.dataCache.sprintManager.startSprint(sprintId, bot);
+      await bot.sprintManager.startSprint(sprintId, bot);
       await interaction.editReply(
         `Sprint of ${duration} minutes starting now!`,
       );
     }
   } catch (err) {
-    logger.error(err, `Error in handleStart`);
     await interaction.editReply("Something went wrong! Please try again later");
+    errorHandler(
+      bot,
+      "commands > sprint > start",
+      err,
+      interaction.guild?.name,
+      undefined,
+      interaction,
+    );
   }
 };

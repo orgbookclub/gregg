@@ -3,7 +3,7 @@ import { Colors, EmbedBuilder } from "discord.js";
 
 import { CommandHandler } from "../../../models";
 import { getAuthorString } from "../../../utils/bookUtils";
-import { logger } from "../../../utils/logHandler";
+import { errorHandler } from "../../../utils/errorHandler";
 
 /**
  * Fetches details of a book from SG.
@@ -29,8 +29,15 @@ const handleBook: CommandHandler = async (bot, interaction) => {
     const embed = getStorygraphBookEmbed(response.data);
     await interaction.editReply({ embeds: [embed] });
   } catch (err) {
-    logger.error(err, `Error in handleBook`);
     await interaction.editReply("Something went wrong! Please try again later");
+    errorHandler(
+      bot,
+      "commands > storygraph > book",
+      err,
+      interaction.guild?.name,
+      undefined,
+      interaction,
+    );
   }
 };
 

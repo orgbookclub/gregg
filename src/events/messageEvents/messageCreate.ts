@@ -8,11 +8,7 @@ const messageCreate: Event = {
   run: async (bot: Bot, message: Message) => {
     try {
       const { author, channel, guild } = message;
-      if (author.bot) {
-        return;
-      }
-
-      if (!guild || channel.type === ChannelType.DM) {
+      if (author.bot || !guild || channel.type === ChannelType.DM) {
         return;
       }
 
@@ -40,12 +36,15 @@ async function upsertMessageCountInDb(bot: Bot, message: Message) {
       count: {
         increment: 1,
       },
+      updatedOn: new Date(),
     },
     create: {
       guildId: guild.id,
       userId: author.id,
       channelId: channel.id,
       count: 1,
+      createdOn: new Date(),
+      updatedOn: new Date(),
     },
   });
 }
