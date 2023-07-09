@@ -102,7 +102,8 @@ function getQotdSuggestionEmbed(question: string, author: User) {
       iconURL: author.displayAvatarURL(),
     })
     .setColor(Colors.Blurple)
-    .setDescription(question);
+    .setDescription(question)
+    .setTimestamp();
   return embed;
 }
 
