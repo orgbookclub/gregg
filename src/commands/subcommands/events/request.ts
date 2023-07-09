@@ -67,7 +67,7 @@ const handleRequest: CommandHandler = async (bot, interaction) => {
 
     const response = await createEvent(eventType, submission, user._id, bot);
     if (!response) {
-      await interaction.editReply(
+      await modalSubmitInteraction.editReply(
         "Something went wrong while trying to create the event :(",
       );
       return;
@@ -77,7 +77,7 @@ const handleRequest: CommandHandler = async (bot, interaction) => {
       id: response.data._id,
     });
     if (!eventResponse) {
-      await interaction.editReply(
+      await modalSubmitInteraction.editReply(
         "Something went wrong while trying fetch the event :(",
       );
       return;

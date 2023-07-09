@@ -31,6 +31,12 @@ export const handleList: CommandHandler = async (bot, interaction) => {
       status: eventStatus,
       type: eventType,
     });
+    if (!response || response.data.length === 0) {
+      await interaction.editReply(
+        "There are no events to display with the given filters",
+      );
+      return;
+    }
     const pageSize = 5;
     const pagedContentManager = new PaginationManager<EventDocument>(
       pageSize,
