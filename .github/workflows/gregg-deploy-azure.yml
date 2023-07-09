@@ -43,7 +43,7 @@ jobs:
 
       - name: yarn install and build
         run: |
-          yarn install
+          yarn install --frozen-lockfile
           yarn build
 
       - name: "Deploy to Azure Web App"
