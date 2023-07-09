@@ -134,7 +134,7 @@ export function getEventInfoEmbed(
   });
   if (event.threads && event.threads.length > 0) {
     embed.addFields({
-      name: "Thread",
+      name: "Thread(s)",
       value: `${event.threads.map((x) => channelMention(x)).join(", ")}`,
       inline: true,
     });
