@@ -242,7 +242,7 @@ export const events: Command = {
       const handler = handlers[subCommand];
       await handler(bot, interaction);
     } catch (err) {
-      errorHandler(
+      await errorHandler(
         bot,
         "commands > events",
         err,

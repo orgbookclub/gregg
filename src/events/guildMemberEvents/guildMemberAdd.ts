@@ -16,7 +16,7 @@ const guildMemberAdd: Event = {
       await upsertUserInDb(bot, member.user);
       await upsertMemberInDb(bot, member);
     } catch (error) {
-      errorHandler(
+      await errorHandler(
         bot,
         `events > ${Events.GuildMemberAdd}`,
         error,

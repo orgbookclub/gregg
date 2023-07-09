@@ -112,7 +112,7 @@ export const storygraph: Command = {
       const handler = handlers[subCommand];
       await handler(bot, interaction);
     } catch (err) {
-      errorHandler(
+      await errorHandler(
         bot,
         "commands > storygraph",
         err,

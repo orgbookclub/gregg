@@ -62,7 +62,7 @@ const handleAddUser: CommandHandler = async (bot, interaction) => {
     });
   } catch (err) {
     await interaction.reply("Something went wrong! Please try again later");
-    errorHandler(
+    await errorHandler(
       bot,
       "commands > events > addUser",
       err,

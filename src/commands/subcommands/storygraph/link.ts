@@ -25,7 +25,7 @@ export const handleLink: CommandHandler = async (bot, interaction) => {
     await interaction.editReply({ content: response.data[0].url });
   } catch (err) {
     await interaction.editReply("Something went wrong! Please try again later");
-    errorHandler(
+    await errorHandler(
       bot,
       "commands > storygraph > link",
       err,

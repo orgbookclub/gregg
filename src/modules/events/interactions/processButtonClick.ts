@@ -29,7 +29,7 @@ const processButtonClick = async (bot: Bot, interaction: ButtonInteraction) => {
       await handleQotdSuggestionActions(interaction, bot);
     }
   } catch (error) {
-    errorHandler(
+    await errorHandler(
       bot,
       "interactionCreate > processButtonClick",
       error,

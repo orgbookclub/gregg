@@ -14,7 +14,7 @@ const guildCreate: Event = {
 
       await createGuildInDb(bot, guild);
     } catch (error) {
-      errorHandler(bot, `events > ${Events.GuildCreate}`, error, guild.name);
+      await errorHandler(bot, `events > ${Events.GuildCreate}`, error, guild.name);
     }
   },
 };

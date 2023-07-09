@@ -23,7 +23,7 @@ export const handleCover: CommandHandler = async (bot, interaction) => {
     await interaction.editReply({ content: response.data.coverUrl });
   } catch (err) {
     await interaction.editReply("Something went wrong! Please try again later");
-    errorHandler(
+    await errorHandler(
       bot,
       "commands > goodreads > cover",
       err,

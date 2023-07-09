@@ -33,7 +33,7 @@ const handleSearch: CommandHandler = async (
     await interaction.editReply({ embeds: [embed] });
   } catch (err) {
     await interaction.editReply("Something went wrong! Please try again later");
-    errorHandler(
+    await errorHandler(
       bot,
       "commands > storygraph > search",
       err,

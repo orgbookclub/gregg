@@ -22,7 +22,7 @@ export const handleAbout: CommandHandler = async (bot, interaction) => {
     await interaction.reply({ embeds: [aboutEmbed] });
   } catch (err) {
     await interaction.reply("Something went wrong! Please try again later.");
-    errorHandler(
+    await errorHandler(
       bot,
       "commands > gregg > about",
       err,

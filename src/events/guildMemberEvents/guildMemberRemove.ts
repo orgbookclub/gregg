@@ -18,7 +18,7 @@ const guildMemberRemove: Event = {
 
       logger.info(`${user.tag} (${user.id}) left guild ${guild.id}`);
     } catch (error) {
-      errorHandler(
+      await errorHandler(
         bot,
         `events > ${Events.GuildMemberRemove}`,
         error,

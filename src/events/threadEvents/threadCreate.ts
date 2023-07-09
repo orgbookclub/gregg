@@ -11,7 +11,7 @@ export const threadCreate: Event = {
         await thread.join();
       }
     } catch (error) {
-      errorHandler(
+      await errorHandler(
         bot,
         `events > ${Events.ThreadCreate}`,
         error,

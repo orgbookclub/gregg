@@ -118,7 +118,7 @@ const handleRequest: CommandHandler = async (bot, interaction) => {
           "Please try again later, or use Storygraph instead �",
       );
     } else {
-      errorHandler(
+      await errorHandler(
         bot,
         "commands > events > request",
         err,

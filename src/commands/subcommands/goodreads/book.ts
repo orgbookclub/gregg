@@ -41,7 +41,7 @@ const handleBook: CommandHandler = async (bot, interaction) => {
       await interaction.editReply(
         "Something went wrong! Please try again later",
       );
-      errorHandler(
+      await errorHandler(
         bot,
         "commands > goodreads > book",
         err,

@@ -14,6 +14,6 @@ export const loadApiClient = async (bot: Bot) => {
     await client.initialize();
     bot.api = client;
   } catch (err) {
-    errorHandler(bot, "index > loadApiClient", err);
+    await errorHandler(bot, "index > loadApiClient", err);
   }
 };

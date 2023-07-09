@@ -24,7 +24,7 @@ const interactionCreate: Event = {
         await processModalSubmit(bot, interaction);
       }
     } catch (error) {
-      errorHandler(
+      await errorHandler(
         bot,
         `events > ${Events.InteractionCreate}`,
         error,

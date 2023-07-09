@@ -44,7 +44,7 @@ export const handleSearch: CommandHandler = async (bot, interaction) => {
     pagedContentManager.createCollectors(message, interaction, 5 * 60 * 1000);
   } catch (err) {
     await interaction.reply("Something went wrong! Please try again later");
-    errorHandler(
+    await errorHandler(
       bot,
       "commands > events > search",
       err,

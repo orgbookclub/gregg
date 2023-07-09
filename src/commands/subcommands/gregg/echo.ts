@@ -24,7 +24,7 @@ export const handleEcho: CommandHandler = async (bot, interaction) => {
     await interaction.reply({ content: "Echo successful!", ephemeral: true });
   } catch (err) {
     await interaction.reply("Something went wrong! Please try again later.");
-    errorHandler(
+    await errorHandler(
       bot,
       "commands > gregg > echo",
       err,

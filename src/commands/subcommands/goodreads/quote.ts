@@ -1,5 +1,6 @@
 import { CommandHandler } from "../../../models";
 import { errorHandler } from "../../../utils/errorHandler";
+import { customSubstring } from "../../../utils/stringUtils";
 
 /**
  * Fetches a random quote from GR.
@@ -18,16 +19,17 @@ export const handleQuote: CommandHandler = async (bot, interaction) => {
     });
     if (!response || response.data.length === 0) {
       await interaction.editReply("No quotes found with that query!");
+      return;
     }
 
     let quote = response.data[0];
     if (quote.length >= 2000) {
-      quote = quote.substring(0, 1995) + "...";
+      quote = customSubstring(quote, 2000);
     }
     await interaction.editReply({ content: quote });
   } catch (err) {
     await interaction.editReply("Something went wrong! Please try again later");
-    errorHandler(
+    await errorHandler(
       bot,
       "commands > goodreads > quote",
       err,

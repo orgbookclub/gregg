@@ -61,7 +61,7 @@ async function processChatInputCommand(
 
     await upsertCommandUsageInDb(bot, interaction);
   } catch (error) {
-    errorHandler(
+    await errorHandler(
       bot,
       "interactionCreate > processChatInputCommand",
       error,
