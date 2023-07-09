@@ -60,7 +60,7 @@ const handleAnnounce: CommandHandler = async (bot, interaction) => {
 
     const message = await announcementChannel.send({
       content:
-        "New Server Event! Please click on the button if you'd like to be pinged for discussions." +
+        `New ${eventDoc.type}! Please click on the button if you'd like to be pinged for discussions.` +
         "\n" +
         `Discussion will take place in ${eventDoc.threads
           .map((x) => channelMention(x))
