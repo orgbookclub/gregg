@@ -7,6 +7,8 @@ on:
   push:
     branches: first-release
   workflow_dispatch:
+  release:
+    types: [published]
 
 env:
   AZURE_WEBAPP_NAME: gregg-dev # set this to your application's name
