@@ -77,10 +77,12 @@ const handleSuggest: CommandHandler = async (bot, interaction) => {
 
 function getButtonActionRow(approveId: string, rejectId: string) {
   const approveButton = new ButtonBuilder()
+    .setLabel("Approve")
     .setEmoji({ name: "✅" })
     .setStyle(ButtonStyle.Success)
     .setCustomId(approveId);
   const rejectButton = new ButtonBuilder()
+    .setLabel("Reject")
     .setEmoji({ name: "❌" })
     .setStyle(ButtonStyle.Secondary)
     .setCustomId(rejectId);

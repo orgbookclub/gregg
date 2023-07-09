@@ -166,7 +166,7 @@ function getButtonActionRow(eventId: string) {
   const notInterestedButton = new ButtonBuilder()
     .setLabel("Leave")
     .setEmoji({ name: "⛔" })
-    .setStyle(ButtonStyle.Secondary)
+    .setStyle(ButtonStyle.Danger)
     .setCustomId(`er-${eventId}-notInterested`);
   const buttonActionRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
     interestedButton,
