@@ -38,9 +38,9 @@ const goodreadsSearchSubcommand = new SlashCommandSubcommandBuilder()
   )
   .addBooleanOption((option) =>
     option
-      .setName("ephermal")
+      .setName("ephemeral")
       .setDescription(
-        "Whether the response should be ephermal or not. Default is true",
+        "Whether the response should be ephemeral or not. Default is true",
       )
       .setRequired(false),
   );
@@ -56,9 +56,9 @@ const goodreadsLinkSubcommand = new SlashCommandSubcommandBuilder()
   )
   .addBooleanOption((option) =>
     option
-      .setName("ephermal")
+      .setName("ephemeral")
       .setDescription(
-        "Whether the response should be ephermal or not. Default is true",
+        "Whether the response should be ephemeral or not. Default is true",
       )
       .setRequired(false),
   );
@@ -74,9 +74,9 @@ const goodreadsBookSubcommand = new SlashCommandSubcommandBuilder()
   )
   .addBooleanOption((option) =>
     option
-      .setName("ephermal")
+      .setName("ephemeral")
       .setDescription(
-        "Whether the response should be ephermal or not. Default is true",
+        "Whether the response should be ephemeral or not. Default is true",
       )
       .setRequired(false),
   );
@@ -92,9 +92,9 @@ const goodreadsCoverSubcommand = new SlashCommandSubcommandBuilder()
   )
   .addBooleanOption((option) =>
     option
-      .setName("ephermal")
+      .setName("ephemeral")
       .setDescription(
-        "Whether the response should be ephermal or not. Default is true",
+        "Whether the response should be ephemeral or not. Default is true",
       )
       .setRequired(false),
   );
@@ -107,9 +107,9 @@ const goodreadsQuoteSubcommand = new SlashCommandSubcommandBuilder()
   )
   .addBooleanOption((option) =>
     option
-      .setName("ephermal")
+      .setName("ephemeral")
       .setDescription(
-        "Whether the response should be ephermal or not. Default is true",
+        "Whether the response should be ephemeral or not. Default is true",
       )
       .setRequired(false),
   );
