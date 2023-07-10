@@ -1,3 +1,5 @@
+import { join } from "path";
+
 import express from "express";
 
 import { logger } from "../utils/logHandler";
@@ -9,13 +11,13 @@ import { logger } from "../utils/logHandler";
  */
 export const createServer = () => {
   const app = express();
-  app.get("/", (_, res) => {
-    res.status(200).send("Ping!");
-  });
+  const docsPath = join(__dirname, "..", "..", "docs");
+  app.use("/", express.static(docsPath));
 
   app.get("/health", (_, res) => {
     res.status(200).send();
   });
+
   const httpPort = process.env.PORT ?? 3000;
 
   app.listen(httpPort, () => {
