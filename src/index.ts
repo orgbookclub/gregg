@@ -5,6 +5,7 @@ import { IntentOptions } from "./config";
 import { connectPrisma } from "./database/connectPrisma";
 import { Bot } from "./models";
 import { SprintManager } from "./models/commands/sprint/SprintManager";
+import { createServer } from "./server/createServer";
 import { errorHandler } from "./utils/errorHandler";
 import { loadApiClient } from "./utils/loadApiClient";
 import { loadCommands, loadContexts } from "./utils/loadCommands";
@@ -75,6 +76,12 @@ void (async () => {
 
   logger.debug("Connecting to Discord...");
   await bot.login(bot.configs.token);
+
+  const server = createServer();
+  if (!server) {
+    logger.error("Failed to launch web server");
+    return;
+  }
 
   logger.debug("Setting activity...");
   bot.user?.setActivity({
