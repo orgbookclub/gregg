@@ -4,22 +4,40 @@ import {
   ButtonBuilder,
   ButtonStyle,
   ChannelType,
+  GuildMember,
   channelMention,
 } from "discord.js";
 
 import { CommandHandler } from "../../../models";
-import { getGuildFromDb } from "../../../utils/dbUtils";
 import { errorHandler } from "../../../utils/errorHandler";
 import { getEventInfoEmbed } from "../../../utils/eventUtils";
+import { hasRole } from "../../../utils/userUtils";
 
 /**
  * Announces an approved event.
  *
  * @param bot The bot instance.
  * @param interaction The interaction.
+ * @param guildConfig The guild config.
  */
-const handleAnnounce: CommandHandler = async (bot, interaction) => {
+const handleAnnounce: CommandHandler = async (
+  bot,
+  interaction,
+  guildConfig,
+) => {
   try {
+    if (
+      guildConfig &&
+      interaction.member &&
+      !hasRole(interaction.member as GuildMember, guildConfig.staffRole)
+    ) {
+      await interaction.reply({
+        content: "Sorry, this command is restricted for staff use only!",
+        ephemeral: true,
+      });
+      return;
+    }
+
     await interaction.deferReply();
     const id = interaction.options.getString("id", true);
     const channel =
@@ -41,8 +59,7 @@ const handleAnnounce: CommandHandler = async (bot, interaction) => {
     let announcementChannel = channel;
     if (!channel) {
       if (!interaction.guild) return;
-      const guildDoc = await getGuildFromDb(bot, interaction.guild.id);
-      const channelId = guildDoc?.eventAnnouncementChannel ?? "Not set";
+      const channelId = guildConfig?.eventAnnouncementChannel ?? "Not set";
       const configuredChannel = await bot.channels.fetch(channelId);
 
       if (
@@ -60,7 +77,7 @@ const handleAnnounce: CommandHandler = async (bot, interaction) => {
 
     const message = await announcementChannel.send({
       content:
-        "New Server Event! Please click on the button if you'd like to be pinged for discussions." +
+        `New ${eventDoc.type}! Please click on the button if you'd like to be pinged for discussions.` +
         "\n" +
         `Discussion will take place in ${eventDoc.threads
           .map((x) => channelMention(x))
@@ -85,7 +102,7 @@ const handleAnnounce: CommandHandler = async (bot, interaction) => {
     });
   } catch (err) {
     await interaction.reply("Something went wrong! Please try again later");
-    errorHandler(
+    await await errorHandler(
       bot,
       "commands > events > announce",
       err,

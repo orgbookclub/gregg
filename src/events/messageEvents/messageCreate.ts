@@ -14,7 +14,7 @@ const messageCreate: Event = {
 
       await upsertMessageCountInDb(bot, message);
     } catch (error) {
-      errorHandler(
+      await errorHandler(
         bot,
         `events > ${Events.MessageCreate}`,
         error,

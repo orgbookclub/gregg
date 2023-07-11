@@ -36,9 +36,9 @@ const storygraphSearchSubcommand = new SlashCommandSubcommandBuilder()
   )
   .addBooleanOption((option) =>
     option
-      .setName("ephermal")
+      .setName("ephemeral")
       .setDescription(
-        "Whether the response should be ephermal or not. Default is true",
+        "Whether the response should be ephemeral or not. Default is true",
       )
       .setRequired(false),
   );
@@ -54,9 +54,9 @@ const storygraphLinkSubcommand = new SlashCommandSubcommandBuilder()
   )
   .addBooleanOption((option) =>
     option
-      .setName("ephermal")
+      .setName("ephemeral")
       .setDescription(
-        "Whether the response should be ephermal or not. Default is true",
+        "Whether the response should be ephemeral or not. Default is true",
       )
       .setRequired(false),
   );
@@ -72,9 +72,9 @@ const storygraphBookSubcommand = new SlashCommandSubcommandBuilder()
   )
   .addBooleanOption((option) =>
     option
-      .setName("ephermal")
+      .setName("ephemeral")
       .setDescription(
-        "Whether the response should be ephermal or not. Default is true",
+        "Whether the response should be ephemeral or not. Default is true",
       )
       .setRequired(false),
   );
@@ -90,9 +90,9 @@ const storygraphCoverSubcommand = new SlashCommandSubcommandBuilder()
   )
   .addBooleanOption((option) =>
     option
-      .setName("ephermal")
+      .setName("ephemeral")
       .setDescription(
-        "Whether the response should be ephermal or not. Default is true",
+        "Whether the response should be ephemeral or not. Default is true",
       )
       .setRequired(false),
   );
@@ -112,7 +112,7 @@ export const storygraph: Command = {
       const handler = handlers[subCommand];
       await handler(bot, interaction);
     } catch (err) {
-      errorHandler(
+      await errorHandler(
         bot,
         "commands > storygraph",
         err,

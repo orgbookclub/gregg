@@ -1,3 +1,4 @@
+import { GuildsConfig } from "@prisma/client";
 import {
   ChatInputCommandInteraction,
   SlashCommandBuilder,
@@ -8,7 +9,10 @@ import { Bot } from "..";
 
 export interface Command {
   data: SlashCommandBuilder | SlashCommandSubcommandsOnlyBuilder;
-
-  run: (bot: Bot, interaction: ChatInputCommandInteraction) => Promise<void>;
+  run: (
+    bot: Bot,
+    interaction: ChatInputCommandInteraction,
+    guildConfig?: GuildsConfig,
+  ) => Promise<void>;
   cooldown?: number;
 }

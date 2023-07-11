@@ -7,8 +7,10 @@ import { Bot } from "../models";
  * @param guildId The guild id.
  * @returns The guild doc.
  */
-export async function getGuildFromDb(bot: Bot, guildId: string) {
-  return await bot.db.guilds.findUnique({
+export async function getGuildConfigFromDb(bot: Bot, guildId: string) {
+  const guild = await bot.db.guilds.findUnique({
+    select: { config: true },
     where: { guildId: guildId },
   });
+  return guild?.config;
 }

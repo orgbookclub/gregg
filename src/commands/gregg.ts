@@ -53,7 +53,7 @@ export const gregg: Command = {
       const handler = handlers[subCommand];
       await handler(bot, interaction);
     } catch (err) {
-      errorHandler(
+      await errorHandler(
         bot,
         "commands > gregg",
         err,

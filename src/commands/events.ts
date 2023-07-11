@@ -36,8 +36,8 @@ const handlers: Record<string, CommandHandler> = {
   announce: handleAnnounce,
   createthread: handleCreateThread,
   broadcast: handleBroadcast,
-  addUser: handleAddUser,
-  removeUser: handleRemoveUser,
+  adduser: handleAddUser,
+  removeuser: handleRemoveUser,
   stats: handleStats,
 };
 
@@ -236,13 +236,13 @@ export const events: Command = {
     .addSubcommand(eventsAddUserSubcommand)
     .addSubcommand(eventsRemoveUserSubcommand)
     .setDMPermission(false),
-  run: async (bot, interaction) => {
+  run: async (bot, interaction, guildConfig) => {
     try {
       const subCommand = interaction.options.getSubcommand();
       const handler = handlers[subCommand];
-      await handler(bot, interaction);
+      await handler(bot, interaction, guildConfig);
     } catch (err) {
-      errorHandler(
+      await errorHandler(
         bot,
         "commands > events",
         err,

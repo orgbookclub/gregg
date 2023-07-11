@@ -3,19 +3,33 @@ import {
   EventDtoTypeEnum,
   UpdateEventDto,
 } from "@orgbookclub/ows-client";
+import { GuildMember } from "discord.js";
 
 import { Bot, CommandHandler } from "../../../models";
 import { errorHandler } from "../../../utils/errorHandler";
 import { getEventInfoEmbed } from "../../../utils/eventUtils";
+import { hasRole } from "../../../utils/userUtils";
 
 /**
  * Gives ability to edit an event.
  *
  * @param bot The bot instance.
  * @param interaction The interaction.
+ * @param guildConfig The guild config.
  */
-const handleEdit: CommandHandler = async (bot, interaction) => {
+const handleEdit: CommandHandler = async (bot, interaction, guildConfig) => {
   try {
+    if (
+      guildConfig &&
+      interaction.member &&
+      !hasRole(interaction.member as GuildMember, guildConfig.staffRole)
+    ) {
+      await interaction.reply({
+        content: "Sorry, this command is restricted for staff use only!",
+        ephemeral: true,
+      });
+      return;
+    }
     await interaction.deferReply();
     const id = interaction.options.getString("id", true);
     const field = interaction.options.getString("field", true);
@@ -135,7 +149,7 @@ const handleEdit: CommandHandler = async (bot, interaction) => {
     });
   } catch (err) {
     await interaction.editReply("Something went wrong! Please try again later");
-    errorHandler(
+    await errorHandler(
       bot,
       "commands > events > edit",
       err,

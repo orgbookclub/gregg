@@ -13,7 +13,12 @@ const guildDelete: Event = {
       );
       await deleteGuildFromDb(bot, guild);
     } catch (error) {
-      errorHandler(bot, `events > ${Events.GuildDelete}`, error, guild.name);
+      await errorHandler(
+        bot,
+        `events > ${Events.GuildDelete}`,
+        error,
+        guild.name,
+      );
     }
   },
 };

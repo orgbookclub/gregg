@@ -1,14 +1,15 @@
 import { qotds } from "@prisma/client";
 import {
   ChannelType,
+  GuildMember,
   TextChannel,
   ThreadAutoArchiveDuration,
 } from "discord.js";
 
 import { CommandHandler } from "../../../models";
 import { QotdSuggestionStatus } from "../../../models/commands/qotd/QotdSuggestionStatus";
-import { getGuildFromDb } from "../../../utils/dbUtils";
 import { errorHandler } from "../../../utils/errorHandler";
+import { hasRole } from "../../../utils/userUtils";
 
 /**
  * Posts a QOTD with the given ID, in the given channel.
@@ -17,9 +18,21 @@ import { errorHandler } from "../../../utils/errorHandler";
  *
  * @param bot The bot instance.
  * @param interaction The interaction.
+ * @param guildConfig The guild config.
  */
-const handlePost: CommandHandler = async (bot, interaction) => {
+const handlePost: CommandHandler = async (bot, interaction, guildConfig) => {
   try {
+    if (
+      guildConfig &&
+      interaction.member &&
+      !hasRole(interaction.member as GuildMember, guildConfig.staffRole)
+    ) {
+      await interaction.reply({
+        content: "Sorry, this command is restricted for staff use only!",
+        ephemeral: true,
+      });
+      return;
+    }
     await interaction.deferReply();
     if (!interaction.guild) return;
 
@@ -49,8 +62,7 @@ const handlePost: CommandHandler = async (bot, interaction) => {
       qotd = selectedQotd;
     }
     if (!channel) {
-      const guildDoc = await getGuildFromDb(bot, interaction.guild.id);
-      const channelId = guildDoc?.qotdChannel ?? "Not set";
+      const channelId = guildConfig?.qotdChannel ?? "Not set";
       const qotdChannel = await bot.channels.fetch(channelId);
       if (!qotdChannel?.isTextBased()) {
         throw new Error("Unable to post QOTD in the configured channel");
@@ -71,7 +83,7 @@ const handlePost: CommandHandler = async (bot, interaction) => {
     });
   } catch (err) {
     await interaction.editReply("Something went wrong! Please try again later");
-    errorHandler(
+    await errorHandler(
       bot,
       "commands > qotd > post",
       err,

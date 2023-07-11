@@ -1,6 +1,18 @@
-import { User } from "discord.js";
+import { GuildMember, User } from "discord.js";
 
 import { Bot } from "../models";
+
+/**
+ * Checks if a Guild Member has a certain role or not.
+ *
+ * @param member The guild member.
+ * @param roleId The Role id.
+ * @returns True if member has role, false otherwise.
+ */
+export function hasRole(member: GuildMember, roleId: string) {
+  if (!member || !roleId) return false;
+  return member.roles.cache.some((role) => role.id === roleId);
+}
 
 /**
  * Gets the user object from the server.

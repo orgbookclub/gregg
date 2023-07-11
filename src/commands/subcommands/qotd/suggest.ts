@@ -10,7 +10,7 @@ import {
 import { CommandHandler } from "../../../models";
 import { QotdSuggestion } from "../../../models/commands/qotd/QotdSuggestion";
 import { QotdSuggestionStatus } from "../../../models/commands/qotd/QotdSuggestionStatus";
-import { getGuildFromDb } from "../../../utils/dbUtils";
+import { getGuildConfigFromDb } from "../../../utils/dbUtils";
 import { errorHandler } from "../../../utils/errorHandler";
 
 /**
@@ -25,8 +25,8 @@ const handleSuggest: CommandHandler = async (bot, interaction) => {
     const question = interaction.options.getString("question", true);
 
     if (!interaction.guild) return;
-    const guildDoc = await getGuildFromDb(bot, interaction.guild.id);
-    const channelId = guildDoc?.qotdSuggestionChannel ?? "Not set";
+    const guildConfig = await getGuildConfigFromDb(bot, interaction.guild.id);
+    const channelId = guildConfig?.qotdSuggestionChannel ?? "Not set";
 
     const channel = await bot.channels.fetch(channelId);
 
@@ -64,7 +64,7 @@ const handleSuggest: CommandHandler = async (bot, interaction) => {
     });
   } catch (err) {
     await interaction.editReply("Something went wrong! Please try again later");
-    errorHandler(
+    await errorHandler(
       bot,
       "commands > qotd > suggest",
       err,
@@ -77,10 +77,12 @@ const handleSuggest: CommandHandler = async (bot, interaction) => {
 
 function getButtonActionRow(approveId: string, rejectId: string) {
   const approveButton = new ButtonBuilder()
+    .setLabel("Approve")
     .setEmoji({ name: "✅" })
     .setStyle(ButtonStyle.Success)
     .setCustomId(approveId);
   const rejectButton = new ButtonBuilder()
+    .setLabel("Reject")
     .setEmoji({ name: "❌" })
     .setStyle(ButtonStyle.Secondary)
     .setCustomId(rejectId);
@@ -100,7 +102,8 @@ function getQotdSuggestionEmbed(question: string, author: User) {
       iconURL: author.displayAvatarURL(),
     })
     .setColor(Colors.Blurple)
-    .setDescription(question);
+    .setDescription(question)
+    .setTimestamp();
   return embed;
 }
 

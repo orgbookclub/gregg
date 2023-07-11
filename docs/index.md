@@ -8,3 +8,9 @@ The rest of the docs assume that you are familiar with the following:
 
 - Basic Discord stuff i.e. Channels, roles, permissions etc. Please refer to Discord guides if you'd like to brush up.
 - Using slash commands in Discord.
+
+# Features
+TODO
+
+# Support
+TODO

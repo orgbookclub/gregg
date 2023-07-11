@@ -12,7 +12,7 @@ export const handleFinish: CommandHandler = async (bot, interaction) => {
   try {
     await interaction.deferReply({ ephemeral: true });
 
-    const count = interaction.options.getInteger("count") ?? 0;
+    const count = interaction.options.getInteger("count", true);
 
     const threadId = interaction.channelId;
     const user = interaction.user;
@@ -38,7 +38,7 @@ export const handleFinish: CommandHandler = async (bot, interaction) => {
     });
   } catch (err) {
     await interaction.editReply("Something went wrong! Please try again later");
-    errorHandler(
+    await errorHandler(
       bot,
       "commands > sprint > finish",
       err,

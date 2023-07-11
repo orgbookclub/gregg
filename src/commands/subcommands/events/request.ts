@@ -15,7 +15,7 @@ import {
 
 import { Bot, CommandHandler } from "../../../models";
 import { EventRequestSubmission } from "../../../models/commands/events/EventRequestSubmission";
-import { getGuildFromDb } from "../../../utils/dbUtils";
+import { getGuildConfigFromDb } from "../../../utils/dbUtils";
 import { errorHandler } from "../../../utils/errorHandler";
 import {
   getEventRequestEmbed,
@@ -67,7 +67,7 @@ const handleRequest: CommandHandler = async (bot, interaction) => {
 
     const response = await createEvent(eventType, submission, user._id, bot);
     if (!response) {
-      await interaction.editReply(
+      await modalSubmitInteraction.editReply(
         "Something went wrong while trying to create the event :(",
       );
       return;
@@ -77,7 +77,7 @@ const handleRequest: CommandHandler = async (bot, interaction) => {
       id: response.data._id,
     });
     if (!eventResponse) {
-      await interaction.editReply(
+      await modalSubmitInteraction.editReply(
         "Something went wrong while trying fetch the event :(",
       );
       return;
@@ -86,8 +86,8 @@ const handleRequest: CommandHandler = async (bot, interaction) => {
     const eventDoc = eventResponse.data;
     if (eventDoc.type === EventDocumentTypeEnum.BuddyRead) {
       if (!interaction.guild) return;
-      const guildDoc = await getGuildFromDb(bot, interaction.guild.id);
-      const channelId = guildDoc?.brRequestChannel ?? "Not set";
+      const guildConfig = await getGuildConfigFromDb(bot, interaction.guild.id);
+      const channelId = guildConfig?.brRequestChannel ?? "Not set";
       const channel = await bot.channels.fetch(channelId);
       if (!channel?.isTextBased()) {
         await modalSubmitInteraction.editReply(
@@ -112,13 +112,13 @@ const handleRequest: CommandHandler = async (bot, interaction) => {
       error.name === "AxiosError" &&
       error.message === "Request failed with status code 503"
     ) {
-      await interaction.editReply(
+      await interaction.reply(
         "Unfortunately, due to Goodreads being Goodreads, I cannot complete your request at the moment :(" +
           "\n" +
           "Please try again later, or use Storygraph instead �",
       );
     } else {
-      errorHandler(
+      await errorHandler(
         bot,
         "commands > events > request",
         err,
@@ -126,9 +126,7 @@ const handleRequest: CommandHandler = async (bot, interaction) => {
         undefined,
         interaction,
       );
-      await interaction.editReply(
-        "Something went wrong! Please try again later",
-      );
+      await interaction.reply("Something went wrong! Please try again later");
     }
   }
 };
@@ -166,7 +164,7 @@ function getButtonActionRow(eventId: string) {
   const notInterestedButton = new ButtonBuilder()
     .setLabel("Leave")
     .setEmoji({ name: "⛔" })
-    .setStyle(ButtonStyle.Secondary)
+    .setStyle(ButtonStyle.Danger)
     .setCustomId(`er-${eventId}-notInterested`);
   const buttonActionRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
     interestedButton,

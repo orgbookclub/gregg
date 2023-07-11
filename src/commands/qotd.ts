@@ -50,13 +50,13 @@ export const qotd: Command = {
     .addSubcommand(qotdListSubcommand)
     .addSubcommand(qotdPostSubcommand)
     .setDMPermission(false),
-  run: async (bot, interaction) => {
+  run: async (bot, interaction, guildConfig) => {
     try {
       const subCommand = interaction.options.getSubcommand();
       const handler = handlers[subCommand];
-      await handler(bot, interaction);
+      await handler(bot, interaction, guildConfig);
     } catch (err) {
-      errorHandler(
+      await errorHandler(
         bot,
         "commands > qotd",
         err,

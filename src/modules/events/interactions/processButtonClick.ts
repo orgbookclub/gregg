@@ -29,7 +29,7 @@ const processButtonClick = async (bot: Bot, interaction: ButtonInteraction) => {
       await handleQotdSuggestionActions(interaction, bot);
     }
   } catch (error) {
-    errorHandler(
+    await errorHandler(
       bot,
       "interactionCreate > processButtonClick",
       error,
@@ -138,12 +138,12 @@ async function handleEventActions(interaction: ButtonInteraction, bot: Bot) {
     );
     return;
   }
+  await interaction.message.edit({ embeds: [updatedEmbed] });
   await interaction.editReply({
     content:
       action === "interested"
         ? "You have been marked as an interested participant for this event!"
         : "You are no longer a participant of this event",
-    embeds: [updatedEmbed],
   });
 }
 

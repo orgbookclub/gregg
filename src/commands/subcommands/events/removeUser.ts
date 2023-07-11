@@ -1,17 +1,35 @@
 import { UpdateEventDto } from "@orgbookclub/ows-client";
+import { GuildMember } from "discord.js";
 
 import { CommandHandler } from "../../../models";
 import { errorHandler } from "../../../utils/errorHandler";
 import { getEventInfoEmbed, participantToDto } from "../../../utils/eventUtils";
+import { hasRole } from "../../../utils/userUtils";
 
 /**
  * Removes a user as a participant to an event.
  *
  * @param bot The bot instance.
  * @param interaction The interaction.
+ * @param guildConfig The guild config.
  */
-const handleRemoveUser: CommandHandler = async (bot, interaction) => {
+const handleRemoveUser: CommandHandler = async (
+  bot,
+  interaction,
+  guildConfig,
+) => {
   try {
+    if (
+      guildConfig &&
+      interaction.member &&
+      !hasRole(interaction.member as GuildMember, guildConfig.staffRole)
+    ) {
+      await interaction.reply({
+        content: "Sorry, this command is restricted for staff use only!",
+        ephemeral: true,
+      });
+      return;
+    }
     const id = interaction.options.getString("id", true);
     const user = interaction.options.getUser("user", true);
     const participantType = interaction.options.getString("type", true);
@@ -50,7 +68,7 @@ const handleRemoveUser: CommandHandler = async (bot, interaction) => {
     });
   } catch (err) {
     await interaction.reply("Something went wrong! Please try again later");
-    errorHandler(
+    await errorHandler(
       bot,
       "commands > events > removeUser",
       err,

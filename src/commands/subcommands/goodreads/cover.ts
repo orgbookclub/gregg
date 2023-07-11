@@ -10,8 +10,8 @@ import { errorHandler } from "../../../utils/errorHandler";
 export const handleCover: CommandHandler = async (bot, interaction) => {
   try {
     const query = interaction.options.getString("query", true);
-    const isEphermal = interaction.options.getBoolean("ephermal") ?? true;
-    await interaction.deferReply({ ephemeral: isEphermal });
+    const isephemeral = interaction.options.getBoolean("ephemeral") ?? true;
+    await interaction.deferReply({ ephemeral: isephemeral });
 
     const response =
       await bot.api.goodreads.goodreadsControllerSearchAndGetBook({ q: query });
@@ -22,14 +22,28 @@ export const handleCover: CommandHandler = async (bot, interaction) => {
 
     await interaction.editReply({ content: response.data.coverUrl });
   } catch (err) {
-    await interaction.editReply("Something went wrong! Please try again later");
-    errorHandler(
-      bot,
-      "commands > goodreads > cover",
-      err,
-      interaction.guild?.name,
-      undefined,
-      interaction,
-    );
+    const error = err as Error;
+    if (
+      error.name === "AxiosError" &&
+      error.message === "Request failed with status code 503"
+    ) {
+      await interaction.editReply(
+        "Unfortunately, due to Goodreads being Goodreads, I cannot complete your request at the moment :(" +
+          "\n" +
+          "Please try again later, or use Storygraph instead �",
+      );
+    } else {
+      await interaction.editReply(
+        "Something went wrong! Please try again later",
+      );
+      await errorHandler(
+        bot,
+        "commands > goodreads > cover",
+        err,
+        interaction.guild?.name,
+        undefined,
+        interaction,
+      );
+    }
   }
 };

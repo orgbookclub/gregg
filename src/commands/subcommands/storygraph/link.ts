@@ -10,8 +10,8 @@ import { errorHandler } from "../../../utils/errorHandler";
 export const handleLink: CommandHandler = async (bot, interaction) => {
   try {
     const query = interaction.options.getString("query", true);
-    const isEphermal = interaction.options.getBoolean("ephermal") ?? true;
-    await interaction.deferReply({ ephemeral: isEphermal });
+    const isephemeral = interaction.options.getBoolean("ephemeral") ?? true;
+    await interaction.deferReply({ ephemeral: isephemeral });
 
     const response = await bot.api.storygraph.storygraphControllerSearchBooks({
       q: query,
@@ -25,7 +25,7 @@ export const handleLink: CommandHandler = async (bot, interaction) => {
     await interaction.editReply({ content: response.data[0].url });
   } catch (err) {
     await interaction.editReply("Something went wrong! Please try again later");
-    errorHandler(
+    await errorHandler(
       bot,
       "commands > storygraph > link",
       err,

@@ -1,5 +1,6 @@
 import { CommandHandler } from "../../../models";
 import { errorHandler } from "../../../utils/errorHandler";
+import { customSubstring } from "../../../utils/stringUtils";
 
 /**
  * Fetches a random quote from GR.
@@ -9,25 +10,26 @@ import { errorHandler } from "../../../utils/errorHandler";
  */
 export const handleQuote: CommandHandler = async (bot, interaction) => {
   try {
-    const query = interaction.options.getString("query", true);
-    const isEphermal = interaction.options.getBoolean("ephermal") ?? true;
-    await interaction.deferReply({ ephemeral: isEphermal });
+    const query = interaction.options.getString("query") ?? "";
+    const isephemeral = interaction.options.getBoolean("ephemeral") ?? true;
+    await interaction.deferReply({ ephemeral: isephemeral });
 
     const response = await bot.api.goodreads.goodreadsControllerGetQuotes({
       q: query,
+      k: 20,
     });
     if (!response || response.data.length === 0) {
-      await interaction.editReply("No quotes found with that query!");
+      await interaction.editReply("No quotes found with that query");
+      return;
     }
 
-    let quote = response.data[0];
-    if (quote.length >= 2000) {
-      quote = quote.substring(0, 1995) + "...";
-    }
-    await interaction.editReply({ content: quote });
+    const quotes = response.data;
+    let randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+    randomQuote = customSubstring(randomQuote, 2000);
+    await interaction.editReply({ content: randomQuote });
   } catch (err) {
     await interaction.editReply("Something went wrong! Please try again later");
-    errorHandler(
+    await errorHandler(
       bot,
       "commands > goodreads > quote",
       err,

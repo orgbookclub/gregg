@@ -10,8 +10,8 @@ import { errorHandler } from "../../../utils/errorHandler";
 export const handleCover: CommandHandler = async (bot, interaction) => {
   try {
     const query = interaction.options.getString("query", true);
-    const isEphermal = interaction.options.getBoolean("ephermal") ?? true;
-    await interaction.deferReply({ ephemeral: isEphermal });
+    const isephemeral = interaction.options.getBoolean("ephemeral") ?? true;
+    await interaction.deferReply({ ephemeral: isephemeral });
 
     const response =
       await bot.api.storygraph.storygraphControllerSearchAndGetBook({
@@ -25,7 +25,7 @@ export const handleCover: CommandHandler = async (bot, interaction) => {
     await interaction.editReply({ content: response.data.coverUrl });
   } catch (err) {
     await interaction.editReply("Something went wrong! Please try again later");
-    errorHandler(
+    await errorHandler(
       bot,
       "commands > storygraph > cover",
       err,

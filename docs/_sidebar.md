@@ -1,0 +1,8 @@
+- [Getting Started](getting-started.md)
+- [Goodreads](commands/goodreads.md)
+- [Storygraph](commands/storygraph.md)
+- [Events](commands/events.md)
+- [User](commands/user.md)
+- [Sprint](commands/sprint.md)
+- [QotD](commands/qotd.md)
+- [Misc](commands/gregg.md)

@@ -31,6 +31,12 @@ export const handleList: CommandHandler = async (bot, interaction) => {
       status: eventStatus,
       type: eventType,
     });
+    if (!response || response.data.length === 0) {
+      await interaction.editReply(
+        "There are no events to display with the given filters",
+      );
+      return;
+    }
     const pageSize = 5;
     const pagedContentManager = new PaginationManager<EventDocument>(
       pageSize,
@@ -44,7 +50,7 @@ export const handleList: CommandHandler = async (bot, interaction) => {
     pagedContentManager.createCollectors(message, interaction, 5 * 60 * 1000);
   } catch (err) {
     await interaction.editReply("Something went wrong! Please try again later");
-    errorHandler(
+    await errorHandler(
       bot,
       "commands > events > list",
       err,

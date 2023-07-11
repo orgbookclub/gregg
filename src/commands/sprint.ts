@@ -53,7 +53,7 @@ const sprintFinishSubcommand = new SlashCommandSubcommandBuilder()
   .setName("finish")
   .setDescription("Logs the final count for a user at the end of a sprint")
   .addIntegerOption((option) =>
-    option.setName("count").setDescription("The final count"),
+    option.setName("count").setDescription("The final count").setRequired(true),
   );
 
 const sprintStatsSubcommand = new SlashCommandSubcommandBuilder()
@@ -95,7 +95,7 @@ export const sprint: Command = {
       const handler = handlers[subCommand];
       await handler(bot, interaction);
     } catch (err) {
-      errorHandler(
+      await errorHandler(
         bot,
         "commands > sprint",
         err,

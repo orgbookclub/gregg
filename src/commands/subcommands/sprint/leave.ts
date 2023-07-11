@@ -28,7 +28,7 @@ export const handleLeave: CommandHandler = async (bot, interaction) => {
     });
   } catch (err) {
     await interaction.editReply("Something went wrong! Please try again later");
-    errorHandler(
+    await errorHandler(
       bot,
       "commands > sprint > leave",
       err,

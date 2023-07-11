@@ -3,6 +3,7 @@ import {
   ChatInputCommandInteraction,
   Colors,
   EmbedBuilder,
+  GuildMember,
   time,
   userMention,
 } from "discord.js";
@@ -11,17 +12,30 @@ import { CommandHandler } from "../../../models";
 import { QotdSuggestionStatus } from "../../../models/commands/qotd/QotdSuggestionStatus";
 import { errorHandler } from "../../../utils/errorHandler";
 import { PaginationManager } from "../../../utils/paginationManager";
+import { hasRole } from "../../../utils/userUtils";
 
 /**
  * Lists the available qotds.
  *
  * @param bot The bot instance.
  * @param interaction The interaction.
+ * @param guildConfig The guild config.
  */
-const handleList: CommandHandler = async (bot, interaction) => {
+const handleList: CommandHandler = async (bot, interaction, guildConfig) => {
   try {
-    await interaction.deferReply();
+    if (
+      guildConfig &&
+      interaction.member &&
+      !hasRole(interaction.member as GuildMember, guildConfig.staffRole)
+    ) {
+      await interaction.reply({
+        content: "Sorry, this command is restricted for staff use only!",
+        ephemeral: true,
+      });
+      return;
+    }
 
+    await interaction.deferReply();
     const approvedQotdList: qotds[] = await bot.db.qotds.findMany({
       where: {
         status: QotdSuggestionStatus.Approved,
@@ -45,7 +59,7 @@ const handleList: CommandHandler = async (bot, interaction) => {
     pagedContentManager.createCollectors(message, interaction, 5 * 60 * 1000);
   } catch (err) {
     await interaction.editReply("Something went wrong! Please try again later");
-    errorHandler(
+    await errorHandler(
       bot,
       "commands > qotd > list",
       err,

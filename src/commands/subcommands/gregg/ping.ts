@@ -12,7 +12,7 @@ export const handlePing: CommandHandler = async (bot, interaction) => {
     await interaction.reply("Pong!");
   } catch (err) {
     await interaction.reply("Something went wrong! Please try again later.");
-    errorHandler(
+    await errorHandler(
       bot,
       "commands > gregg > ping",
       err,

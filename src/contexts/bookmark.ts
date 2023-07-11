@@ -53,7 +53,7 @@ const bookmark: Context = {
           );
         });
     } catch (err) {
-      await errorHandler(
+      await await errorHandler(
         bot,
         "contexts > bookmark",
         err,

@@ -6,11 +6,13 @@ import {
   ModalActionRowComponentBuilder,
   ModalBuilder,
   TextInputBuilder,
+  GuildMember,
 } from "discord.js";
 
 import { CommandHandler } from "../../../models";
 import { errorHandler } from "../../../utils/errorHandler";
 import { getUserMentionString } from "../../../utils/eventUtils";
+import { hasRole } from "../../../utils/userUtils";
 
 const EVENT_BROADCAST_MODAL_ID = "eventBroadcastModal";
 const MESSAGE_FIELD_ID = "message";
@@ -20,9 +22,26 @@ const MESSAGE_FIELD_ID = "message";
  *
  * @param bot The bot instance.
  * @param interaction The interaction.
+ * @param guildConfig The guild config.
  */
-const handleBroadcast: CommandHandler = async (bot, interaction) => {
+const handleBroadcast: CommandHandler = async (
+  bot,
+  interaction,
+  guildConfig,
+) => {
   try {
+    if (
+      guildConfig &&
+      interaction.member &&
+      !hasRole(interaction.member as GuildMember, guildConfig.brLeaderRole) &&
+      !hasRole(interaction.member as GuildMember, guildConfig.staffRole)
+    ) {
+      await interaction.reply({
+        content: "Sorry, this command is restricted for BR Leader use only!",
+        ephemeral: true,
+      });
+      return;
+    }
     const eventId = interaction.options.getString("id", true);
     const channel =
       interaction.options.getChannel<ChannelType.GuildText>("channel");
@@ -87,7 +106,7 @@ const handleBroadcast: CommandHandler = async (bot, interaction) => {
     });
   } catch (err) {
     await interaction.editReply("Something went wrong! Please try again later");
-    errorHandler(
+    await errorHandler(
       bot,
       "commands > events > broadcast",
       err,
