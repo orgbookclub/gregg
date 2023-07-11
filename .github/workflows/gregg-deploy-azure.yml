@@ -5,10 +5,8 @@ name: Deploy to Azure (Dev)
 
 on:
   push:
-    branches: first-release
+    branches: develop
   workflow_dispatch:
-  release:
-    types: [published]
 
 env:
   AZURE_WEBAPP_NAME: gregg-dev # set this to your application's name
@@ -28,8 +26,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
 
-      - name:
-          .npmrc registry login
+      - name: .npmrc registry login
         uses: healthplace/npmrc-registry-login-action@v1.0.9
         with:
           scope: "@orgbookclub"
