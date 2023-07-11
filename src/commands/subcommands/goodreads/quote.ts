@@ -19,7 +19,7 @@ export const handleQuote: CommandHandler = async (bot, interaction) => {
       k: 20,
     });
     if (!response || response.data.length === 0) {
-      await interaction.editReply("No quotes found with that query!");
+      await interaction.editReply("No quotes found with that query");
       return;
     }
 
