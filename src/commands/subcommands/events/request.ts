@@ -86,10 +86,6 @@ const handleRequest: CommandHandler = async (bot, interaction, guildConfig) => {
     const eventDoc = eventResponse.data;
     if (eventDoc.type === EventDocumentTypeEnum.BuddyRead) {
       if (!interaction.guild) return;
-<<<<<<< HEAD
-=======
-      const guildConfig = await getGuildConfigFromDb(bot, interaction.guild.id);
->>>>>>> origin/develop
       const channelId = guildConfig?.brRequestChannel ?? "Not set";
       const channel = await bot.channels.fetch(channelId);
       if (!channel?.isTextBased()) {
