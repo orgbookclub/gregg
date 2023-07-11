@@ -102,7 +102,7 @@ const handleAnnounce: CommandHandler = async (
     });
   } catch (err) {
     await interaction.reply("Something went wrong! Please try again later");
-    await await errorHandler(
+    await errorHandler(
       bot,
       "commands > events > announce",
       err,
