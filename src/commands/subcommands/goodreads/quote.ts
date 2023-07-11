@@ -23,7 +23,7 @@ export const handleQuote: CommandHandler = async (bot, interaction) => {
       return;
     }
 
-    const quotes = response.data[0];
+    const quotes = response.data;
     let randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
     randomQuote = customSubstring(randomQuote, 2000);
     await interaction.editReply({ content: randomQuote });
