@@ -4,22 +4,29 @@ import {
   ButtonBuilder,
   ButtonStyle,
   ChannelType,
+  GuildMember,
   channelMention,
 } from "discord.js";
 
 import { CommandHandler } from "../../../models";
-import { getGuildConfigFromDb } from "../../../utils/dbUtils";
 import { errorHandler } from "../../../utils/errorHandler";
 import { getEventInfoEmbed } from "../../../utils/eventUtils";
+import { hasRole } from "../../../utils/userUtils";
 
 /**
  * Announces an approved event.
  *
  * @param bot The bot instance.
  * @param interaction The interaction.
+ * @param guildConfig The guild config.
  */
-const handleAnnounce: CommandHandler = async (bot, interaction) => {
+const handleAnnounce: CommandHandler = async (
+  bot,
+  interaction,
+  guildConfig,
+) => {
   try {
+    
     await interaction.deferReply();
     const id = interaction.options.getString("id", true);
     const channel =
@@ -41,7 +48,6 @@ const handleAnnounce: CommandHandler = async (bot, interaction) => {
     let announcementChannel = channel;
     if (!channel) {
       if (!interaction.guild) return;
-      const guildConfig = await getGuildConfigFromDb(bot, interaction.guild.id);
       const channelId = guildConfig?.eventAnnouncementChannel ?? "Not set";
       const configuredChannel = await bot.channels.fetch(channelId);
 

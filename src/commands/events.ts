@@ -236,11 +236,11 @@ export const events: Command = {
     .addSubcommand(eventsAddUserSubcommand)
     .addSubcommand(eventsRemoveUserSubcommand)
     .setDMPermission(false),
-  run: async (bot, interaction) => {
+  run: async (bot, interaction, guildConfig) => {
     try {
       const subCommand = interaction.options.getSubcommand();
       const handler = handlers[subCommand];
-      await handler(bot, interaction);
+      await handler(bot, interaction, guildConfig);
     } catch (err) {
       await errorHandler(
         bot,

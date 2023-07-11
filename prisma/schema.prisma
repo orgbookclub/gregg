@@ -6,20 +6,23 @@ datasource db {
   provider = "mongodb"
   url      = env("MONGODB_URI")
 }
+
 type SprintsParticipants {
   didFinish  Boolean @default(false)
-  endCount   Int @default(0)
-  startCount Int @default(0)
+  endCount   Int     @default(0)
+  startCount Int     @default(0)
   userId     String
 }
 
 type GuildsConfig {
-  brForumChannel           String @default("")
-  brRequestChannel         String @default("")
-  eventAnnouncementChannel String @default("")
-  mrForumChannel           String @default("")
-  qotdChannel              String @default("")
-  qotdSuggestionChannel    String @default("")
+  brForumChannel           String              @default("")
+  brRequestChannel         String              @default("")
+  eventAnnouncementChannel String              @default("")
+  mrForumChannel           String              @default("")
+  qotdChannel              String              @default("")
+  qotdSuggestionChannel    String              @default("")
+  staffRole                String              @default("")
+  brLeaderRole             String              @default("")
   readerRoles              GuildsReaderRoles[]
 }
 
@@ -28,18 +31,15 @@ type GuildsReaderRoles {
   role   String @default("")
 }
 
-
 model commandUsages {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  
-  
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
   command    String
   subcommand String
   uses       Int
   createdOn  DateTime @db.Date
   updatedOn  DateTime @db.Date
   v          Int?     @map("__v") @ignore
-
 
   @@unique([command, subcommand], map: "command_1_subcommand_1")
 }
@@ -54,7 +54,6 @@ model guilds {
   createdAt DateTime     @db.Date
   joinedAt  DateTime     @db.Date
   v         Int?         @map("__v") @ignore
-
 }
 
 model members {
@@ -63,7 +62,6 @@ model members {
   guildId  String
   joinedAt DateTime @db.Date
   v        Int?     @map("__v") @ignore
-
 
   @@unique([guildId, userId], map: "guildId_1_userId_1")
 }
@@ -90,7 +88,6 @@ model qotds {
   createdOn DateTime @db.Date
   updatedOn DateTime @db.Date
   v         Int?     @map("__v") @ignore
-
 }
 
 model sprints {
@@ -98,13 +95,12 @@ model sprints {
   channelId    String
   userId       String
   guildId      String
-  duration     Int @default(0)
+  duration     Int                   @default(0)
   participants SprintsParticipants[]
   startedOn    DateTime              @db.Date
   endedOn      DateTime              @db.Date
   status       String
   v            Int?                  @map("__v") @ignore
-
 }
 
 model users {
@@ -112,5 +108,4 @@ model users {
   userId   String @unique(map: "userId_1")
   username String
   v        Int?   @map("__v") @ignore
-
 }

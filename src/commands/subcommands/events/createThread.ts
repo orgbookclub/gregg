@@ -6,6 +6,7 @@ import {
 import {
   channelMention,
   ChannelType,
+  GuildMember,
   hideLinkEmbed,
   time,
   TimestampStyles,
@@ -19,6 +20,7 @@ import {
   getThreadTitle,
   getUserMentionString,
 } from "../../../utils/eventUtils";
+import { hasRole } from "../../../utils/userUtils";
 
 /**
  * Creates thread(s) for an approved event, and writes information about the event on the thread.
@@ -26,9 +28,25 @@ import {
  *
  * @param bot The bot instance.
  * @param interaction The interaction.
+ * @param guildConfig The guild config.
  */
-const handleCreateThread: CommandHandler = async (bot, interaction) => {
+const handleCreateThread: CommandHandler = async (
+  bot,
+  interaction,
+  guildConfig,
+) => {
   try {
+    if (
+      guildConfig &&
+      interaction.member &&
+      !hasRole(interaction.member as GuildMember, guildConfig.staffRole)
+    ) {
+      await interaction.reply({
+        content: "Sorry, this command is restricted for staff use only!",
+        ephemeral: true,
+      });
+      return;
+    }
     await interaction.deferReply();
     const id = interaction.options.getString("id", true);
     const channel = interaction.options.getChannel<
