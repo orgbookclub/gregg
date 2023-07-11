@@ -10,7 +10,6 @@ import {
 import { CommandHandler } from "../../../models";
 import { QotdSuggestion } from "../../../models/commands/qotd/QotdSuggestion";
 import { QotdSuggestionStatus } from "../../../models/commands/qotd/QotdSuggestionStatus";
-import { getGuildConfigFromDb } from "../../../utils/dbUtils";
 import { errorHandler } from "../../../utils/errorHandler";
 
 /**
