@@ -1,7 +1,7 @@
 {
   "name": "gregg",
   "author": "ravsodhi",
-  "version": "1.0.0",
+  "version": "0.1.1",
   "description": "Discord Bot",
   "main": "./dist/index.js",
   "private": true,
@@ -26,7 +26,7 @@
     "docs:serve": "docsify serve docs"
   },
   "dependencies": {
-    "@orgbookclub/ows-client": "^0.2.1",
+    "@orgbookclub/ows-client": "^0.3.0",
     "@prisma/client": "^4.16.2",
     "@sentry/node": "^7.48.0",
     "@sentry/tracing": "^7.57.0",

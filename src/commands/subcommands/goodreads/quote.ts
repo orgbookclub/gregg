@@ -10,23 +10,23 @@ import { customSubstring } from "../../../utils/stringUtils";
  */
 export const handleQuote: CommandHandler = async (bot, interaction) => {
   try {
-    const query = interaction.options.getString("query", true);
+    const query = interaction.options.getString("query") ?? "";
     const isephemeral = interaction.options.getBoolean("ephemeral") ?? true;
     await interaction.deferReply({ ephemeral: isephemeral });
 
     const response = await bot.api.goodreads.goodreadsControllerGetQuotes({
       q: query,
+      k: 20,
     });
     if (!response || response.data.length === 0) {
       await interaction.editReply("No quotes found with that query!");
       return;
     }
 
-    let quote = response.data[0];
-    if (quote.length >= 2000) {
-      quote = customSubstring(quote, 2000);
-    }
-    await interaction.editReply({ content: quote });
+    const quotes = response.data[0];
+    let randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+    randomQuote = customSubstring(randomQuote, 2000);
+    await interaction.editReply({ content: randomQuote });
   } catch (err) {
     await interaction.editReply("Something went wrong! Please try again later");
     await errorHandler(

@@ -147,10 +147,10 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
-"@orgbookclub/ows-client@^0.2.1":
-  version "0.2.1"
-  resolved "https://npm.pkg.github.com/download/@orgbookclub/ows-client/0.2.1/5ad5504b3b65edd20797cfe177be4e6c3d6824c6#5ad5504b3b65edd20797cfe177be4e6c3d6824c6"
-  integrity sha512-PjgxpOIlxGv+5HAGdmKOxq3K4Uw6LpEEQht9MqijZUO4qkLLjb2f+vorxwerO1yR3VewlfVvW1lEKfoXVn4Xiw==
+"@orgbookclub/ows-client@^0.3.0":
+  version "0.3.0"
+  resolved "https://npm.pkg.github.com/download/@orgbookclub/ows-client/0.3.0/a3f10ae65d66439d028991804a2a010e953b35f6#a3f10ae65d66439d028991804a2a010e953b35f6"
+  integrity sha512-pbwBwKuT9kcajFxvs3yR4d98LnjkzQjAO/As+CFSVWefXgNC3j1PQgKxRHAxbUrR/NidTWeKIiLGmoLM3rNP/g==
   dependencies:
     axios "^0.27.2"
 
