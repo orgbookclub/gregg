@@ -34,8 +34,9 @@ const REQUEST_REASON_FIELD_ID = "reason";
  *
  * @param bot The bot instance.
  * @param interaction The interaction.
+ * @param guildConfig The guild config.
  */
-const handleRequest: CommandHandler = async (bot, interaction) => {
+const handleRequest: CommandHandler = async (bot, interaction, guildConfig) => {
   try {
     const eventType = interaction.options.getString(
       "type",
@@ -86,7 +87,6 @@ const handleRequest: CommandHandler = async (bot, interaction) => {
     const eventDoc = eventResponse.data;
     if (eventDoc.type === EventDocumentTypeEnum.BuddyRead) {
       if (!interaction.guild) return;
-      const guildConfig = await getGuildConfigFromDb(bot, interaction.guild.id);
       const channelId = guildConfig?.brRequestChannel ?? "Not set";
       const channel = await bot.channels.fetch(channelId);
       if (!channel?.isTextBased()) {
