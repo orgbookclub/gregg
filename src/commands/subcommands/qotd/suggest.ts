@@ -10,7 +10,6 @@ import {
 import { CommandHandler } from "../../../models";
 import { QotdSuggestion } from "../../../models/commands/qotd/QotdSuggestion";
 import { QotdSuggestionStatus } from "../../../models/commands/qotd/QotdSuggestionStatus";
-import { getGuildConfigFromDb } from "../../../utils/dbUtils";
 import { errorHandler } from "../../../utils/errorHandler";
 
 /**
@@ -18,14 +17,14 @@ import { errorHandler } from "../../../utils/errorHandler";
  *
  * @param bot The bot instance.
  * @param interaction The interaction.
+ * @param guildConfig The guild config.
  */
-const handleSuggest: CommandHandler = async (bot, interaction) => {
+const handleSuggest: CommandHandler = async (bot, interaction, guildConfig) => {
   try {
     await interaction.deferReply({ ephemeral: true });
     const question = interaction.options.getString("question", true);
 
     if (!interaction.guild) return;
-    const guildConfig = await getGuildConfigFromDb(bot, interaction.guild.id);
     const channelId = guildConfig?.qotdSuggestionChannel ?? "Not set";
 
     const channel = await bot.channels.fetch(channelId);
@@ -84,7 +83,7 @@ function getButtonActionRow(approveId: string, rejectId: string) {
   const rejectButton = new ButtonBuilder()
     .setLabel("Reject")
     .setEmoji({ name: "❌" })
-    .setStyle(ButtonStyle.Secondary)
+    .setStyle(ButtonStyle.Danger)
     .setCustomId(rejectId);
   const buttonActionRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
     approveButton,

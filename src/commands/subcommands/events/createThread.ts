@@ -3,6 +3,7 @@ import {
   EventDocumentTypeEnum,
   EventDtoStatusEnum,
 } from "@orgbookclub/ows-client";
+import { GuildsConfig } from "@prisma/client";
 import {
   channelMention,
   ChannelType,
@@ -13,7 +14,6 @@ import {
 } from "discord.js";
 
 import { Bot, CommandHandler } from "../../../models";
-import { getGuildConfigFromDb } from "../../../utils/dbUtils";
 import { errorHandler } from "../../../utils/errorHandler";
 import {
   getEventInfoEmbed,
@@ -75,7 +75,7 @@ const handleCreateThread: CommandHandler = async (
         forum = await getConfiguredForumChannel(
           bot,
           eventDoc.type,
-          interaction.guild?.id,
+          guildConfig,
         );
       }
       if (!forum) {
@@ -137,11 +137,10 @@ const handleCreateThread: CommandHandler = async (
 async function getConfiguredForumChannel(
   bot: Bot,
   type: EventDocumentTypeEnum,
-  guildId?: string,
+  guildConfig?: GuildsConfig,
 ) {
   let eventForum;
-  if (!guildId) return null;
-  const guildConfig = await getGuildConfigFromDb(bot, guildId);
+  if (!guildConfig) return null;
   if (type === EventDocumentTypeEnum.BuddyRead) {
     const channelId = guildConfig?.brForumChannel ?? "Not set";
     eventForum = await bot.channels.fetch(channelId);

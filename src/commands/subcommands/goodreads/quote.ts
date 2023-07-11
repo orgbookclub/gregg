@@ -11,8 +11,8 @@ import { customSubstring } from "../../../utils/stringUtils";
 export const handleQuote: CommandHandler = async (bot, interaction) => {
   try {
     const query = interaction.options.getString("query") ?? "";
-    const isephemeral = interaction.options.getBoolean("ephemeral") ?? true;
-    await interaction.deferReply({ ephemeral: isephemeral });
+    const isEphemeral = interaction.options.getBoolean("ephemeral") ?? true;
+    await interaction.deferReply({ ephemeral: isEphemeral });
 
     const response = await bot.api.goodreads.goodreadsControllerGetQuotes({
       q: query,
