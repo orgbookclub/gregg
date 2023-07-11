@@ -36,8 +36,8 @@ const handlers: Record<string, CommandHandler> = {
   announce: handleAnnounce,
   createthread: handleCreateThread,
   broadcast: handleBroadcast,
-  addUser: handleAddUser,
-  removeUser: handleRemoveUser,
+  adduser: handleAddUser,
+  removeuser: handleRemoveUser,
   stats: handleStats,
 };
 
