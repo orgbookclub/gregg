@@ -6,12 +6,21 @@ datasource db {
   provider = "mongodb"
   url      = env("MONGODB_URI")
 }
-
 type SprintsParticipants {
   didFinish  Boolean @default(false)
-  endCount   Int     @default(0)
-  startCount Int     @default(0)
+  endCount   Int @default(0)
+  startCount Int @default(0)
   userId     String
+}
+
+type GuildsConfig {
+  brForumChannel           String @default("")
+  brRequestChannel         String @default("")
+  eventAnnouncementChannel String @default("")
+  mrForumChannel           String @default("")
+  qotdChannel              String @default("")
+  qotdSuggestionChannel    String @default("")
+  readerRoles              GuildsReaderRoles[]
 }
 
 type GuildsReaderRoles {
@@ -19,57 +28,33 @@ type GuildsReaderRoles {
   role   String @default("")
 }
 
-model qotds {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  question  String   @default("")
-  guildId   String
-  userId    String
-  status    String   @default("Requested")
-  createdOn DateTime @db.Date
-  updatedOn DateTime @db.Date
-  v         Int?     @map("__v") @ignore
-}
 
-model sprints {
-  id           String                @id @default(auto()) @map("_id") @db.ObjectId
-  duration     Int                   @default(0)
-  participants SprintsParticipants[]
-  userId       String
-  guildId      String
-  channelId    String
-  startedOn    DateTime              @db.Date
-  endedOn      DateTime              @db.Date
-  status       String
-  v            Int?                  @map("__v") @ignore
+model commandUsages {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  
+  
+  command    String
+  subcommand String
+  uses       Int
+  createdOn  DateTime @db.Date
+  updatedOn  DateTime @db.Date
+  v          Int?     @map("__v") @ignore
+
+
+  @@unique([command, subcommand], map: "command_1_subcommand_1")
 }
 
 model guilds {
-  id                       String              @id @default(auto()) @map("_id") @db.ObjectId
-  guildId                  String
-  name                     String              @default("")
-  ownerId                  String
-  region                   String              @default("")
-  createdAt                DateTime            @db.Date
-  joinedAt                 DateTime            @db.Date
-  brRequestChannel         String              @default("")
-  brForumChannel           String              @default("")
-  mrForumChannel           String              @default("")
-  eventAnnouncementChannel String              @default("")
-  qotdSuggestionChannel    String              @default("")
-  qotdChannel              String              @default("")
-  readerRoles              GuildsReaderRoles[]
-  v                        Int?                @map("__v") @ignore
+  id        String       @id @default(auto()) @map("_id") @db.ObjectId
+  guildId   String       @unique(map: "guildId_1")
+  name      String       @default("")
+  ownerId   String
+  region    String
+  config    GuildsConfig
+  createdAt DateTime     @db.Date
+  joinedAt  DateTime     @db.Date
+  v         Int?         @map("__v") @ignore
 
-  @@unique([guildId], map: "guildId_1")
-}
-
-model users {
-  id       String @id @default(auto()) @map("_id") @db.ObjectId
-  userId   String
-  username String
-  v        Int?   @map("__v") @ignore
-
-  @@unique([userId], map: "userId_1")
 }
 
 model members {
@@ -79,30 +64,53 @@ model members {
   joinedAt DateTime @db.Date
   v        Int?     @map("__v") @ignore
 
+
   @@unique([guildId, userId], map: "guildId_1_userId_1")
 }
 
 model messageCounts {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  v         Int?     @map("__v") @ignore
-  count     Int      @default(0)
-  guildId   String
   userId    String
   channelId String
+  guildId   String
+  count     Int
   createdOn DateTime @db.Date
   updatedOn DateTime @db.Date
+  v         Int?     @map("__v") @ignore
 
   @@unique([guildId, userId, channelId], map: "guildId_1_userId_1_channelId_1")
 }
 
-model commandUsages {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  v          Int?     @map("__v") @ignore
-  command    String
-  subcommand String
-  uses       Int      @default(0)
-  createdOn  DateTime @db.Date
-  updatedOn  DateTime @db.Date
+model qotds {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  question  String
+  userId    String
+  guildId   String
+  status    String
+  createdOn DateTime @db.Date
+  updatedOn DateTime @db.Date
+  v         Int?     @map("__v") @ignore
 
-  @@unique([command, subcommand], map: "command_1_subcommand_1")
+}
+
+model sprints {
+  id           String                @id @default(auto()) @map("_id") @db.ObjectId
+  channelId    String
+  userId       String
+  guildId      String
+  duration     Int @default(0)
+  participants SprintsParticipants[]
+  startedOn    DateTime              @db.Date
+  endedOn      DateTime              @db.Date
+  status       String
+  v            Int?                  @map("__v") @ignore
+
+}
+
+model users {
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  userId   String @unique(map: "userId_1")
+  username String
+  v        Int?   @map("__v") @ignore
+
 }
