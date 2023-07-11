@@ -26,7 +26,18 @@ const handleAnnounce: CommandHandler = async (
   guildConfig,
 ) => {
   try {
-    
+    if (
+      guildConfig &&
+      interaction.member &&
+      !hasRole(interaction.member as GuildMember, guildConfig.staffRole)
+    ) {
+      await interaction.reply({
+        content: "Sorry, this command is restricted for staff use only!",
+        ephemeral: true,
+      });
+      return;
+    }
+
     await interaction.deferReply();
     const id = interaction.options.getString("id", true);
     const channel =
