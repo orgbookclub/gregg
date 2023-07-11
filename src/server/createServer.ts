@@ -18,7 +18,7 @@ export const createServer = () => {
     res.status(200).send();
   });
 
-  const httpPort = process.env.PORT ?? 3000;
+  const httpPort = process.env.PORT ?? 3001;
 
   app.listen(httpPort, () => {
     logger.info(`http server is live on port ${httpPort}`);

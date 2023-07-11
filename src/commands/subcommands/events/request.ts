@@ -112,7 +112,7 @@ const handleRequest: CommandHandler = async (bot, interaction) => {
       error.name === "AxiosError" &&
       error.message === "Request failed with status code 503"
     ) {
-      await interaction.editReply(
+      await interaction.reply(
         "Unfortunately, due to Goodreads being Goodreads, I cannot complete your request at the moment :(" +
           "\n" +
           "Please try again later, or use Storygraph instead �",
@@ -126,9 +126,7 @@ const handleRequest: CommandHandler = async (bot, interaction) => {
         undefined,
         interaction,
       );
-      await interaction.editReply(
-        "Something went wrong! Please try again later",
-      );
+      await interaction.reply("Something went wrong! Please try again later");
     }
   }
 };
