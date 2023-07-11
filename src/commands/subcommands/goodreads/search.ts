@@ -12,8 +12,8 @@ const handleSearch: CommandHandler = async (bot, interaction) => {
   try {
     const query = interaction.options.getString("query", true);
     const limit = interaction.options.getInteger("limit") ?? 5;
-    const isephemeral = interaction.options.getBoolean("ephemeral") ?? true;
-    await interaction.deferReply({ ephemeral: isephemeral });
+    const isEphemeral = interaction.options.getBoolean("ephemeral") ?? true;
+    await interaction.deferReply({ ephemeral: isEphemeral });
 
     const response = await bot.api.goodreads.goodreadsControllerSearchBooks({
       q: query,

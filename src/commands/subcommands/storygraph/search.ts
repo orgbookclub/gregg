@@ -17,8 +17,8 @@ const handleSearch: CommandHandler = async (
   try {
     const query = interaction.options.getString("query", true);
     const limit = interaction.options.getInteger("limit") ?? 5;
-    const isephemeral = interaction.options.getBoolean("ephemeral") ?? true;
-    await interaction.deferReply({ ephemeral: isephemeral });
+    const isEphemeral = interaction.options.getBoolean("ephemeral") ?? true;
+    await interaction.deferReply({ ephemeral: isEphemeral });
 
     const response = await bot.api.storygraph.storygraphControllerSearchBooks({
       q: query,

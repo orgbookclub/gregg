@@ -14,8 +14,8 @@ import { errorHandler } from "../../../utils/errorHandler";
 const handleBook: CommandHandler = async (bot, interaction) => {
   try {
     const query = interaction.options.getString("query", true);
-    const isephemeral = interaction.options.getBoolean("ephemeral") ?? true;
-    await interaction.deferReply({ ephemeral: isephemeral });
+    const isEphemeral = interaction.options.getBoolean("ephemeral") ?? true;
+    await interaction.deferReply({ ephemeral: isEphemeral });
 
     const response =
       await bot.api.goodreads.goodreadsControllerSearchAndGetBook({ q: query });
