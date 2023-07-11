@@ -23,7 +23,7 @@ All commands listed below can be used after typing `/sprint` in the chat bar on 
 | stats [user]               | Shows the total sprint stats of a user                                                                                                        |
 
 ## Sprint Lifecycle
-
+(Refresh this page if the diagram is not visible)
 ```mermaid
 stateDiagram-v2
     state if_state \<\<choice\>\>

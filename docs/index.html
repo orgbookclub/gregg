@@ -16,13 +16,15 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, minimum-scale=1.0"
     />
+    <!-- Theme: Simple -->
     <link
       rel="stylesheet"
-      href="//cdn.jsdelivr.net/npm/docsify/themes/vue.css"
+      href="https://cdn.jsdelivr.net/npm/docsify-themeable@0/dist/css/theme-simple.css"
     />
   </head>
   <body>
     <div id="app"></div>
+
     <script>
       window.$docsify = {
         name: "Gregg Docs",
@@ -32,15 +34,6 @@
         maxLevel: 5,
         subMaxLevel: 3,
         homepage: "index.md",
-        search: {
-          noData: {
-            "/": "No results!",
-          },
-          paths: "auto",
-          placeholder: {
-            "/": "Search...",
-          },
-        },
         // coverpage: true,
         markdown: {
           smartypants: true,
@@ -50,9 +43,14 @@
         autoHeader: true,
       };
     </script>
-    <!-- Docsify v4 -->
-    <script src="//cdn.jsdelivr.net/npm/docsify@4"></script>
-    <script src="//cdn.jsdelivr.net/npm/docsify@4/lib/plugins/search.js"></script>
+
+    <!-- Required -->
+    <script src="https://cdn.jsdelivr.net/npm/docsify@4/lib/docsify.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/docsify-themeable@0/dist/js/docsify-themeable.min.js"></script>
+
+    <!-- Recommended -->
+    <script src="https://cdn.jsdelivr.net/npm/docsify@4/lib/plugins/search.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/docsify@4/lib/plugins/zoom-image.min.js"></script>
     <script type="module">
       import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
       mermaid.initialize({ startOnLoad: true });

@@ -17,6 +17,7 @@ All commands listed below can be used after typing `/qotd` in the chat bar on Di
 | post \<id\> [channel] | Posts a QOTD and creates a thread for it. Selects a random QOTD if id is not given. Selects a pre-configured channel if channel is not given |
 
 ## QotD Lifecycle
+(Refresh this page if the diagram is not visible)
 
 ```mermaid
 stateDiagram-v2
