@@ -15,7 +15,7 @@ import {
 
 import { Bot, CommandHandler } from "../../../models";
 import { EventRequestSubmission } from "../../../models/commands/events/EventRequestSubmission";
-import { getGuildFromDb } from "../../../utils/dbUtils";
+import { getGuildConfigFromDb } from "../../../utils/dbUtils";
 import { errorHandler } from "../../../utils/errorHandler";
 import {
   getEventRequestEmbed,
@@ -86,8 +86,8 @@ const handleRequest: CommandHandler = async (bot, interaction) => {
     const eventDoc = eventResponse.data;
     if (eventDoc.type === EventDocumentTypeEnum.BuddyRead) {
       if (!interaction.guild) return;
-      const guildDoc = await getGuildFromDb(bot, interaction.guild.id);
-      const channelId = guildDoc?.brRequestChannel ?? "Not set";
+      const guildConfig = await getGuildConfigFromDb(bot, interaction.guild.id);
+      const channelId = guildConfig?.brRequestChannel ?? "Not set";
       const channel = await bot.channels.fetch(channelId);
       if (!channel?.isTextBased()) {
         await modalSubmitInteraction.editReply(

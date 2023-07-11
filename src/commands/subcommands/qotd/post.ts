@@ -7,7 +7,7 @@ import {
 
 import { CommandHandler } from "../../../models";
 import { QotdSuggestionStatus } from "../../../models/commands/qotd/QotdSuggestionStatus";
-import { getGuildFromDb } from "../../../utils/dbUtils";
+import { getGuildConfigFromDb } from "../../../utils/dbUtils";
 import { errorHandler } from "../../../utils/errorHandler";
 
 /**
@@ -49,8 +49,8 @@ const handlePost: CommandHandler = async (bot, interaction) => {
       qotd = selectedQotd;
     }
     if (!channel) {
-      const guildDoc = await getGuildFromDb(bot, interaction.guild.id);
-      const channelId = guildDoc?.qotdChannel ?? "Not set";
+      const guildConfig = await getGuildConfigFromDb(bot, interaction.guild.id);
+      const channelId = guildConfig?.qotdChannel ?? "Not set";
       const qotdChannel = await bot.channels.fetch(channelId);
       if (!qotdChannel?.isTextBased()) {
         throw new Error("Unable to post QOTD in the configured channel");

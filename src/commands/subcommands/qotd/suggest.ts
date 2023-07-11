@@ -10,7 +10,7 @@ import {
 import { CommandHandler } from "../../../models";
 import { QotdSuggestion } from "../../../models/commands/qotd/QotdSuggestion";
 import { QotdSuggestionStatus } from "../../../models/commands/qotd/QotdSuggestionStatus";
-import { getGuildFromDb } from "../../../utils/dbUtils";
+import { getGuildConfigFromDb } from "../../../utils/dbUtils";
 import { errorHandler } from "../../../utils/errorHandler";
 
 /**
@@ -25,8 +25,8 @@ const handleSuggest: CommandHandler = async (bot, interaction) => {
     const question = interaction.options.getString("question", true);
 
     if (!interaction.guild) return;
-    const guildDoc = await getGuildFromDb(bot, interaction.guild.id);
-    const channelId = guildDoc?.qotdSuggestionChannel ?? "Not set";
+    const guildConfig = await getGuildConfigFromDb(bot, interaction.guild.id);
+    const channelId = guildConfig?.qotdSuggestionChannel ?? "Not set";
 
     const channel = await bot.channels.fetch(channelId);
 

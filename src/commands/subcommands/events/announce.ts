@@ -8,7 +8,7 @@ import {
 } from "discord.js";
 
 import { CommandHandler } from "../../../models";
-import { getGuildFromDb } from "../../../utils/dbUtils";
+import { getGuildConfigFromDb } from "../../../utils/dbUtils";
 import { errorHandler } from "../../../utils/errorHandler";
 import { getEventInfoEmbed } from "../../../utils/eventUtils";
 
@@ -41,8 +41,8 @@ const handleAnnounce: CommandHandler = async (bot, interaction) => {
     let announcementChannel = channel;
     if (!channel) {
       if (!interaction.guild) return;
-      const guildDoc = await getGuildFromDb(bot, interaction.guild.id);
-      const channelId = guildDoc?.eventAnnouncementChannel ?? "Not set";
+      const guildConfig = await getGuildConfigFromDb(bot, interaction.guild.id);
+      const channelId = guildConfig?.eventAnnouncementChannel ?? "Not set";
       const configuredChannel = await bot.channels.fetch(channelId);
 
       if (

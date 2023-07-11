@@ -12,7 +12,7 @@ import {
 } from "discord.js";
 
 import { Bot, CommandHandler } from "../../../models";
-import { getGuildFromDb } from "../../../utils/dbUtils";
+import { getGuildConfigFromDb } from "../../../utils/dbUtils";
 import { errorHandler } from "../../../utils/errorHandler";
 import {
   getEventInfoEmbed,
@@ -123,12 +123,12 @@ async function getConfiguredForumChannel(
 ) {
   let eventForum;
   if (!guildId) return null;
-  const guildDoc = await getGuildFromDb(bot, guildId);
+  const guildConfig = await getGuildConfigFromDb(bot, guildId);
   if (type === EventDocumentTypeEnum.BuddyRead) {
-    const channelId = guildDoc?.brForumChannel ?? "Not set";
+    const channelId = guildConfig?.brForumChannel ?? "Not set";
     eventForum = await bot.channels.fetch(channelId);
   } else if (type === EventDocumentTypeEnum.MonthlyRead) {
-    const channelId = guildDoc?.mrForumChannel ?? "Not set";
+    const channelId = guildConfig?.mrForumChannel ?? "Not set";
     eventForum = await bot.channels.fetch(channelId);
   }
   if (!eventForum || eventForum.type !== ChannelType.GuildForum) {

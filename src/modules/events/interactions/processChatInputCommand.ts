@@ -1,6 +1,7 @@
 import { ChatInputCommandInteraction, TimestampStyles, time } from "discord.js";
 
 import { Bot } from "../../../models";
+import { getGuildConfigFromDb } from "../../../utils/dbUtils";
 import { errorHandler } from "../../../utils/errorHandler";
 
 /**
@@ -57,7 +58,12 @@ async function processChatInputCommand(
     // TODO: Can add type guards here
     // TODO: Can also get guild-specific config settings from here.
     // e.g. does guild have certain features enabled etc.
-    await command.run(bot, interaction);
+    if (interaction.inGuild()) {
+      const guildConfig = await getGuildConfigFromDb(bot, interaction.guildId);
+      await command.run(bot, interaction, guildConfig);
+    } else {
+      await command.run(bot, interaction);
+    }
 
     await upsertCommandUsageInDb(bot, interaction);
   } catch (error) {
