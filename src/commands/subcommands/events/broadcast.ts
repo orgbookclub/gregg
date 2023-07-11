@@ -33,7 +33,8 @@ const handleBroadcast: CommandHandler = async (
     if (
       guildConfig &&
       interaction.member &&
-      !hasRole(interaction.member as GuildMember, guildConfig.brLeaderRole)
+      !hasRole(interaction.member as GuildMember, guildConfig.brLeaderRole) &&
+      !hasRole(interaction.member as GuildMember, guildConfig.staffRole)
     ) {
       await interaction.reply({
         content: "Sorry, this command is restricted for BR Leader use only!",
