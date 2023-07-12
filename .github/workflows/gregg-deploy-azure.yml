@@ -24,7 +24,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: "npm"
+          cache: "yarn"
 
       - name: .npmrc registry login
         uses: healthplace/npmrc-registry-login-action@v1.0.9
