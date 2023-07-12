@@ -23,6 +23,8 @@ type GuildsConfig {
   qotdSuggestionChannel    String              @default("")
   staffRole                String              @default("")
   brLeaderRole             String              @default("")
+  qotdPingRole             String              @default("")
+  serverEventsRole         String              @default("")
   readerRoles              GuildsReaderRoles[]
 }
 

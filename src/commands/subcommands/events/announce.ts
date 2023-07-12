@@ -6,6 +6,7 @@ import {
   ChannelType,
   GuildMember,
   channelMention,
+  roleMention,
 } from "discord.js";
 
 import { CommandHandler } from "../../../models";
@@ -74,10 +75,12 @@ const handleAnnounce: CommandHandler = async (
       announcementChannel = configuredChannel;
     }
     if (!announcementChannel) return;
-
+    const pingRole = guildConfig?.serverEventsRole ?? "Not set";
     const message = await announcementChannel.send({
       content:
-        `New ${eventDoc.type}! Please click on the button if you'd like to be pinged for discussions.` +
+        `${roleMention(pingRole)} New ${
+          eventDoc.type
+        }! Please click on the button if you'd like to be pinged for discussions.` +
         "\n" +
         `Discussion will take place in ${eventDoc.threads
           .map((x) => channelMention(x))
