@@ -4,6 +4,7 @@ import {
   GuildMember,
   TextChannel,
   ThreadAutoArchiveDuration,
+  roleMention,
 } from "discord.js";
 
 import { CommandHandler } from "../../../models";
@@ -69,7 +70,10 @@ const handlePost: CommandHandler = async (bot, interaction, guildConfig) => {
       }
       channel = qotdChannel as TextChannel;
     }
-    const message = await channel.send(qotd.question);
+    const pingRole = guildConfig?.qotdPingRole ?? "Not set";
+    const message = await channel.send(
+      `${roleMention(pingRole)} ${qotd.question}`,
+    );
     await message.startThread({
       name: `QOTD: ${new Date().toDateString()}`,
       autoArchiveDuration: ThreadAutoArchiveDuration.OneDay,
