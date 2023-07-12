@@ -1,6 +1,11 @@
-# Gregg
-
+<p align="center>
+    <img src="docs/_media/gregg.png" width="320" alt="Gregg Icon"/>
+</p>
+<p align="center">
 [![CI](https://github.com/orgbookclub/gregg/actions/workflows/gregg-develop-ci.yml/badge.svg)](https://github.com/orgbookclub/gregg/actions/workflows/gregg-develop-ci.yml) [![CD](https://github.com/orgbookclub/gregg/actions/workflows/gregg-deploy-railway.yml/badge.svg)](https://github.com/orgbookclub/gregg/actions/workflows/gregg-deploy-railway.yml)
+</p>
+
+# Gregg
 
 This is the repository for Gregg, a Discord bot for Book Clubs. Currently, Gregg is custom-tailored to the [Organized Book Club](https://discord.gg/BookClubs) server on Discord.
 
