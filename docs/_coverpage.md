@@ -1,4 +1,4 @@
-![logo](_media/ows.png ':size=120')
+![logo](_media/gregg.png ':size=70%')
 
 # Gregg
 
