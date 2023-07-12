@@ -1,6 +1,7 @@
-<p align="center>
+<p align="center">
     <img src="./docs/_media/gregg.png" width="320" alt="Gregg Icon"/>
 </p>
+
 [![CI](https://github.com/orgbookclub/gregg/actions/workflows/gregg-develop-ci.yml/badge.svg)](https://github.com/orgbookclub/gregg/actions/workflows/gregg-develop-ci.yml) [![CD](https://github.com/orgbookclub/gregg/actions/workflows/gregg-deploy-railway.yml/badge.svg)](https://github.com/orgbookclub/gregg/actions/workflows/gregg-deploy-railway.yml)
 
 # Gregg
