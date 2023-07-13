@@ -6,6 +6,7 @@ import {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
+  GuildMember,
   ModalActionRowComponentBuilder,
   ModalBuilder,
   ModalSubmitInteraction,
@@ -20,7 +21,7 @@ import {
   getEventRequestEmbed,
   getNextMonthRange,
 } from "../../../utils/eventUtils";
-import { upsertUser } from "../../../utils/userUtils";
+import { hasRole, upsertUser } from "../../../utils/userUtils";
 
 const EVENT_REQUEST_MODAL_ID = "eventRequestModal";
 const BOOK_LINK_FIELD_ID = "link";
@@ -37,6 +38,10 @@ const REQUEST_REASON_FIELD_ID = "reason";
  */
 const handleRequest: CommandHandler = async (bot, interaction, guildConfig) => {
   try {
+    if (!guildConfig || !interaction.member) {
+      await interaction.reply("You shouldn't be here! :o");
+      return;
+    }
     const eventType = interaction.options.getString(
       "type",
       true,
@@ -55,7 +60,10 @@ const handleRequest: CommandHandler = async (bot, interaction, guildConfig) => {
       modalSubmitInteraction,
       eventType,
     );
-    const validationResponse = isValidSubmission(submission);
+    const validationResponse = isValidSubmission(
+      submission,
+      hasRole(interaction.member as GuildMember, guildConfig.staffRole),
+    );
     if (!validationResponse.isValid) {
       await modalSubmitInteraction.editReply(
         `Invalid submission: ${validationResponse.message}`,
@@ -263,14 +271,14 @@ function getEventRequestSubmission(
   }
 }
 
-function isValidSubmission(request: EventRequestSubmission) {
+function isValidSubmission(request: EventRequestSubmission, isStaff: boolean) {
   const { link, startDate: startDateString, endDate: endDateString } = request;
   const startTimestamp = Date.parse(startDateString);
   if (isNaN(startTimestamp)) {
     return { isValid: false, message: "Invalid start date" };
   }
   const startDate = new Date(startTimestamp);
-  if (startDate < new Date()) {
+  if (!isStaff && startDate < new Date()) {
     return { isValid: false, message: "Start date cannot be in the past!" };
   }
   const endTimestamp = Date.parse(endDateString);
