@@ -1,5 +1,5 @@
-import { REST } from "@discordjs/rest";
 import {
+  REST,
   RESTPostAPIApplicationCommandsJSONBody,
   RESTPostAPIChatInputApplicationCommandsJSONBody,
   Routes,
