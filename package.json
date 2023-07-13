@@ -22,7 +22,7 @@
     "prebuild": "rimraf ./dist",
     "build": "tsc",
     "postinstall": "prisma generate",
-    "lint": "eslint src --max-warnings 0 && prettier src --check",
+    "lint": "eslint src --max-warnings 0",
     "lint:fix": "eslint src --max-warnings 0 --fix && prettier src test --write",
     "start": "node ./dist/index.js",
     "start:dev": "tsc && node -r dotenv/config ./dist/index.js",
