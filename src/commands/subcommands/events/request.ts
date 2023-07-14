@@ -62,7 +62,10 @@ const handleRequest: CommandHandler = async (bot, interaction, guildConfig) => {
     );
     const validationResponse = isValidSubmission(
       submission,
-      hasRole(interaction.member as GuildMember, guildConfig.staffRole),
+      hasRole(
+        modalSubmitInteraction.member as GuildMember,
+        guildConfig.staffRole,
+      ),
     );
     if (!validationResponse.isValid) {
       await modalSubmitInteraction.editReply(
