@@ -48,7 +48,7 @@
     "docsify-cli": "^4.4.4",
     "dotenv": "^16.0.3",
     "eslint": "^8.45.0",
-    "eslint-config-prettier": "^8.6.0",
+    "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-import": "^2.27.5",
     "eslint-plugin-jsdoc": "^46.4.3",
     "eslint-plugin-prettier": "^4.2.1",
