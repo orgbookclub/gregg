@@ -29,7 +29,7 @@
   "dependencies": {
     "@orgbookclub/ows-client": "^0.3.0",
     "@prisma/client": "^5.0.0",
-    "@sentry/node": "^7.60.0",
+    "@sentry/node": "^7.68.0",
     "@sentry/tracing": "^7.57.0",
     "axios": "^1.4.0",
     "cron": "^2.3.1",
