@@ -42,7 +42,6 @@ async function parseCommandFiles<T>(filePathExp: string) {
   const commands: T[] = [];
   const files = sync(filePathExp, { absolute: true });
   for (const file of files) {
-    console.log(file);
     const mod = await import(file);
     const name = file.split("/").at(-1)?.split(".")[0] ?? "";
     commands.push(mod[name] as T);
