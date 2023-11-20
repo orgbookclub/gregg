@@ -51,6 +51,7 @@ jobs:
         with:
           name: gregg-build
           path: gregg.zip
+          
   deploy:
     permissions:
       contents: none
