@@ -18,7 +18,7 @@ env:
   NODE_VERSION: "18.x"
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -42,31 +42,6 @@ jobs:
         run: |
           yarn install --frozen-lockfile
           yarn build
-
-      - name: Zip artifact for deployment
-        run: zip -r gregg.zip ./* .npmrc
-
-      - name: Upload artifact for deployment job
-        uses: actions/upload-artifact@v3
-        with:
-          name: gregg-build
-          path: gregg.zip
-  deploy:
-    permissions:
-      contents: none
-    runs-on: ubuntu-latest
-    needs: build
-    environment:
-      name: "production"
-
-    steps:
-      - name: Download artifact from build job
-        uses: actions/download-artifact@v3
-        with:
-          name: gregg-build
-
-      - name: Unzip artifact for deployment
-        run: unzip gregg.zip
 
       - name: "Deploy to Azure WebApp"
         id: deploy-to-webapp
