@@ -1,4 +1,4 @@
-import { sync } from "glob";
+import { sync } from "fast-glob";
 
 import { Command, Context } from "../models";
 
