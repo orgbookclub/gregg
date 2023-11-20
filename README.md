@@ -12,6 +12,11 @@
 </a>
 </p>
 
+<a href="https://github.com/orgbookclub/gregg/actions/workflows/gregg-prod-deploy-azure.yml">
+<img src="https://github.com/orgbookclub/gregg/actions/workflows/gregg-prod-deploy-azure.yml/badge.svg">
+</a>
+</p>
+
 # Gregg
 
 This is the repository for Gregg, a Discord bot for Book Clubs. Currently, Gregg is custom-tailored to the [Organized Book Club](https://discord.gg/BookClubs) server on Discord.
