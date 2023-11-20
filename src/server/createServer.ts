@@ -15,7 +15,7 @@ export const createServer = () => {
   app.use("/", express.static(docsPath));
 
   app.get("/health", (_, res) => {
-    res.status(200).send();
+    res.status(200).send(`Healthy! v${process.env.npm_package_version}`);
   });
 
   const httpPort = process.env.PORT ?? 3001;

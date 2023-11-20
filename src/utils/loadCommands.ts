@@ -1,10 +1,10 @@
-import glob from "glob";
+import { sync } from "fast-glob";
 
 import { Command, Context } from "../models";
 
 import { logger } from "./logHandler";
 
-const OUT_DIR = "dist";
+const OUT_DIR = "./dist";
 
 /**
  * Reads the '/commands' directory and dynamically imports the files,
@@ -14,7 +14,7 @@ const OUT_DIR = "dist";
  */
 const loadCommands = async () => {
   try {
-    const filePathExp = `./${OUT_DIR}/commands/*.js`;
+    const filePathExp = `${OUT_DIR}/commands/*.js`;
     return await parseCommandFiles<Command>(filePathExp);
   } catch (err) {
     logger.error(err, `Error while loading commands`);
@@ -30,7 +30,7 @@ const loadCommands = async () => {
  */
 const loadContexts = async () => {
   try {
-    const filePathExp = `./${OUT_DIR}/contexts/*.js`;
+    const filePathExp = `${OUT_DIR}/contexts/*.js`;
     return await parseCommandFiles<Context>(filePathExp);
   } catch (err) {
     logger.error(err, `Error while loading context commands`);
@@ -40,7 +40,7 @@ const loadContexts = async () => {
 
 async function parseCommandFiles<T>(filePathExp: string) {
   const commands: T[] = [];
-  const files = glob.sync(filePathExp, { realpath: true });
+  const files = sync(filePathExp, { absolute: true });
   for (const file of files) {
     const mod = await import(file);
     const name = file.split("/").at(-1)?.split(".")[0] ?? "";

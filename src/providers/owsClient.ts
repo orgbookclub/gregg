@@ -23,7 +23,7 @@ export class OWSClient {
   private accessToken: string;
   private cronJob: CronJob;
 
-  public auth: AuthApi;
+  private auth: AuthApi;
   public events!: EventsApi;
   public goodreads!: GoodreadsApi;
   public storygraph!: StorygraphApi;
@@ -56,30 +56,14 @@ export class OWSClient {
    * Initializes the Sub modules with the baseURL and access Token.
    */
   private initializeAPIs() {
-    this.events = new EventsApi(
-      new Configuration({
-        basePath: this.baseUrl,
-        accessToken: this.accessToken,
-      }),
-    );
-    this.goodreads = new GoodreadsApi(
-      new Configuration({
-        basePath: this.baseUrl,
-        accessToken: this.accessToken,
-      }),
-    );
-    this.storygraph = new StorygraphApi(
-      new Configuration({
-        basePath: this.baseUrl,
-        accessToken: this.accessToken,
-      }),
-    );
-    this.users = new UsersApi(
-      new Configuration({
-        basePath: this.baseUrl,
-        accessToken: this.accessToken,
-      }),
-    );
+    const configuration = new Configuration({
+      basePath: this.baseUrl,
+      accessToken: this.accessToken,
+    });
+    this.events = new EventsApi(configuration);
+    this.goodreads = new GoodreadsApi(configuration);
+    this.storygraph = new StorygraphApi(configuration);
+    this.users = new UsersApi(configuration);
   }
 
   /**

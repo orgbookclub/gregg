@@ -10,41 +10,39 @@
     "discordjs",
     "discord",
     "bot",
-    "orgbookclub"
+    "discord-bot",
+    "organized-book-club"
   ],
   "repository": "https://github.com/orgbookclub/gregg",
   "bugs": {
     "url": "https://github.com/orgbookclub/gregg/issues"
   },
+  "homepage": "https://gregg-bot.azurewebsites.net/",
   "scripts": {
     "prebuild": "rimraf ./dist",
     "build": "tsc",
-    "postinstall": "npx prisma generate",
+    "postinstall": "prisma generate",
     "lint": "eslint src --max-warnings 0",
-    "lint:fix": "eslint src --max-warnings 0 --fix",
+    "lint:fix": "eslint src --max-warnings 0 --fix && prettier src test --write",
     "start": "node ./dist/index.js",
     "start:dev": "tsc && node -r dotenv/config ./dist/index.js",
     "docs:serve": "docsify serve docs"
   },
   "dependencies": {
     "@orgbookclub/ows-client": "^0.3.0",
-    "@prisma/client": "^5.0.0",
+    "@prisma/client": "^5.6.0",
     "@sentry/node": "^7.80.1",
-    "@sentry/tracing": "^7.57.0",
-    "axios": "^1.6.0",
     "cron": "^2.4.1",
     "discord.js": "^14.11.0",
     "express": "^4.18.2",
+    "fast-glob": "^3.3.2",
     "pino": "^8.16.0"
   },
   "devDependencies": {
-    "@types/cron": "^2.4.0",
     "@types/express": "^4.17.17",
-    "@types/glob": "^8.0.1",
     "@types/node": "^20.4.4",
     "@typescript-eslint/eslint-plugin": "^6.8.0",
     "@typescript-eslint/parser": "^6.1.0",
-    "add": "^2.0.6",
     "docsify-cli": "^4.4.4",
     "dotenv": "^16.0.3",
     "eslint": "^8.45.0",
@@ -54,11 +52,11 @@
     "eslint-plugin-prettier": "^4.2.1",
     "pino-pretty": "^10.0.0",
     "prettier": "^2.8.8",
-    "typescript": "^5.0.4",
-    "yarn": "^1.22.19"
+    "prisma": "^5.6.0",
+    "typescript": "^5.0.4"
   },
   "engines": {
-    "node": ">=18.0.0 < 19.0.0",
-    "yarn": ">=1.2.0 < 2.0.0"
+    "node": ">=18.14.2 <19.0.0",
+    "yarn": ">=1.22.19 <2.0.0"
   }
 }

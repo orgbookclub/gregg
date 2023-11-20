@@ -18,7 +18,7 @@ init({
   dsn: process.env.SENTRY_DSN,
   tracesSampleRate: 1.0,
   release: `gregg@v${process.env.npm_package_version}`,
-  environment: "development",
+  environment: process.env.NODE_ENV ?? "development",
 });
 
 /**
