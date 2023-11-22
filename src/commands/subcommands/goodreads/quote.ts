@@ -1,3 +1,4 @@
+import { errors } from "../../../config/constants";
 import { CommandHandler } from "../../../models";
 import { errorHandler } from "../../../utils/errorHandler";
 import { customSubstring } from "../../../utils/stringUtils";
@@ -18,24 +19,25 @@ export const handleQuote: CommandHandler = async (bot, interaction) => {
       q: query,
       k: 20,
     });
-    if (!response || response.data.length === 0) {
-      await interaction.editReply("No quotes found with that query");
-      return;
-    }
 
     const quotes = response.data;
     let randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
     randomQuote = customSubstring(randomQuote, 2000);
     await interaction.editReply({ content: randomQuote });
   } catch (err) {
-    await interaction.editReply("Something went wrong! Please try again later");
-    await errorHandler(
-      bot,
-      "commands > goodreads > quote",
-      err,
-      interaction.guild?.name,
-      undefined,
-      interaction,
-    );
+    const error = err as Error;
+    if (error.message === "Request failed with status code 404") {
+      await interaction.editReply(errors.NoQuotesFoundError);
+    } else {
+      await interaction.editReply(errors.SomethingWentWrongError);
+      await errorHandler(
+        bot,
+        "commands > goodreads > quote",
+        err,
+        interaction.guild?.name,
+        undefined,
+        interaction,
+      );
+    }
   }
 };

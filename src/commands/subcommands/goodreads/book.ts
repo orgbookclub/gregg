@@ -1,6 +1,7 @@
 import { GoodreadsBookDto } from "@orgbookclub/ows-client";
 import { Colors, EmbedBuilder } from "discord.js";
 
+import { errors } from "../../../config/constants";
 import { CommandHandler } from "../../../models";
 import { getAuthorString } from "../../../utils/bookUtils";
 import { errorHandler } from "../../../utils/errorHandler";
@@ -20,10 +21,6 @@ const handleBook: CommandHandler = async (bot, interaction) => {
     const response =
       await bot.api.goodreads.goodreadsControllerSearchAndGetBook({ q: query });
 
-    if (!response) {
-      await interaction.editReply("No books found with that query!");
-    }
-
     const embed = getGoodreadsBookEmbed(response.data);
     await interaction.editReply({ embeds: [embed] });
   } catch (err) {
@@ -32,15 +29,11 @@ const handleBook: CommandHandler = async (bot, interaction) => {
       error.name === "AxiosError" &&
       error.message === "Request failed with status code 503"
     ) {
-      await interaction.editReply(
-        "Unfortunately, due to Goodreads being Goodreads, I cannot complete your request at the moment :(" +
-          "\n" +
-          "Please try again later, or use Storygraph instead �",
-      );
+      await interaction.editReply(errors.GoodreadsIssueError);
+    } else if (error.message === "Request failed with status code 404") {
+      await interaction.editReply(errors.NoBooksFoundError);
     } else {
-      await interaction.editReply(
-        "Something went wrong! Please try again later",
-      );
+      await interaction.editReply(errors.SomethingWentWrongError);
       await errorHandler(
         bot,
         "commands > goodreads > book",

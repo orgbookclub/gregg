@@ -1,3 +1,4 @@
+import { errors } from "../../../config/constants";
 import { CommandHandler } from "../../../models";
 import { errorHandler } from "../../../utils/errorHandler";
 
@@ -16,10 +17,6 @@ export const handleCover: CommandHandler = async (bot, interaction) => {
     const response =
       await bot.api.goodreads.goodreadsControllerSearchAndGetBook({ q: query });
 
-    if (!response) {
-      await interaction.editReply("No books found with that query!");
-    }
-
     await interaction.editReply({ content: response.data.coverUrl });
   } catch (err) {
     const error = err as Error;
@@ -27,15 +24,11 @@ export const handleCover: CommandHandler = async (bot, interaction) => {
       error.name === "AxiosError" &&
       error.message === "Request failed with status code 503"
     ) {
-      await interaction.editReply(
-        "Unfortunately, due to Goodreads being Goodreads, I cannot complete your request at the moment :(" +
-          "\n" +
-          "Please try again later, or use Storygraph instead �",
-      );
+      await interaction.editReply(errors.GoodreadsIssueError);
+    } else if (error.message === "Request failed with status code 404") {
+      await interaction.editReply(errors.NoBooksFoundError);
     } else {
-      await interaction.editReply(
-        "Something went wrong! Please try again later",
-      );
+      await interaction.editReply(errors.SomethingWentWrongError);
       await errorHandler(
         bot,
         "commands > goodreads > cover",

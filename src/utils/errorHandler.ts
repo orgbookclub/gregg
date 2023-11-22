@@ -1,5 +1,6 @@
 import { captureException } from "@sentry/node";
 import {
+  Colors,
   CommandInteraction,
   ContextMenuCommandInteraction,
   EmbedBuilder,
@@ -51,6 +52,7 @@ function getErrorEmbed(
     .setTitle(
       `${context} error ${guild ? `in ${guild}` : "from an unknown source"}.`,
     )
+    .setColor(Colors.Red)
     .setDescription(customSubstring(error.message, 2000))
     .setTimestamp()
     .addFields([

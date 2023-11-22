@@ -22,14 +22,14 @@
     "prebuild": "rimraf ./dist",
     "build": "tsc",
     "postinstall": "prisma generate",
-    "lint": "eslint src --max-warnings 0",
-    "lint:fix": "eslint src --max-warnings 0 --fix && prettier src test --write",
+    "lint": "eslint src --max-warnings 0 && prettier src --check",
+    "lint:fix": "eslint src --max-warnings 0 --fix && prettier src --write",
     "start": "node ./dist/index.js",
     "start:dev": "tsc && node -r dotenv/config ./dist/index.js",
     "docs:serve": "docsify serve docs"
   },
   "dependencies": {
-    "@orgbookclub/ows-client": "^0.3.0",
+    "@orgbookclub/ows-client": "^0.4.0",
     "@prisma/client": "^5.6.0",
     "@sentry/node": "^7.80.1",
     "cron": "^2.4.1",

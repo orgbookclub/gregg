@@ -1,3 +1,4 @@
+import { errors } from "../../../config/constants";
 import { CommandHandler } from "../../../models";
 import { errorHandler } from "../../../utils/errorHandler";
 
@@ -18,20 +19,21 @@ export const handleCover: CommandHandler = async (bot, interaction) => {
         q: query,
       });
 
-    if (!response) {
-      await interaction.editReply("No books found with that query!");
-    }
-
     await interaction.editReply({ content: response.data.coverUrl });
   } catch (err) {
-    await interaction.editReply("Something went wrong! Please try again later");
-    await errorHandler(
-      bot,
-      "commands > storygraph > cover",
-      err,
-      interaction.guild?.name,
-      undefined,
-      interaction,
-    );
+    const error = err as Error;
+    if (error.message === "Request failed with status code 404") {
+      await interaction.editReply(errors.NoBooksFoundError);
+    } else {
+      await interaction.editReply(errors.SomethingWentWrongError);
+      await errorHandler(
+        bot,
+        "commands > storygraph > cover",
+        err,
+        interaction.guild?.name,
+        undefined,
+        interaction,
+      );
+    }
   }
 };
