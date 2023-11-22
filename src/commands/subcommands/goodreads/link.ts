@@ -21,6 +21,7 @@ export const handleLink: CommandHandler = async (bot, interaction) => {
     });
     if (!response || response.data.length === 0) {
       await interaction.editReply("No books found with that query!");
+      return;
     }
     await interaction.editReply({
       content: hideLinkEmbed(response.data[0].url),

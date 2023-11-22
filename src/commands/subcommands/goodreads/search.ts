@@ -19,9 +19,10 @@ const handleSearch: CommandHandler = async (bot, interaction) => {
       q: query,
       k: limit,
     });
-
+    console.log(response.data.length === 0);
     if (!response || response.data.length === 0) {
       await interaction.editReply("No books found with that query!");
+      return;
     }
 
     const embed = getBookSearchEmbed(query, response.data, "Goodreads");

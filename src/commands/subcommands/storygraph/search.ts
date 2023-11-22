@@ -27,6 +27,7 @@ const handleSearch: CommandHandler = async (
 
     if (!response || response.data.length === 0) {
       await interaction.editReply("No books found with that query!");
+      return;
     }
 
     const embed = getBookSearchEmbed(query, response.data, "Storygraph");

@@ -22,6 +22,7 @@ const handleBook: CommandHandler = async (bot, interaction) => {
 
     if (!response) {
       await interaction.editReply("No books found with that query!");
+      return;
     }
 
     const embed = getGoodreadsBookEmbed(response.data);
