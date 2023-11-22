@@ -1,5 +1,6 @@
 import { ChatInputCommandInteraction } from "discord.js";
 
+import { errors } from "../../../config/constants";
 import { CommandHandler, Bot } from "../../../models";
 import { getBookSearchEmbed } from "../../../utils/bookUtils";
 import { errorHandler } from "../../../utils/errorHandler";
@@ -25,23 +26,23 @@ const handleSearch: CommandHandler = async (
       k: limit,
     });
 
-    if (!response || response.data.length === 0) {
-      await interaction.editReply("No books found with that query!");
-      return;
-    }
-
     const embed = getBookSearchEmbed(query, response.data, "Storygraph");
     await interaction.editReply({ embeds: [embed] });
   } catch (err) {
-    await interaction.editReply("Something went wrong! Please try again later");
-    await errorHandler(
-      bot,
-      "commands > storygraph > search",
-      err,
-      interaction.guild?.name,
-      undefined,
-      interaction,
-    );
+    const error = err as Error;
+    if (error.message === "Request failed with status code 404") {
+      await interaction.editReply(errors.NoBooksFoundError);
+    } else {
+      await interaction.editReply(errors.SomethingWentWrongError);
+      await errorHandler(
+        bot,
+        "commands > storygraph > search",
+        err,
+        interaction.guild?.name,
+        undefined,
+        interaction,
+      );
+    }
   }
 };
 

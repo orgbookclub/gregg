@@ -1,6 +1,7 @@
 import { StorygraphBookDto } from "@orgbookclub/ows-client";
 import { Colors, EmbedBuilder } from "discord.js";
 
+import { errors } from "../../../config/constants";
 import { CommandHandler } from "../../../models";
 import { getAuthorString } from "../../../utils/bookUtils";
 import { errorHandler } from "../../../utils/errorHandler";
@@ -22,23 +23,23 @@ const handleBook: CommandHandler = async (bot, interaction) => {
         q: query,
       });
 
-    if (!response) {
-      await interaction.editReply("No books found with that query!");
-      return;
-    }
-
     const embed = getStorygraphBookEmbed(response.data);
     await interaction.editReply({ embeds: [embed] });
   } catch (err) {
-    await interaction.editReply("Something went wrong! Please try again later");
-    await errorHandler(
-      bot,
-      "commands > storygraph > book",
-      err,
-      interaction.guild?.name,
-      undefined,
-      interaction,
-    );
+    const error = err as Error;
+    if (error.message === "Request failed with status code 404") {
+      await interaction.editReply(errors.NoBooksFoundError);
+    } else {
+      await interaction.editReply(errors.SomethingWentWrongError);
+      await errorHandler(
+        bot,
+        "commands > storygraph > book",
+        err,
+        interaction.guild?.name,
+        undefined,
+        interaction,
+      );
+    }
   }
 };
 
