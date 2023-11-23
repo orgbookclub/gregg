@@ -14,7 +14,10 @@ const guildMemberRemove: Event = {
         return;
       }
 
-      await deleteMemberFromDb(bot, member);
+      const memberDoc = await getMemberFromDb(bot, member);
+      if (memberDoc) {
+        await deleteMemberFromDb(bot, member);
+      }
 
       logger.info(`${user.tag} (${user.id}) left guild ${guild.id}`);
     } catch (error) {
@@ -27,6 +30,22 @@ const guildMemberRemove: Event = {
     }
   },
 };
+
+async function getMemberFromDb(
+  bot: Bot,
+  member: GuildMember | PartialGuildMember,
+) {
+  const memberDoc = await bot.db.members.findUnique({
+    where: {
+      // eslint-disable-next-line camelcase
+      guildId_userId: {
+        guildId: member.guild.id,
+        userId: member.user.id,
+      },
+    },
+  });
+  return memberDoc;
+}
 
 async function deleteMemberFromDb(
   bot: Bot,
