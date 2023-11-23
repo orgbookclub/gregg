@@ -244,6 +244,8 @@ export class SprintManager {
         status: sprint.status,
       },
     });
+
+    delete this.sprints[sprintId];
   }
 
   /**
