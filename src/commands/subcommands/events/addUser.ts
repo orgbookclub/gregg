@@ -48,7 +48,7 @@ const handleAddUser: CommandHandler = async (bot, interaction, guildConfig) => {
       });
       return;
     }
-    const userDoc = await upsertUser(bot, user);
+    const userDoc = await upsertUser(bot.api, user.id, user.username);
 
     const eventDoc = response.data;
     const allParticipants = eventDoc[participantType];

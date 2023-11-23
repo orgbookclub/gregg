@@ -74,7 +74,11 @@ const handleRequest: CommandHandler = async (bot, interaction, guildConfig) => {
       return;
     }
 
-    const user = await upsertUser(bot, modalSubmitInteraction.user);
+    const user = await upsertUser(
+      bot.api,
+      modalSubmitInteraction.user.id,
+      modalSubmitInteraction.user.username,
+    );
 
     const response = await createEvent(eventType, submission, user._id, bot);
     if (!response) {
