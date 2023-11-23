@@ -6,6 +6,7 @@ import {
   EventDtoStatusEnum,
   EventDtoTypeEnum,
   ParticipantDto,
+  UpdateEventDto,
 } from "@orgbookclub/ows-client";
 import { parse } from "csv-parse";
 
@@ -14,8 +15,8 @@ import { logger } from "../src/utils/logHandler";
 import { upsertUser } from "../src/utils/userUtils";
 
 const BASE_URL = process.env.API_URL ?? "http://localhost:3000";
-const DATA_CSV = "scripts/data.csv";
-const MEMBERS_CSV = "scripts/members.csv";
+const DATA_CSV = "data/data.csv";
+const MEMBERS_CSV = "data/members.csv";
 
 main();
 
@@ -26,21 +27,36 @@ async function main() {
     await getGroupedEventRecords();
 
   for await (const key of Object.keys(groupedEventRecords)) {
-    const response = await client.events.eventsControllerFind({ name: key });
-    if (response.data.length > 0) {
-      logger.info(`Event with key: ${key} already created, skipping...`);
-    } else {
-      await processAndCreateEvent(
-        groupedEventRecords[key],
-        key,
-        client,
-        memberMap,
+    const getResponse = await client.events.eventsControllerFind({ name: key });
+    const { url, createEventDto } = await getEventDto(
+      groupedEventRecords[key],
+      key,
+      client,
+      memberMap,
+    );
+    const firstRow = groupedEventRecords[key][0];
+
+    if (getResponse.data.length > 0) {
+      const existingEventDoc = getResponse.data[0];
+      await client.events.eventsControllerUpdate({
+        id: existingEventDoc._id,
+        updateEventDto: createEventDto,
+      });
+      logger.info(
+        `Updated event ${existingEventDoc._id}: ${firstRow["Name of Book"]}`,
       );
+    } else {
+      const postResponse = await client.events.eventsControllerCreateFromUrl({
+        url: url,
+        createEventDto: createEventDto,
+      });
+      const eventDoc = postResponse.data;
+      logger.info(`Created event ${eventDoc._id}: ${firstRow["Name of Book"]}`);
     }
   }
 }
 
-async function processAndCreateEvent(
+async function getEventDto(
   rows: any[],
   key: string,
   client: OWSClient,
@@ -51,10 +67,9 @@ async function processAndCreateEvent(
   const url = firstRow["Link"];
   const startDate = new Date(firstRow["BR Start"]);
   const endDate = new Date(firstRow["BR end"]);
-
   const readerDtos: ParticipantDto[] = await getReaderDtos(rows, client);
 
-  const createEventDto: CreateEventDto = {
+  const createEventDto: CreateEventDto | UpdateEventDto = {
     name: key,
     threads: [],
     status: EventDtoStatusEnum.Completed,
@@ -81,14 +96,7 @@ async function processAndCreateEvent(
   createEventDto.requestedBy = leaderDto;
   createEventDto.leaders = [leaderDto];
 
-  const response = await client.events.eventsControllerCreateFromUrl({
-    url: url,
-    createEventDto: createEventDto,
-  });
-  const eventDoc = response.data;
-  logger.info(
-    `Successfully created event for ${firstRow["Name of Book"]}, ID: ${eventDoc._id}`,
-  );
+  return { url, createEventDto };
 }
 
 async function getReaderDtos(rows: any[], client: OWSClient) {
@@ -160,8 +168,15 @@ async function readCsv(filepath: string) {
   const records: any = [];
   logger.debug(`Reading ${filepath}...`);
   const parser = createReadStream(filepath).pipe(
-    // eslint-disable-next-line camelcase
-    parse({ cast: true, cast_date: true, columns: true, trim: true }),
+    parse({
+      cast: (value, _context) => {
+        return value;
+      },
+      // eslint-disable-next-line camelcase
+      cast_date: true,
+      columns: true,
+      trim: true,
+    }),
   );
   for await (const record of parser) {
     records.push(record);
