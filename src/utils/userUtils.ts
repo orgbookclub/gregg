@@ -1,6 +1,8 @@
-import { GuildMember, User } from "discord.js";
+import { GuildMember } from "discord.js";
 
-import { Bot } from "../models";
+import { OWSClient } from "../providers/owsClient";
+
+import { logger } from "./logHandler";
 
 /**
  * Checks if a Guild Member has a certain role or not.
@@ -18,20 +20,26 @@ export function hasRole(member: GuildMember, roleId: string) {
  * Gets the user object from the server.
  * If user does not exist, creates one with default values.
  *
- * @param bot The bot instance.
- * @param user The user.
+ * @param api The OWS client.
+ * @param userId The user id.
+ * @param username The username.
  * @returns The User document.
  */
-export async function upsertUser(bot: Bot, user: User) {
-  const response = await bot.api.users.usersControllerFindOneByUserId({
-    userid: user.id,
+export async function upsertUser(
+  api: OWSClient,
+  userId: string,
+  username: string,
+) {
+  const response = await api.users.usersControllerFindOneByUserId({
+    userid: userId,
   });
   let userDoc = response.data;
   if (!userDoc) {
-    const userCreateResponse = await bot.api.users.usersControllerCreate({
+    logger.debug(`Creating new user ${userId}`);
+    const userCreateResponse = await api.users.usersControllerCreate({
       createUserDto: {
-        userId: user.id,
-        name: user.username,
+        userId: userId,
+        name: username,
         joinDate: new Date().toISOString(),
         profile: { bio: "" },
       },

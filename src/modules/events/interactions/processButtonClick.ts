@@ -76,7 +76,11 @@ async function handleEventActions(interaction: ButtonInteraction, bot: Bot) {
   await interaction.deferReply({ ephemeral: true });
   const [embedType, eventId, action] = interaction.customId.split("-");
 
-  const userDoc = await upsertUser(bot, interaction.user);
+  const userDoc = await upsertUser(
+    bot.api,
+    interaction.user.id,
+    interaction.user.username,
+  );
 
   const eventResponse = await bot.api.events.eventsControllerFindOne({
     id: eventId,

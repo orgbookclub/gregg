@@ -11,5 +11,5 @@
     "resolveJsonModule": true,
     "sourceMap": true
   },
-  "exclude": ["./test"]
+  "exclude": ["./test", "./scripts"]
 }
