@@ -1,8 +1,4 @@
-import {
-  EventDocument,
-  Participant,
-  ParticipantDto,
-} from "@orgbookclub/ows-client";
+import { EventDocument } from "@orgbookclub/ows-client";
 import {
   ButtonInteraction,
   ChatInputCommandInteraction,
@@ -16,33 +12,8 @@ import {
 } from "discord.js";
 
 import { getAuthorString } from "./bookUtils";
-
-/**
- * Converts a particpant array or a user array to a comma separated user mention string.
- *
- * @param participants Participant list or a user list.
- * @param includePoints Indicates whether to include particpant points in the string.
- * @param limit The max number of users to show in the string.
- * @returns Result string.
- */
-export const getUserMentionString = (
-  participants: Participant[] | string[],
-  includePoints = false,
-  limit = 25,
-) => {
-  const limitedParticipants = participants.slice(0, limit);
-  return limitedParticipants
-    .map((participant) => {
-      if (typeof participant === "string") {
-        return userMention(participant);
-      }
-      const userId = participant.user.userId.toString();
-      return includePoints
-        ? `${userMention(userId)}(${participant.points})`
-        : userMention(userId);
-    })
-    .join(",");
-};
+import { customSubstring } from "./stringUtils";
+import { getUserMentionString } from "./userUtils";
 
 /**
  * Creates an embed to display a list of events.
@@ -243,20 +214,6 @@ export function getThreadTitle(event: EventDocument) {
 }
 
 /**
- * Converts a participant object to its corresponding dto.
- *
- * @param participant The participant object.
- * @returns The participant dto.
- */
-export function participantToDto(participant: Participant) {
-  const participantDto: ParticipantDto = {
-    ...participant,
-    user: participant.user._id,
-  };
-  return participantDto;
-}
-
-/**
  * Returns the first day and the last day of the next month, considering year changes and varying month lengths.
  *
  * @param date The date.
@@ -285,4 +242,80 @@ export function getNextMonthRange(date: Date): [Date, Date] {
   const lastDayOfNextMonth = new Date(nextYear, nextMonth + 1, 0);
 
   return [firstDayOfNextMonth, lastDayOfNextMonth];
+}
+
+/**
+ * Given a list of documents, calculates the total reader points for all the users.
+ *
+ * @param eventDocs List of event documents.
+ * @returns An array of users, along with their position and points.
+ */
+export function calculateReaderboardScores(eventDocs: EventDocument[]) {
+  const scoreMap = new Map<string, number>();
+
+  for (const event of eventDocs) {
+    for (const participant of event.readers.concat(event.leaders)) {
+      const userId = participant.user.userId;
+      scoreMap.set(
+        userId,
+        (scoreMap.get(userId) ?? 0) + (participant.points ?? 0),
+      );
+    }
+  }
+
+  const scores = [...scoreMap.entries()];
+  scores.sort((a, b) => b[1] - a[1]);
+
+  let position = 1;
+  const scoresWithPosition: [string, [number, number]][] = [];
+  for (const score of scores) {
+    const [userId, points] = score;
+    scoresWithPosition.push([userId, [position, points]]);
+    position += 1;
+  }
+
+  return scoresWithPosition;
+}
+
+/**
+ * Gets the embed for logging an event status update.
+ *
+ * @param eventDoc The old doc.
+ * @param updatedEventDoc The new doc.
+ * @returns An embed.
+ */
+export function getEventUpdateLogEmbed(
+  eventDoc: EventDocument,
+  updatedEventDoc: EventDocument,
+) {
+  const startDate = eventDoc.dates.startDate
+    ? time(new Date(eventDoc.dates.startDate), TimestampStyles.RelativeTime)
+    : "N/A";
+  const endDate = eventDoc.dates.endDate
+    ? time(new Date(eventDoc.dates.endDate), TimestampStyles.RelativeTime)
+    : "N/A";
+  const embed = new EmbedBuilder()
+    .setColor(Colors.Red)
+    .setTitle("Event Update")
+    .addFields([
+      {
+        name: "ID",
+        value: `\`${updatedEventDoc._id}\``,
+      },
+      {
+        name: "Change",
+        value: `\`${eventDoc.status}\` --> \`${updatedEventDoc.status}\``,
+        inline: true,
+      },
+      {
+        name: "Details",
+        value: customSubstring(
+          `${eventDoc.book.title} (${startDate} - ${endDate})`,
+          1000,
+        ),
+      },
+    ])
+    .setThumbnail(eventDoc.book.coverUrl)
+    .setTimestamp();
+  return embed;
 }

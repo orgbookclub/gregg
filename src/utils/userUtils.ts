@@ -1,4 +1,5 @@
-import { GuildMember } from "discord.js";
+import { Participant, ParticipantDto } from "@orgbookclub/ows-client";
+import { GuildMember, userMention } from "discord.js";
 
 import { OWSClient } from "../providers/owsClient";
 
@@ -47,4 +48,45 @@ export async function upsertUser(
     userDoc = userCreateResponse.data;
   }
   return userDoc;
+}
+
+/**
+ * Converts a particpant array or a user array to a comma separated user mention string.
+ *
+ * @param participants Participant list or a user list.
+ * @param includePoints Indicates whether to include particpant points in the string.
+ * @param limit The max number of users to show in the string.
+ * @returns Result string.
+ */
+export const getUserMentionString = (
+  participants: Participant[] | string[],
+  includePoints = false,
+  limit = 25,
+) => {
+  const limitedParticipants = participants.slice(0, limit);
+  return limitedParticipants
+    .map((participant) => {
+      if (typeof participant === "string") {
+        return userMention(participant);
+      }
+      const userId = participant.user.userId.toString();
+      return includePoints
+        ? `${userMention(userId)}(${participant.points})`
+        : userMention(userId);
+    })
+    .join(",");
+};
+
+/**
+ * Converts a participant object to its corresponding dto.
+ *
+ * @param participant The participant object.
+ * @returns The participant dto.
+ */
+export function participantToDto(participant: Participant) {
+  const participantDto: ParticipantDto = {
+    ...participant,
+    user: participant.user._id,
+  };
+  return participantDto;
 }

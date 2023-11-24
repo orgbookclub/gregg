@@ -3,8 +3,12 @@ import { GuildMember } from "discord.js";
 
 import { CommandHandler } from "../../../models";
 import { errorHandler } from "../../../utils/errorHandler";
-import { getEventInfoEmbed, participantToDto } from "../../../utils/eventUtils";
-import { hasRole, upsertUser } from "../../../utils/userUtils";
+import { getEventInfoEmbed } from "../../../utils/eventUtils";
+import {
+  participantToDto,
+  hasRole,
+  upsertUser,
+} from "../../../utils/userUtils";
 
 /**
  * Adds a user as a participant to an event.

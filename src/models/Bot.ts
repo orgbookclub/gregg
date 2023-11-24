@@ -6,6 +6,7 @@ import { OWSClient } from "../providers/owsClient";
 import { Command } from "./commands/Command";
 import { SprintManager } from "./commands/sprint/SprintManager";
 import { Context } from "./contexts/Context";
+import { JobManager } from "./jobs/JobManager";
 
 /**
  * Model used to pass around the bot's Discord instance with additional
@@ -24,6 +25,7 @@ export interface Bot extends Client {
   api: OWSClient;
   db: PrismaClient;
   sprintManager: SprintManager;
+  jobManager: JobManager;
   cooldowns: Record<string, Record<string, number>>;
   debugHook: WebhookClient;
 }

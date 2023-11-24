@@ -1,16 +1,15 @@
-# Introduction
+# Gregg
 
-Hi! If you're reading this, you want to know more about Gregg, how it works, and how to use it. These docs will cover how to use Gregg, both as a normal user and as a staff/administrator of a server.
-
-# Pre-requisites
-
-The rest of the docs assume that you are familiar with the following:
-
-- Basic Discord stuff i.e. Channels, roles, permissions etc. Please refer to Discord guides if you'd like to brush up.
-- Using slash commands in Discord.
+A discord bot built for book clubs, specifically for the [Organized Book Club Discord server](https://discord.gg/BookClubs).
 
 # Features
-TODO
+
+- [Goodreads](https://goodreads.com) search support
+- [Storygraph](https://app.thestorygraph.com/) search support
+- Reading event management
+- Reading sprints support
+- Message bookmarking
 
 # Support
-TODO
+
+OBC Staff should be able to help for basic queries. For detailed support, reach out in the [support server](https://discord.gg/dFYkmjFHR8).

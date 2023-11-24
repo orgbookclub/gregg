@@ -7,9 +7,6 @@ import {
   StorygraphApi,
   UsersApi,
 } from "@orgbookclub/ows-client";
-import { CronJob } from "cron";
-
-import { logger } from "../utils/logHandler";
 
 const CLIENT_ID = process.env.CLIENT_ID ?? "";
 const CLIENT_SECRET = process.env.CLIENT_SECRET ?? "";
@@ -21,8 +18,6 @@ const CLIENT_SECRET = process.env.CLIENT_SECRET ?? "";
 export class OWSClient {
   private baseUrl: string;
   private accessToken: string;
-  private cronJob: CronJob;
-
   private auth: AuthApi;
   public events!: EventsApi;
   public goodreads!: GoodreadsApi;
@@ -38,18 +33,7 @@ export class OWSClient {
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl;
     this.accessToken = "";
-    this.cronJob = new CronJob("*/60 * * * *", async () => {
-      try {
-        await this.initialize();
-      } catch (err) {
-        logger.error(err, `Error refreshing access token with cron job`);
-      }
-    });
-
     this.auth = new AuthApi(new Configuration({ basePath: this.baseUrl }));
-    if (!this.cronJob.running) {
-      this.cronJob.start();
-    }
   }
 
   /**
