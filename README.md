@@ -1,6 +1,6 @@
-![Gregg Icon](./docs/_media/gregg.png)
+![Gregg Icon](./docs/_media/gregg-full.png)
 <p align="center">
-    <img src="./docs/_media/gregg.png" width="120" alt="Gregg Icon"/>
+    <img src="./docs/_media/gregg-full.png" width="120" alt="Gregg Icon"/>
 </p>
 
 <p align="center">
