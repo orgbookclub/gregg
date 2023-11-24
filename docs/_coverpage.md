@@ -1,5 +1,5 @@
-![logo](_media/gregg.png ':size=70%')
+![logo](_media/gregg.png ":size=70%")
 
-# Gregg
+# Gregg Bot
 
-[Get Started](#Introduction)
+[Get Started](#Gregg)
