@@ -11,7 +11,7 @@ import {
 
 import { CommandHandler } from "../../../models";
 import { errorHandler } from "../../../utils/errorHandler";
-import { getUserMentionString } from "../../../utils/eventUtils";
+import { getUserMentionString } from "../../../utils/userUtils";
 import { hasRole } from "../../../utils/userUtils";
 
 const EVENT_BROADCAST_MODAL_ID = "eventBroadcastModal";

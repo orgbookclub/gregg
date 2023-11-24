@@ -6,8 +6,8 @@ import { errorHandler } from "../../../utils/errorHandler";
 import {
   getEventInfoEmbed,
   getEventRequestEmbed,
-  participantToDto,
 } from "../../../utils/eventUtils";
+import { participantToDto } from "../../../utils/userUtils";
 import { upsertUser } from "../../../utils/userUtils";
 
 /**

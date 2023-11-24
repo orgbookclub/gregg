@@ -18,8 +18,8 @@ import { errorHandler } from "../../../utils/errorHandler";
 import {
   getEventInfoEmbed,
   getThreadTitle,
-  getUserMentionString,
 } from "../../../utils/eventUtils";
+import { getUserMentionString } from "../../../utils/userUtils";
 import { hasRole } from "../../../utils/userUtils";
 
 /**

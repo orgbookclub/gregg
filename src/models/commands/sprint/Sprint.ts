@@ -1,6 +1,6 @@
 import { userMention } from "discord.js";
 
-import { getUserMentionString } from "../../../utils/eventUtils";
+import { getUserMentionString } from "../../../utils/userUtils";
 
 import { SprintParticipant } from "./SprintParticipant";
 import { SprintStatus } from "./SprintStatus";

@@ -1,15 +1,9 @@
-import { Colors, EmbedBuilder, WebhookClient } from "discord.js";
+import {
+  MessagePayload,
+  WebhookClient,
+  WebhookMessageCreateOptions,
+} from "discord.js";
 import pino from "pino";
-
-import { customSubstring } from "./stringUtils";
-
-function getLogEmbed(message: string) {
-  const logEmbed = new EmbedBuilder()
-    .setColor(Colors.Gold)
-    .setDescription(customSubstring(message, 2000))
-    .setTimestamp();
-  return logEmbed;
-}
 
 /**
  * Log Handler using pino.
@@ -25,11 +19,14 @@ export const logger = pino({
 /**
  * Sends a message to the log webhook.
  *
- * @param message The message.
+ * @param message The message payload.
  * @param url The webhook url.
  */
-export const logToWebhook = (message: string, url: string) => {
+export const logToWebhook = (
+  message: string | MessagePayload | WebhookMessageCreateOptions,
+  url: string,
+) => {
   if (!url || url === "") return;
   const client = new WebhookClient({ url: url });
-  client.send({ embeds: [getLogEmbed(message)] });
+  client.send(message);
 };

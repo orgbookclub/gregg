@@ -3,7 +3,8 @@ import { GuildMember } from "discord.js";
 
 import { CommandHandler } from "../../../models";
 import { errorHandler } from "../../../utils/errorHandler";
-import { getEventInfoEmbed, participantToDto } from "../../../utils/eventUtils";
+import { getEventInfoEmbed } from "../../../utils/eventUtils";
+import { participantToDto } from "../../../utils/userUtils";
 import { hasRole } from "../../../utils/userUtils";
 
 /**
