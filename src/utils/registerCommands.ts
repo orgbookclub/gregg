@@ -38,6 +38,15 @@ export const registerCommands = async (bot: Bot) => {
       await rest.put(Routes.applicationCommands(bot.configs.clientId), {
         body: commandData,
       });
+    } else {
+      const homeGuild = process.env.HOME_GUILD_ID ?? "N/A";
+      logger.debug(`Registering commands in guild: ${homeGuild}`);
+      await rest.put(
+        Routes.applicationGuildCommands(bot.configs.clientId, homeGuild),
+        {
+          body: commandData,
+        },
+      );
     }
 
     return true;

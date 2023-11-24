@@ -1,4 +1,4 @@
-import { EventDocument, EventDtoStatusEnum } from "@orgbookclub/ows-client";
+import { EventDtoStatusEnum } from "@orgbookclub/ows-client";
 import {
   ChatInputCommandInteraction,
   Colors,
@@ -8,6 +8,7 @@ import {
 
 import { CommandHandler } from "../../../models";
 import { errorHandler } from "../../../utils/errorHandler";
+import { calculateReaderboardScores } from "../../../utils/eventUtils";
 import { PaginationManager } from "../../../utils/paginationManager";
 
 /**
@@ -51,33 +52,6 @@ const handleReaderboard: CommandHandler = async (bot, interaction) => {
     );
   }
 };
-
-function calculateReaderboardScores(eventDocs: EventDocument[]) {
-  const scoreMap = new Map<string, number>();
-
-  for (const event of eventDocs) {
-    for (const participant of event.readers.concat(event.leaders)) {
-      const userId = participant.user.userId;
-      scoreMap.set(
-        userId,
-        (scoreMap.get(userId) ?? 0) + (participant.points ?? 0),
-      );
-    }
-  }
-
-  const scores = [...scoreMap.entries()];
-  scores.sort((a, b) => b[1] - a[1]);
-
-  let position = 1;
-  const scoresWithPosition: [string, [number, number]][] = [];
-  for (const score of scores) {
-    const [userId, points] = score;
-    scoresWithPosition.push([userId, [position, points]]);
-    position += 1;
-  }
-
-  return scoresWithPosition;
-}
 
 function getReaderboardEmbed(
   title: string,

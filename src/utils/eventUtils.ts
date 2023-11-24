@@ -286,3 +286,36 @@ export function getNextMonthRange(date: Date): [Date, Date] {
 
   return [firstDayOfNextMonth, lastDayOfNextMonth];
 }
+
+/**
+ * Given a list of documents, calculates the total reader points for all the users.
+ *
+ * @param eventDocs List of event documents.
+ * @returns An array of users, along with their position and points.
+ */
+export function calculateReaderboardScores(eventDocs: EventDocument[]) {
+  const scoreMap = new Map<string, number>();
+
+  for (const event of eventDocs) {
+    for (const participant of event.readers.concat(event.leaders)) {
+      const userId = participant.user.userId;
+      scoreMap.set(
+        userId,
+        (scoreMap.get(userId) ?? 0) + (participant.points ?? 0),
+      );
+    }
+  }
+
+  const scores = [...scoreMap.entries()];
+  scores.sort((a, b) => b[1] - a[1]);
+
+  let position = 1;
+  const scoresWithPosition: [string, [number, number]][] = [];
+  for (const score of scores) {
+    const [userId, points] = score;
+    scoresWithPosition.push([userId, [position, points]]);
+    position += 1;
+  }
+
+  return scoresWithPosition;
+}
