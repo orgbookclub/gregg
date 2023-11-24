@@ -61,19 +61,20 @@ async function updateMemberRole(
     embed.setDescription(
       `${roleMention(requiredRole.id)} removed from ${userMention(member.id)}`,
     );
+    await logToWebhook({ embeds: [embed] }, logWebhookUrl);
   } else if (!hasRole(member, requiredRole.id) && points >= requiredPoints) {
     await member.roles.add(requiredRole);
 
     embed.setDescription(
       `${roleMention(requiredRole.id)} added to ${userMention(member.id)}`,
     );
+    await logToWebhook({ embeds: [embed] }, logWebhookUrl);
   }
-  await logToWebhook({ embeds: [embed] }, logWebhookUrl);
 }
 
 export const updateReaderRoles: Job = {
   name: "updateReaderRoles",
-  cronTime: "0 7 * * *",
+  cronTime: "* * * * *",
   callBack: async (bot) => {
     try {
       const guilds = await getAllGuildConfigs(bot);
