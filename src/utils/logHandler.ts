@@ -11,8 +11,14 @@ import pretty from "pino-pretty";
 const logStreams = [
   { stream: createWriteStream("logs/info.stream.out") },
   { level: "debug", stream: pretty() },
-  { level: "debug", stream: createWriteStream("logs/debug.stream.out") },
-  { level: "fatal", stream: createWriteStream("logs/fatal.stream.out") },
+  {
+    level: "debug",
+    stream: createWriteStream("logs/debug.stream.out", { flags: "r+" }),
+  },
+  {
+    level: "fatal",
+    stream: createWriteStream("logs/fatal.stream.out", { flags: "r+" }),
+  },
 ];
 
 /**
