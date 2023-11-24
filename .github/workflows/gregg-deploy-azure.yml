@@ -41,7 +41,7 @@ jobs:
       - name: yarn install and build
         run: |
           yarn install --frozen-lockfile --production
-          yarn build
+          yarn build:prod
 
       - name: "Deploy to Azure Web App"
         id: deploy-to-webapp
