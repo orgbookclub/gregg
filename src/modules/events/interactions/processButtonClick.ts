@@ -7,8 +7,7 @@ import {
   getEventInfoEmbed,
   getEventRequestEmbed,
 } from "../../../utils/eventUtils";
-import { participantToDto } from "../../../utils/userUtils";
-import { upsertUser } from "../../../utils/userUtils";
+import { participantToDto, upsertUser } from "../../../utils/userUtils";
 
 /**
  * Handles the logic for button clicks.

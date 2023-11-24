@@ -7,9 +7,6 @@ import {
   StorygraphApi,
   UsersApi,
 } from "@orgbookclub/ows-client";
-import { CronJob } from "cron";
-
-import { logger } from "../utils/logHandler";
 
 const CLIENT_ID = process.env.CLIENT_ID ?? "";
 const CLIENT_SECRET = process.env.CLIENT_SECRET ?? "";

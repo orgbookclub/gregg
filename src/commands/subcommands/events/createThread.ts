@@ -15,12 +15,8 @@ import {
 
 import { Bot, CommandHandler } from "../../../models";
 import { errorHandler } from "../../../utils/errorHandler";
-import {
-  getEventInfoEmbed,
-  getThreadTitle,
-} from "../../../utils/eventUtils";
-import { getUserMentionString } from "../../../utils/userUtils";
-import { hasRole } from "../../../utils/userUtils";
+import { getEventInfoEmbed, getThreadTitle } from "../../../utils/eventUtils";
+import { getUserMentionString, hasRole } from "../../../utils/userUtils";
 
 /**
  * Creates thread(s) for an approved event, and writes information about the event on the thread.
