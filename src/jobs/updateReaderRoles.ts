@@ -73,7 +73,7 @@ function updateMemberRole(
 
 export const updateReaderRoles: Job = {
   name: "updateReaderRoles",
-  cronTime: "0 23 * * *",
+  cronTime: "0 7 * * *",
   callBack: async (bot) => {
     try {
       const guilds = await getAllGuildConfigs(bot);

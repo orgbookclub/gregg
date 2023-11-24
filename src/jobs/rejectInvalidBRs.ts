@@ -8,7 +8,7 @@ import { logToWebhook } from "../utils/logHandler";
 
 export const rejectInvalidBRs: Job = {
   name: "rejectInvalidBRs",
-  cronTime: "10 */12 * * *",
+  cronTime: "10 23 * * *",
   callBack: async (bot) => {
     try {
       const guilds = await getAllGuildConfigs(bot);

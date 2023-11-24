@@ -3,7 +3,7 @@ import { errorHandler } from "../utils/errorHandler";
 
 export const refreshClientToken: Job = {
   name: "refreshClientToken",
-  cronTime: "*/60 * * * *",
+  cronTime: "30 * * * *",
   callBack: async (bot) => {
     try {
       await bot.api.initialize();

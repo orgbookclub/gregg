@@ -8,7 +8,7 @@ import { logToWebhook } from "../utils/logHandler";
 
 export const startAnnouncedEvents: Job = {
   name: "startAnnouncedEvents",
-  cronTime: "0 */12 * * *",
+  cronTime: "0 6 * * *",
   callBack: async (bot) => {
     try {
       const guilds = await getAllGuildConfigs(bot);

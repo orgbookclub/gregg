@@ -8,7 +8,7 @@ import { logToWebhook } from "../utils/logHandler";
 
 export const endCompletedEvents: Job = {
   name: "endCompletedEvents",
-  cronTime: "5 */12 * * *",
+  cronTime: "40 23 * * *",
   callBack: async (bot) => {
     try {
       const guilds = await getAllGuildConfigs(bot);
