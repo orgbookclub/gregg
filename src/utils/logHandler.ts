@@ -1,20 +1,30 @@
+import { createWriteStream } from "fs";
+
 import {
   MessagePayload,
   WebhookClient,
   WebhookMessageCreateOptions,
 } from "discord.js";
-import pino from "pino";
+import pino, { multistream } from "pino";
+import pretty from "pino-pretty";
+
+const logStreams = [
+  { stream: createWriteStream("logs/info.stream.out") },
+  { level: "debug", stream: pretty() },
+  { level: "debug", stream: createWriteStream("logs/debug.stream.out") },
+  { level: "fatal", stream: createWriteStream("logs/fatal.stream.out") },
+];
 
 /**
  * Log Handler using pino.
  */
-export const logger = pino({
-  name: "gregg",
-  level: "debug",
-  transport: {
-    target: "pino-pretty",
+export const logger = pino(
+  {
+    name: "gregg",
+    level: "debug",
   },
-});
+  multistream(logStreams),
+);
 
 /**
  * Sends a message to the log webhook.
