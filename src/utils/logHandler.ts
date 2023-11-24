@@ -8,16 +8,18 @@ import {
 import pino, { multistream } from "pino";
 import pretty from "pino-pretty";
 
+const now = new Date().toISOString();
+
 const logStreams = [
-  { stream: createWriteStream("logs/info.stream.out") },
+  { stream: createWriteStream(`logs/${now}_info.txt`) },
   { level: "debug", stream: pretty() },
   {
     level: "debug",
-    stream: createWriteStream("logs/debug.stream.out", { flags: "r+" }),
+    stream: createWriteStream(`logs/${now}_debug.txt`, { flags: "r+" }),
   },
   {
-    level: "fatal",
-    stream: createWriteStream("logs/fatal.stream.out", { flags: "r+" }),
+    level: "error",
+    stream: createWriteStream(`logs/${now}_error.txt`, { flags: "r+" }),
   },
 ];
 
