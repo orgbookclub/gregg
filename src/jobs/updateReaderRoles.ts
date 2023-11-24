@@ -42,7 +42,7 @@ async function getRoleMapping(
   return roles;
 }
 
-function updateMemberRole(
+async function updateMemberRole(
   roleWithPoints: [Role, number],
   member: GuildMember,
   points: number,
@@ -56,13 +56,13 @@ function updateMemberRole(
     .setTimestamp();
 
   if (hasRole(member, requiredRole.id) && points < requiredPoints) {
-    member.roles.remove(requiredRole);
+    await member.roles.remove(requiredRole);
 
     embed.setDescription(
       `${roleMention(requiredRole.id)} removed from ${userMention(member.id)}`,
     );
   } else if (!hasRole(member, requiredRole.id) && points >= requiredPoints) {
-    member.roles.add(requiredRole);
+    await member.roles.add(requiredRole);
 
     embed.setDescription(
       `${roleMention(requiredRole.id)} added to ${userMention(member.id)}`,
@@ -99,7 +99,12 @@ export const updateReaderRoles: Job = {
 
           for (const roleWithPoints of rolesWithPoints) {
             const logWebhookUrl = guildDoc.config.logWebhookUrl;
-            updateMemberRole(roleWithPoints, member, points, logWebhookUrl);
+            await updateMemberRole(
+              roleWithPoints,
+              member,
+              points,
+              logWebhookUrl,
+            );
           }
         }
       }
