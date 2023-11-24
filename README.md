@@ -10,7 +10,6 @@
 <a href="https://github.com/orgbookclub/gregg/actions/workflows/gregg-deploy-azure.yml">
 <img src="https://github.com/orgbookclub/gregg/actions/workflows/gregg-deploy-azure.yml/badge.svg">
 </a>
-</p>
 
 <a href="https://github.com/orgbookclub/gregg/actions/workflows/gregg-prod-deploy-azure.yml">
 <img src="https://github.com/orgbookclub/gregg/actions/workflows/gregg-prod-deploy-azure.yml/badge.svg">
