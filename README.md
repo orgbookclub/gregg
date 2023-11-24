@@ -1,3 +1,4 @@
+![Gregg Icon](./docs/_media/gregg.png)
 <p align="center">
     <img src="./docs/_media/gregg.png" width="120" alt="Gregg Icon"/>
 </p>
