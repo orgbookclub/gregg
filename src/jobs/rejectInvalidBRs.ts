@@ -34,7 +34,10 @@ export const rejectInvalidBRs: Job = {
               })
             ).data;
             const embed = getEventUpdateLogEmbed(eventDoc, updatedEventDoc);
-            await logToWebhook({ embeds: [embed] }, guildDoc.config.logWebhookUrl);
+            await logToWebhook(
+              { embeds: [embed] },
+              guildDoc.config.logWebhookUrl,
+            );
           }
         }
       }
