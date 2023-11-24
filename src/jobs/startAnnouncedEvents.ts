@@ -9,14 +9,23 @@ import { logToWebhook } from "../utils/logHandler";
 
 const jobName = "startAnnouncedEvents";
 
+const cronTime = "0 6 * * *";
 export const startAnnouncedEvents: Job = {
   name: jobName,
-  cronTime: "0 6 * * *",
+  cronTime: cronTime,
   callBack: async (bot) => {
-    const checkInId = captureCheckIn({
-      monitorSlug: jobName,
-      status: "in_progress",
-    });
+    const checkInId = captureCheckIn(
+      {
+        monitorSlug: jobName,
+        status: "in_progress",
+      },
+      {
+        schedule: {
+          type: "crontab",
+          value: cronTime,
+        },
+      },
+    );
 
     try {
       const guilds = await getAllGuildConfigs(bot);

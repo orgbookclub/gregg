@@ -8,14 +8,23 @@ import { getEventUpdateLogEmbed } from "../utils/eventUtils";
 import { logToWebhook } from "../utils/logHandler";
 
 const jobName = "rejectInvalidBRs";
+const cronTime = "10 23 * * *";
 export const rejectInvalidBRs: Job = {
   name: jobName,
-  cronTime: "10 23 * * *",
+  cronTime: cronTime,
   callBack: async (bot) => {
-    const checkInId = captureCheckIn({
-      monitorSlug: jobName,
-      status: "in_progress",
-    });
+    const checkInId = captureCheckIn(
+      {
+        monitorSlug: jobName,
+        status: "in_progress",
+      },
+      {
+        schedule: {
+          type: "crontab",
+          value: cronTime,
+        },
+      },
+    );
 
     try {
       const guilds = await getAllGuildConfigs(bot);

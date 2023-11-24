@@ -75,14 +75,24 @@ async function updateMemberRole(
 
 const jobName = "updateReaderRoles";
 
+const cronTime = "50 23 * * *";
+
 export const updateReaderRoles: Job = {
   name: jobName,
-  cronTime: "* * * * *",
+  cronTime: cronTime,
   callBack: async (bot) => {
-    const checkInId = captureCheckIn({
-      monitorSlug: jobName,
-      status: "in_progress",
-    });
+    const checkInId = captureCheckIn(
+      {
+        monitorSlug: jobName,
+        status: "in_progress",
+      },
+      {
+        schedule: {
+          type: "crontab",
+          value: cronTime,
+        },
+      },
+    );
 
     try {
       const guilds = await getAllGuildConfigs(bot);
