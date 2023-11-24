@@ -27,7 +27,7 @@ export const endCompletedEvents: Job = {
           });
           const updatedEventDoc = response.data;
           const embed = getEventUpdateLogEmbed(eventDoc, updatedEventDoc);
-          logToWebhook({ embeds: [embed] }, guildDoc.config.logWebhookUrl);
+          await logToWebhook({ embeds: [embed] }, guildDoc.config.logWebhookUrl);
         }
       }
     } catch (error) {

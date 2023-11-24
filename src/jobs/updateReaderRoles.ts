@@ -68,7 +68,7 @@ async function updateMemberRole(
       `${roleMention(requiredRole.id)} added to ${userMention(member.id)}`,
     );
   }
-  logToWebhook({ embeds: [embed] }, logWebhookUrl);
+  await logToWebhook({ embeds: [embed] }, logWebhookUrl);
 }
 
 export const updateReaderRoles: Job = {

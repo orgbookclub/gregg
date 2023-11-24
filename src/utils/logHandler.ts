@@ -32,11 +32,11 @@ export const logger = pino(
  * @param message The message payload.
  * @param url The webhook url.
  */
-export const logToWebhook = (
+export const logToWebhook = async (
   message: string | MessagePayload | WebhookMessageCreateOptions,
   url: string,
 ) => {
   if (!url || url === "") return;
   const client = new WebhookClient({ url: url });
-  client.send(message);
+  await client.send(message);
 };
