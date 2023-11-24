@@ -15,6 +15,7 @@ type SprintsParticipants {
 }
 
 type GuildsConfig {
+  minParticipantCount      Int                 @default(10)
   logWebhookUrl            String              @default("")
   brForumChannel           String              @default("")
   brRequestChannel         String              @default("")
