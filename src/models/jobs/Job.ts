@@ -6,5 +6,5 @@ import { Bot } from "..";
 export interface Job {
   name: string;
   cronTime: string | Date;
-  callBack: (bot: Bot) => Promise<void>;
+  callBack: (bot: Bot) => Promise<void> | void;
 }

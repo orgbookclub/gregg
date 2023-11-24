@@ -1,5 +1,6 @@
 import { EventDtoStatusEnum } from "@orgbookclub/ows-client";
 import { GuildsConfig } from "@prisma/client";
+import { captureCheckIn } from "@sentry/node";
 import {
   Colors,
   EmbedBuilder,
@@ -72,10 +73,17 @@ async function updateMemberRole(
   }
 }
 
+const jobName = "updateReaderRoles";
+
 export const updateReaderRoles: Job = {
-  name: "updateReaderRoles",
+  name: jobName,
   cronTime: "* * * * *",
   callBack: async (bot) => {
+    const checkInId = captureCheckIn({
+      monitorSlug: jobName,
+      status: "in_progress",
+    });
+
     try {
       const guilds = await getAllGuildConfigs(bot);
 
@@ -109,8 +117,18 @@ export const updateReaderRoles: Job = {
           }
         }
       }
+      captureCheckIn({
+        checkInId,
+        monitorSlug: jobName,
+        status: "ok",
+      });
     } catch (error) {
-      await errorHandler(bot, "jobs > updateReaderRoles", error);
+      await errorHandler(bot, `jobs > ${jobName}`, error);
+      captureCheckIn({
+        checkInId,
+        monitorSlug: jobName,
+        status: "error",
+      });
     }
   },
 };

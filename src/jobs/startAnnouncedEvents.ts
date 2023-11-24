@@ -1,4 +1,5 @@
 import { EventDtoStatusEnum } from "@orgbookclub/ows-client";
+import { captureCheckIn } from "@sentry/node";
 
 import { Job } from "../models";
 import { getAllGuildConfigs } from "../utils/dbUtils";
@@ -6,10 +7,17 @@ import { errorHandler } from "../utils/errorHandler";
 import { getEventUpdateLogEmbed } from "../utils/eventUtils";
 import { logToWebhook } from "../utils/logHandler";
 
+const jobName = "startAnnouncedEvents";
+
 export const startAnnouncedEvents: Job = {
-  name: "startAnnouncedEvents",
+  name: jobName,
   cronTime: "0 6 * * *",
   callBack: async (bot) => {
+    const checkInId = captureCheckIn({
+      monitorSlug: jobName,
+      status: "in_progress",
+    });
+
     try {
       const guilds = await getAllGuildConfigs(bot);
       for (const guildDoc of guilds) {
@@ -34,8 +42,18 @@ export const startAnnouncedEvents: Job = {
           );
         }
       }
+      captureCheckIn({
+        checkInId,
+        monitorSlug: jobName,
+        status: "ok",
+      });
     } catch (error) {
-      await errorHandler(bot, "jobs > startAnnouncedEvents", error);
+      await errorHandler(bot, `jobs > ${jobName}`, error);
+      captureCheckIn({
+        checkInId,
+        monitorSlug: jobName,
+        status: "error",
+      });
     }
   },
 };
