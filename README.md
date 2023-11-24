@@ -1,8 +1,3 @@
-![Gregg Icon](./docs/_media/gregg.ico)
-<p align="center">
-    <img src="./docs/_media/gregg.ico" alt="Gregg Icon"/>
-</p>
-
 <p align="center">
 <a href="https://github.com/orgbookclub/gregg/actions/workflows/gregg-develop-ci.yml">
 <img src="https://github.com/orgbookclub/gregg/actions/workflows/gregg-develop-ci.yml/badge.svg">
