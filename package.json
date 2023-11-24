@@ -21,7 +21,6 @@
   "scripts": {
     "prebuild": "rimraf ./dist",
     "build": "tsc",
-    "build:prod": "tsc",
     "postinstall": "prisma generate",
     "lint": "eslint src --max-warnings 0 && prettier src --check",
     "lint:fix": "eslint src --max-warnings 0 --fix && prettier src --write",
