@@ -5,8 +5,6 @@ import {
 } from "@orgbookclub/ows-client";
 import {
   ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
   GuildMember,
   ModalActionRowComponentBuilder,
   ModalBuilder,
@@ -24,6 +22,7 @@ import {
   getEventRequestEmbed,
   getNextMonthRange,
 } from "../../../utils/eventUtils";
+import { getButtonActionRow } from "../../../utils/messageUtils";
 import { hasRole, upsertUser } from "../../../utils/userUtils";
 
 const EVENT_REQUEST_MODAL_ID = "eventRequestModal";
@@ -113,7 +112,7 @@ const handleRequest: CommandHandler = async (bot, interaction, guildConfig) => {
         return;
       }
       const embed = getEventRequestEmbed(eventDoc, modalSubmitInteraction);
-      const buttonActionRow = getButtonActionRow(eventDoc._id);
+      const buttonActionRow = getButtonActionRow(eventDoc._id, "er");
       const message = await channel.send({
         embeds: [embed],
         components: [buttonActionRow],
@@ -174,24 +173,6 @@ async function createEvent(
     createEventDto: createEventDto,
   });
   return response;
-}
-
-function getButtonActionRow(eventId: string) {
-  const interestedButton = new ButtonBuilder()
-    .setLabel("Join")
-    .setEmoji({ name: "✅" })
-    .setStyle(ButtonStyle.Success)
-    .setCustomId(`er-${eventId}-interested`);
-  const notInterestedButton = new ButtonBuilder()
-    .setLabel("Leave")
-    .setEmoji({ name: "⛔" })
-    .setStyle(ButtonStyle.Danger)
-    .setCustomId(`er-${eventId}-notInterested`);
-  const buttonActionRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
-    interestedButton,
-    notInterestedButton,
-  );
-  return buttonActionRow;
 }
 
 function getEventRequestModal(eventType: string) {

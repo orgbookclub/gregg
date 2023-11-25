@@ -1,8 +1,5 @@
 import { EventDocument, EventDtoStatusEnum } from "@orgbookclub/ows-client";
 import {
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
   ChannelType,
   GuildMember,
   channelMention,
@@ -14,6 +11,7 @@ import { CommandHandler } from "../../../models";
 import { createEventMessageDoc } from "../../../utils/dbUtils";
 import { errorHandler } from "../../../utils/errorHandler";
 import { getEventInfoEmbed } from "../../../utils/eventUtils";
+import { getButtonActionRow } from "../../../utils/messageUtils";
 import { hasRole } from "../../../utils/userUtils";
 
 /**
@@ -87,7 +85,7 @@ const handleAnnounce: CommandHandler = async (
     const message = await announcementChannel.send({
       content: getAnnouncementString(pingRole, eventDoc),
       embeds: [getEventInfoEmbed(eventDoc, interaction)],
-      components: [getButtonActionRow(eventDoc._id)],
+      components: [getButtonActionRow(eventDoc._id, "ea")],
     });
 
     await createEventMessageDoc(
@@ -137,24 +135,6 @@ function getAnnouncementString(
       .map((x) => channelMention(x))
       .join(", ")}`
   );
-}
-
-function getButtonActionRow(eventId: string) {
-  const interestedButton = new ButtonBuilder()
-    .setLabel("Join")
-    .setEmoji({ name: "✅" })
-    .setStyle(ButtonStyle.Success)
-    .setCustomId(`ea-${eventId}-interested`);
-  const notInterestedButton = new ButtonBuilder()
-    .setLabel("Leave")
-    .setEmoji({ name: "⛔" })
-    .setStyle(ButtonStyle.Danger)
-    .setCustomId(`ea-${eventId}-notInterested`);
-  const buttonActionRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
-    interestedButton,
-    notInterestedButton,
-  );
-  return buttonActionRow;
 }
 
 export { handleAnnounce };

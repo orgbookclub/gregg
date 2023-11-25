@@ -1,4 +1,8 @@
-import { BookDocument, EventDocument } from "@orgbookclub/ows-client";
+import {
+  BookDocument,
+  EventDocument,
+  EventDtoStatusEnum,
+} from "@orgbookclub/ows-client";
 import {
   ButtonInteraction,
   ChatInputCommandInteraction,
@@ -11,7 +15,11 @@ import {
   userMention,
 } from "discord.js";
 
+import { Bot } from "../models";
+
 import { getAuthorString } from "./bookUtils";
+import { logToWebhook } from "./logHandler";
+import { deleteBRRequest } from "./messageUtils";
 import { customSubstring } from "./stringUtils";
 import { getUserMentionString } from "./userUtils";
 
@@ -200,8 +208,7 @@ export function getEventRequestEmbed(
 /**
  * Creates a title for a thread for an event.
  *
- * @param event The event.
- * @param book
+ * @param book The book document.
  * @returns The title.
  */
 export function getBookTitleWithAuthors(book: BookDocument) {
@@ -314,4 +321,31 @@ export function getEventUpdateLogEmbed(
     .setThumbnail(eventDoc.book.coverUrl)
     .setTimestamp();
   return embed;
+}
+
+/**
+ * Updates event state, logs to the webhook, and deletes the request message.
+ *
+ * @param bot The bot.
+ * @param eventDoc The event doc.
+ * @param webhookUrl The webhook url.
+ * @param newState New state of the event.
+ */
+export async function updateEventState(
+  bot: Bot,
+  eventDoc: EventDocument,
+  webhookUrl: string,
+  newState: EventDtoStatusEnum,
+) {
+  const updatedEventDoc = (
+    await bot.api.events.eventsControllerUpdate({
+      id: eventDoc._id,
+      updateEventDto: { status: newState },
+    })
+  ).data;
+
+  const embed = getEventUpdateLogEmbed(eventDoc, updatedEventDoc);
+  await logToWebhook({ embeds: [embed] }, webhookUrl);
+
+  await deleteBRRequest(bot, eventDoc, webhookUrl);
 }

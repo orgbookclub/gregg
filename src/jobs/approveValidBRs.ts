@@ -4,14 +4,13 @@ import { captureCheckIn } from "@sentry/node";
 import { Job } from "../models";
 import { getAllGuildConfigs } from "../utils/dbUtils";
 import { errorHandler } from "../utils/errorHandler";
-import { getEventUpdateLogEmbed } from "../utils/eventUtils";
-import { logToWebhook } from "../utils/logHandler";
+import { updateEventState } from "../utils/eventUtils";
 
 const jobName = "approveValidBRs";
 
 const cronTime = "30 7 * * *";
 
-export const approveValidBRs: Job = {
+const approveValidBRs: Job = {
   name: jobName,
   cronTime: cronTime,
   callBack: async (bot) => {
@@ -45,16 +44,11 @@ export const approveValidBRs: Job = {
             eventDoc.interested.length >= minParticipantCount &&
             eventDoc.leaders.length > 0
           ) {
-            const updatedEventDoc = (
-              await bot.api.events.eventsControllerUpdate({
-                id: eventDoc._id,
-                updateEventDto: { status: EventDtoStatusEnum.Approved },
-              })
-            ).data;
-            const embed = getEventUpdateLogEmbed(eventDoc, updatedEventDoc);
-            await logToWebhook(
-              { embeds: [embed] },
+            await updateEventState(
+              bot,
+              eventDoc,
               guildDoc.config.logWebhookUrl,
+              EventDtoStatusEnum.Approved,
             );
           }
         }
@@ -75,3 +69,5 @@ export const approveValidBRs: Job = {
     }
   },
 };
+
+export { approveValidBRs };

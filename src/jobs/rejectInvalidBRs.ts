@@ -4,12 +4,11 @@ import { captureCheckIn } from "@sentry/node";
 import { Job } from "../models";
 import { getAllGuildConfigs } from "../utils/dbUtils";
 import { errorHandler } from "../utils/errorHandler";
-import { getEventUpdateLogEmbed } from "../utils/eventUtils";
-import { logToWebhook } from "../utils/logHandler";
+import { updateEventState } from "../utils/eventUtils";
 
 const jobName = "rejectInvalidBRs";
 const cronTime = "10 23 * * *";
-export const rejectInvalidBRs: Job = {
+const rejectInvalidBRs: Job = {
   name: jobName,
   cronTime: cronTime,
   callBack: async (bot) => {
@@ -43,16 +42,12 @@ export const rejectInvalidBRs: Job = {
             eventDoc.interested.length < minParticipantCount ||
             eventDoc.leaders.length === 0
           ) {
-            const updatedEventDoc = (
-              await bot.api.events.eventsControllerUpdate({
-                id: eventDoc._id,
-                updateEventDto: { status: EventDtoStatusEnum.Rejected },
-              })
-            ).data;
-            const embed = getEventUpdateLogEmbed(eventDoc, updatedEventDoc);
-            await logToWebhook(
-              { embeds: [embed] },
-              guildDoc.config.logWebhookUrl,
+            const logWebhookUrl = guildDoc.config.logWebhookUrl;
+            await updateEventState(
+              bot,
+              eventDoc,
+              logWebhookUrl,
+              EventDtoStatusEnum.Rejected,
             );
           }
         }
@@ -73,3 +68,5 @@ export const rejectInvalidBRs: Job = {
     }
   },
 };
+
+export { rejectInvalidBRs };
