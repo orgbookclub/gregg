@@ -8,11 +8,15 @@ import {
   ModalBuilder,
   TextInputBuilder,
   GuildMember,
+  EmbedBuilder,
+  Colors,
+  userMention,
 } from "discord.js";
 
 import { errors } from "../../../config/constants";
 import { CommandHandler } from "../../../models";
 import { errorHandler } from "../../../utils/errorHandler";
+import { logToWebhook } from "../../../utils/logHandler";
 import { getUserMentionString, hasRole } from "../../../utils/userUtils";
 
 const EVENT_BROADCAST_MODAL_ID = "eventBroadcastModal";
@@ -38,7 +42,7 @@ const handleBroadcast: CommandHandler = async (
       !hasRole(interaction.member as GuildMember, guildConfig.staffRole)
     ) {
       await interaction.reply({
-        content: errors.StaffRestrictionError,
+        content: errors.BRLeaderRestrictionError,
         ephemeral: true,
       });
       return;
@@ -107,6 +111,19 @@ const handleBroadcast: CommandHandler = async (
       content: "Your message has been broadcasted!",
       ephemeral: true,
     });
+
+    if (guildConfig) {
+      const embed = new EmbedBuilder()
+        .setColor(Colors.Green)
+        .setTimestamp()
+        .setTitle("Event Broadcast")
+        .setDescription(
+          `${userMention(interaction.user.id)} broadcasted message for event ${
+            eventDoc._id
+          } `,
+        );
+      await logToWebhook({ embeds: [embed] }, guildConfig.logWebhookUrl);
+    }
   } catch (err) {
     await interaction.followUp(errors.SomethingWentWrongError);
     await errorHandler(

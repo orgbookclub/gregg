@@ -1,6 +1,8 @@
 export const errors = {
   // General
   SomethingWentWrongError: "Something went wrong! Please try again later",
+  BRLeaderRestrictionError:
+    "Sorry, this command is restricted for BR Leaders use only!",
   StaffRestrictionError:
     "Sorry, this command is restricted for staff use only!",
   // Books
