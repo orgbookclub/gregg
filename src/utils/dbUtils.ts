@@ -1,3 +1,5 @@
+import { Message } from "discord.js";
+
 import { Bot } from "../models";
 
 /**
@@ -26,4 +28,34 @@ export async function getAllGuildConfigs(bot: Bot) {
     select: { guildId: true, config: true },
   });
   return guilds;
+}
+
+/**
+ * Creates an event message doc in the db.
+ *
+ * @param bot The bot.
+ * @param guildId The guild ID.
+ * @param eventId The event ID.
+ * @param message The message.
+ * @param type The type of the event message.
+ */
+export async function createEventMessageDoc(
+  bot: Bot,
+  guildId: string,
+  eventId: string,
+  message: Message,
+  type: string,
+) {
+  await bot.db.eventMessages.create({
+    data: {
+      guildId: guildId,
+      eventId: eventId,
+      channelId: message.channel.id,
+      messageId: message.id,
+      messageUrl: message.url,
+      type: type,
+      createdOn: message.createdAt,
+      updatedOn: message.createdAt,
+    },
+  });
 }

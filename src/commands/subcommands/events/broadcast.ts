@@ -1,3 +1,4 @@
+import { EventDocument } from "@orgbookclub/ows-client";
 import {
   ModalSubmitInteraction,
   TextInputStyle,
@@ -9,6 +10,7 @@ import {
   GuildMember,
 } from "discord.js";
 
+import { errors } from "../../../config/constants";
 import { CommandHandler } from "../../../models";
 import { errorHandler } from "../../../utils/errorHandler";
 import { getUserMentionString, hasRole } from "../../../utils/userUtils";
@@ -36,7 +38,7 @@ const handleBroadcast: CommandHandler = async (
       !hasRole(interaction.member as GuildMember, guildConfig.staffRole)
     ) {
       await interaction.reply({
-        content: "Sorry, this command is restricted for BR Leader use only!",
+        content: errors.StaffRestrictionError,
         ephemeral: true,
       });
       return;
@@ -63,18 +65,19 @@ const handleBroadcast: CommandHandler = async (
       modalSubmitInteraction.fields.getTextInputValue(MESSAGE_FIELD_ID);
 
     // Get event details
-    const response = await bot.api.events.eventsControllerFindOne({
-      id: eventId,
-    });
-    if (!response) {
+    let eventDoc: EventDocument;
+    try {
+      const response = await bot.api.events.eventsControllerFindOne({
+        id: eventId,
+      });
+      eventDoc = response.data;
+    } catch (error) {
       await modalSubmitInteraction.reply({
-        content: "Invalid Event ID!",
+        content: errors.InvalidEventIdError,
         ephemeral: true,
       });
       return;
     }
-
-    const eventDoc = response.data;
 
     let threadToPost;
     if (!channel) {
@@ -96,7 +99,8 @@ const handleBroadcast: CommandHandler = async (
       await threadToPost.send({ content: mentionString });
     }
     if (messageContent.length !== 0) {
-      await threadToPost.send({ content: messageContent });
+      const message = await threadToPost.send({ content: messageContent });
+      await message.pin();
     }
 
     await modalSubmitInteraction.reply({
@@ -104,7 +108,7 @@ const handleBroadcast: CommandHandler = async (
       ephemeral: true,
     });
   } catch (err) {
-    await interaction.editReply("Something went wrong! Please try again later");
+    await interaction.editReply(errors.SomethingWentWrongError);
     await errorHandler(
       bot,
       "commands > events > broadcast",

@@ -14,8 +14,10 @@ import {
   TextInputStyle,
 } from "discord.js";
 
+import { errors } from "../../../config/constants";
 import { Bot, CommandHandler } from "../../../models";
 import { EventRequestSubmission } from "../../../models/commands/events/EventRequestSubmission";
+import { createEventMessageDoc } from "../../../utils/dbUtils";
 import { errorHandler } from "../../../utils/errorHandler";
 import {
   getEventRequestEmbed,
@@ -105,16 +107,24 @@ const handleRequest: CommandHandler = async (bot, interaction, guildConfig) => {
       const channel = await bot.channels.fetch(channelId);
       if (!channel?.isTextBased()) {
         await modalSubmitInteraction.editReply(
-          "Unable to post event request in the configured channel. Please contact staff",
+          "Unable to post event request in the configured channel. Please contact staff!",
         );
         return;
       }
       const embed = getEventRequestEmbed(eventDoc, modalSubmitInteraction);
       const buttonActionRow = getButtonActionRow(eventDoc._id);
-      await channel.send({
+      const message = await channel.send({
         embeds: [embed],
         components: [buttonActionRow],
       });
+
+      await createEventMessageDoc(
+        bot,
+        interaction.guild.id,
+        eventDoc._id,
+        message,
+        "BRRequest",
+      );
     }
 
     await modalSubmitInteraction.editReply({
@@ -126,12 +136,9 @@ const handleRequest: CommandHandler = async (bot, interaction, guildConfig) => {
       error.name === "AxiosError" &&
       error.message === "Request failed with status code 503"
     ) {
-      await interaction.reply(
-        "Unfortunately, due to Goodreads being Goodreads, I cannot complete your request at the moment :(" +
-          "\n" +
-          "Please try again later, or use Storygraph instead �",
-      );
+      await interaction.reply(errors.GoodreadsIssueError);
     } else {
+      await interaction.reply(errors.SomethingWentWrongError);
       await errorHandler(
         bot,
         "commands > events > request",
@@ -140,7 +147,6 @@ const handleRequest: CommandHandler = async (bot, interaction, guildConfig) => {
         undefined,
         interaction,
       );
-      await interaction.reply("Something went wrong! Please try again later");
     }
   }
 };
@@ -237,6 +243,9 @@ function getEventRequestModal(eventType: string) {
   const reasonInput = new TextInputBuilder()
     .setCustomId(REQUEST_REASON_FIELD_ID)
     .setLabel("Why are you requesting this book?")
+    .setPlaceholder(
+      "A short description of why other folks should join your event",
+    )
     .setRequired(true)
     .setStyle(TextInputStyle.Paragraph);
   const reasonActionRow =

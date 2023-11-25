@@ -13,9 +13,13 @@ import {
   TimestampStyles,
 } from "discord.js";
 
+import { errors } from "../../../config/constants";
 import { Bot, CommandHandler } from "../../../models";
 import { errorHandler } from "../../../utils/errorHandler";
-import { getEventInfoEmbed, getThreadTitle } from "../../../utils/eventUtils";
+import {
+  getEventInfoEmbed,
+  getBookTitleWithAuthors,
+} from "../../../utils/eventUtils";
 import { getUserMentionString, hasRole } from "../../../utils/userUtils";
 
 /**
@@ -38,7 +42,7 @@ const handleCreateThread: CommandHandler = async (
       !hasRole(interaction.member as GuildMember, guildConfig.staffRole)
     ) {
       await interaction.reply({
-        content: "Sorry, this command is restricted for staff use only!",
+        content: errors.StaffRestrictionError,
         ephemeral: true,
       });
       return;
@@ -51,11 +55,14 @@ const handleCreateThread: CommandHandler = async (
     const threadTitle = interaction.options.getString("title");
 
     // Validate event
-    const response = await bot.api.events.eventsControllerFindOne({ id: id });
-    if (!response) {
-      await interaction.editReply("Invalid Event ID!");
+    let eventDoc: EventDocument;
+    try {
+      const response = await bot.api.events.eventsControllerFindOne({ id: id });
+      eventDoc = response.data;
+    } catch (error) {
+      await interaction.editReply(errors.InvalidEventIdError);
+      return;
     }
-    const eventDoc = response.data;
 
     if (eventDoc.status !== EventDtoStatusEnum.Approved) {
       await interaction.editReply(
@@ -81,10 +88,8 @@ const handleCreateThread: CommandHandler = async (
         return;
       }
       const post = await forum.threads.create({
-        name: threadTitle ?? getThreadTitle(eventDoc),
-        message: {
-          content: getPostContent(eventDoc),
-        },
+        name: threadTitle ?? getBookTitleWithAuthors(eventDoc.book),
+        message: { content: getPostContent(eventDoc) },
       });
       await bot.api.events.eventsControllerUpdate({
         id: eventDoc._id,
@@ -118,7 +123,7 @@ const handleCreateThread: CommandHandler = async (
       await interaction.editReply(`Updated ${channelMention(channel.id)}`);
     }
   } catch (err) {
-    await interaction.editReply("Something went wrong! Please try again later");
+    await interaction.editReply(errors.SomethingWentWrongError);
     await errorHandler(
       bot,
       "commands > events > createThread",
@@ -160,7 +165,7 @@ function getPostContent(event: EventDocument) {
   if (event.leaders.length > 0) {
     content += ` | Leader(s): ${getUserMentionString(event.leaders, false)}`;
   }
-  content += `\n**Link**: ${hideLinkEmbed(event.book.url)}`;
+  content += `\n**[Book Link](${hideLinkEmbed(event.book.url)})**`;
   content += `\n**Cover**: ${event.book.coverUrl}`;
   content += `\n\n**ID**: \`${event._id}\``;
   return content;

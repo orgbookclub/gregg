@@ -1,14 +1,16 @@
 import {
+  EventDocument,
   EventDtoStatusEnum,
   EventDtoTypeEnum,
   UpdateEventDto,
 } from "@orgbookclub/ows-client";
 import { GuildMember } from "discord.js";
 
-import { Bot, CommandHandler } from "../../../models";
+import { errors } from "../../../config/constants";
+import { CommandHandler } from "../../../models";
 import { errorHandler } from "../../../utils/errorHandler";
 import { getEventInfoEmbed } from "../../../utils/eventUtils";
-import { hasRole } from "../../../utils/userUtils";
+import { hasRole, getUserByDiscordId } from "../../../utils/userUtils";
 
 /**
  * Gives ability to edit an event.
@@ -25,7 +27,7 @@ const handleEdit: CommandHandler = async (bot, interaction, guildConfig) => {
       !hasRole(interaction.member as GuildMember, guildConfig.staffRole)
     ) {
       await interaction.reply({
-        content: "Sorry, this command is restricted for staff use only!",
+        content: errors.StaffRestrictionError,
         ephemeral: true,
       });
       return;
@@ -35,14 +37,15 @@ const handleEdit: CommandHandler = async (bot, interaction, guildConfig) => {
     const field = interaction.options.getString("field", true);
     const value = interaction.options.getString("value", true);
 
-    const response = await bot.api.events.eventsControllerFindOne({ id: id });
-    if (!response) {
-      await interaction.reply({
-        content: "Invalid event ID! Please try again with a valid event ID.",
-      });
+    let eventDoc: EventDocument;
+    try {
+      const response = await bot.api.events.eventsControllerFindOne({ id: id });
+      eventDoc = response.data;
+    } catch (error) {
+      await interaction.editReply(errors.InvalidEventIdError);
       return;
     }
-    const eventDoc = response.data;
+
     const updateEventDto: UpdateEventDto = {};
     if (field === "status") {
       if (
@@ -86,17 +89,18 @@ const handleEdit: CommandHandler = async (bot, interaction, guildConfig) => {
       updateEventDto.dates = eventDoc.dates;
       updateEventDto.dates.endDate = endDate.toISOString();
     }
-    // if (field === "book") {
-    //   await interaction.reply({content: "Sorry, editing this field is currently not supported :("
-    //   });
-    //   return;
-    // }
+    if (field === "book") {
+      await interaction.reply({
+        content: "Sorry, editing this field is currently not supported :(",
+      });
+      return;
+    }
     if (field === "threads") {
       const threads = value.split(",").map((x) => x.trim());
       updateEventDto.threads = threads;
     }
     if (field === "requestedBy") {
-      const userDoc = await getUserByDiscordId(bot, value);
+      const userDoc = await getUserByDiscordId(bot.api, value);
       if (!userDoc) {
         await interaction.reply(`No user found with user Id: ${value}`);
         return;
@@ -106,27 +110,27 @@ const handleEdit: CommandHandler = async (bot, interaction, guildConfig) => {
         points: 0,
       };
     }
-    // if (field === "interested") {
-    //   await interaction.reply({
-    //     content: "Sorry, editing this field is currently not supported :(",
-    //     ephemeral: true,
-    //   });
-    //   return;
-    // }
-    // if (field === "readers") {
-    //   await interaction.reply({
-    //     content: "Sorry, editing this field is currently not supported :(",
-    //     ephemeral: true,
-    //   });
-    //   return;
-    // }
-    // if (field === "leaders") {
-    //   await interaction.reply({
-    //     content: "Sorry, editing this field is currently not supported :(",
-    //     ephemeral: true,
-    //   });
-    //   return;
-    // }
+    if (field === "interested") {
+      await interaction.reply({
+        content: "Sorry, editing this field is currently not supported :(",
+        ephemeral: true,
+      });
+      return;
+    }
+    if (field === "readers") {
+      await interaction.reply({
+        content: "Sorry, editing this field is currently not supported :(",
+        ephemeral: true,
+      });
+      return;
+    }
+    if (field === "leaders") {
+      await interaction.reply({
+        content: "Sorry, editing this field is currently not supported :(",
+        ephemeral: true,
+      });
+      return;
+    }
     if (field === "description") {
       updateEventDto.description = value;
     }
@@ -137,18 +141,12 @@ const handleEdit: CommandHandler = async (bot, interaction, guildConfig) => {
       id: id,
       updateEventDto: updateEventDto,
     });
-    if (!editResponse) {
-      await interaction.editReply(
-        "Something went wrong whiled updating the event :(",
-      );
-      return;
-    }
     await interaction.editReply({
-      content: "Event edit successful!",
+      content: "Event updated!",
       embeds: [getEventInfoEmbed(editResponse.data, interaction)],
     });
   } catch (err) {
-    await interaction.editReply("Something went wrong! Please try again later");
+    await interaction.editReply(errors.SomethingWentWrongError);
     await errorHandler(
       bot,
       "commands > events > edit",
@@ -159,16 +157,5 @@ const handleEdit: CommandHandler = async (bot, interaction, guildConfig) => {
     );
   }
 };
-
-async function getUserByDiscordId(bot: Bot, id: string) {
-  const userResponse = await bot.api.users.usersControllerFindOneByUserId({
-    userid: id,
-  });
-  if (!userResponse?.data) {
-    return undefined;
-  }
-  const user = userResponse.data;
-  return user;
-}
 
 export { handleEdit };

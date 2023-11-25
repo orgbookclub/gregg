@@ -1,4 +1,4 @@
-import { EventDocument } from "@orgbookclub/ows-client";
+import { BookDocument, EventDocument } from "@orgbookclub/ows-client";
 import {
   ButtonInteraction,
   ChatInputCommandInteraction,
@@ -42,7 +42,7 @@ export function getEventsListEmbed(
 
   function getEventItemField(event: EventDocument) {
     return {
-      name: `📕 ${event.book.title} - ${getAuthorString(event.book.authors)}`,
+      name: `📕 ${getBookTitleWithAuthors(event.book)}`,
       value:
         `> [Link](${event.book.url}) | __ID__: \`${event._id}\`` +
         `\n> __Type__: ${event.type} | __Status__: ${event.status}` +
@@ -75,7 +75,7 @@ export function getEventInfoEmbed(
   interaction: ChatInputCommandInteraction | ButtonInteraction,
 ) {
   const embed = new EmbedBuilder()
-    .setTitle(`${event.book.title} - ${getAuthorString(event.book.authors)}`)
+    .setTitle(getBookTitleWithAuthors(event.book))
     .setURL(event.book.url)
     .setFooter({ text: `Event ID: ${event._id}` })
     .setColor(Colors.Gold)
@@ -89,7 +89,7 @@ export function getEventInfoEmbed(
   if (event.description) {
     embed.addFields({
       name: "Description",
-      value: event.description,
+      value: customSubstring(event.description, 1000),
       inline: false,
     });
   }
@@ -154,7 +154,7 @@ export function getEventRequestEmbed(
     | ModalSubmitInteraction,
 ) {
   const embed = new EmbedBuilder()
-    .setTitle(`${event.book.title} - ${getAuthorString(event.book.authors)}`)
+    .setTitle(getBookTitleWithAuthors(event.book))
     .setURL(event.book.url)
     .setFooter({ text: `Event ID: ${event._id}` })
     .setColor(Colors.DarkGold)
@@ -201,16 +201,12 @@ export function getEventRequestEmbed(
  * Creates a title for a thread for an event.
  *
  * @param event The event.
+ * @param book
  * @returns The title.
  */
-export function getThreadTitle(event: EventDocument) {
-  let eventTitle = `${event.book.title} - ${getAuthorString(
-    event.book.authors,
-  )}`;
-  if (eventTitle.length >= 100) {
-    eventTitle = eventTitle.slice(0, 96) + "...";
-  }
-  return eventTitle;
+export function getBookTitleWithAuthors(book: BookDocument) {
+  const title = `${book.title} - ${getAuthorString(book.authors)}`;
+  return customSubstring(title, 100);
 }
 
 /**
