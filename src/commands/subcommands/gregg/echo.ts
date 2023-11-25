@@ -15,7 +15,7 @@ import { logToWebhook } from "../../../utils/logHandler";
  *
  * @param bot The bot instance.
  * @param interaction The interaction.
- * @param guildConfig
+ * @param guildConfig The guildconfig.
  */
 export const handleEcho: CommandHandler = async (
   bot,
