@@ -15,11 +15,11 @@ const logStreams = [
   { level: "debug", stream: pretty() },
   {
     level: "debug",
-    stream: createWriteStream(`logs/${now}_debug.txt`, { flags: "r+" }),
+    stream: createWriteStream(`logs/${now}_debug.txt`),
   },
   {
     level: "error",
-    stream: createWriteStream(`logs/${now}_error.txt`, { flags: "r+" }),
+    stream: createWriteStream(`logs/${now}_error.txt`),
   },
 ];
 
