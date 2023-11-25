@@ -108,7 +108,7 @@ const handleBroadcast: CommandHandler = async (
       ephemeral: true,
     });
   } catch (err) {
-    await interaction.editReply(errors.SomethingWentWrongError);
+    await interaction.followUp(errors.SomethingWentWrongError);
     await errorHandler(
       bot,
       "commands > events > broadcast",

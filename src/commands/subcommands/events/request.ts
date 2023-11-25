@@ -1,4 +1,5 @@
 import {
+  CreateEventDto,
   EventDocumentTypeEnum,
   EventDtoTypeEnum,
 } from "@orgbookclub/ows-client";
@@ -136,9 +137,9 @@ const handleRequest: CommandHandler = async (bot, interaction, guildConfig) => {
       error.name === "AxiosError" &&
       error.message === "Request failed with status code 503"
     ) {
-      await interaction.reply(errors.GoodreadsIssueError);
+      await interaction.followUp(errors.GoodreadsIssueError);
     } else {
-      await interaction.reply(errors.SomethingWentWrongError);
+      await interaction.followUp(errors.SomethingWentWrongError);
       await errorHandler(
         bot,
         "commands > events > request",
@@ -157,7 +158,7 @@ async function createEvent(
   userId: string,
   bot: Bot,
 ) {
-  const createEventDto = {
+  const createEventDto: CreateEventDto = {
     type: eventType,
     dates: {
       startDate: new Date(submission.startDate).toISOString(),
