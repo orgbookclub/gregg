@@ -1,8 +1,4 @@
 <p align="center">
-    <img src="./docs/_media/gregg.png" width="120" alt="Gregg Icon"/>
-</p>
-
-<p align="center">
 <a href="https://github.com/orgbookclub/gregg/actions/workflows/gregg-develop-ci.yml">
 <img src="https://github.com/orgbookclub/gregg/actions/workflows/gregg-develop-ci.yml/badge.svg">
 </a>
@@ -10,7 +6,6 @@
 <a href="https://github.com/orgbookclub/gregg/actions/workflows/gregg-deploy-azure.yml">
 <img src="https://github.com/orgbookclub/gregg/actions/workflows/gregg-deploy-azure.yml/badge.svg">
 </a>
-</p>
 
 <a href="https://github.com/orgbookclub/gregg/actions/workflows/gregg-prod-deploy-azure.yml">
 <img src="https://github.com/orgbookclub/gregg/actions/workflows/gregg-prod-deploy-azure.yml/badge.svg">

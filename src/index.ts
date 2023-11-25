@@ -1,4 +1,5 @@
 import { init } from "@sentry/node";
+import { ProfilingIntegration } from "@sentry/profiling-node";
 import { ActivityType, Client, WebhookClient } from "discord.js";
 
 import { IntentOptions } from "./config";
@@ -20,6 +21,8 @@ init({
   tracesSampleRate: 1.0,
   release: `gregg@v${process.env.npm_package_version}`,
   environment: process.env.NODE_ENV ?? "development",
+  profilesSampleRate: 1.0,
+  integrations: [new ProfilingIntegration()],
 });
 
 /**

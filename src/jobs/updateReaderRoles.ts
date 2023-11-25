@@ -1,5 +1,6 @@
 import { EventDtoStatusEnum } from "@orgbookclub/ows-client";
 import { GuildsConfig } from "@prisma/client";
+import { captureCheckIn } from "@sentry/node";
 import {
   Colors,
   EmbedBuilder,
@@ -42,7 +43,7 @@ async function getRoleMapping(
   return roles;
 }
 
-function updateMemberRole(
+async function updateMemberRole(
   roleWithPoints: [Role, number],
   member: GuildMember,
   points: number,
@@ -56,25 +57,43 @@ function updateMemberRole(
     .setTimestamp();
 
   if (hasRole(member, requiredRole.id) && points < requiredPoints) {
-    member.roles.remove(requiredRole);
+    await member.roles.remove(requiredRole);
 
     embed.setDescription(
       `${roleMention(requiredRole.id)} removed from ${userMention(member.id)}`,
     );
+    await logToWebhook({ embeds: [embed] }, logWebhookUrl);
   } else if (!hasRole(member, requiredRole.id) && points >= requiredPoints) {
-    member.roles.add(requiredRole);
+    await member.roles.add(requiredRole);
 
     embed.setDescription(
       `${roleMention(requiredRole.id)} added to ${userMention(member.id)}`,
     );
+    await logToWebhook({ embeds: [embed] }, logWebhookUrl);
   }
-  logToWebhook({ embeds: [embed] }, logWebhookUrl);
 }
 
+const jobName = "updateReaderRoles";
+
+const cronTime = "50 23 * * *";
+
 export const updateReaderRoles: Job = {
-  name: "updateReaderRoles",
-  cronTime: "0 23 * * *",
+  name: jobName,
+  cronTime: cronTime,
   callBack: async (bot) => {
+    const checkInId = captureCheckIn(
+      {
+        monitorSlug: jobName,
+        status: "in_progress",
+      },
+      {
+        schedule: {
+          type: "crontab",
+          value: cronTime,
+        },
+      },
+    );
+
     try {
       const guilds = await getAllGuildConfigs(bot);
 
@@ -99,12 +118,27 @@ export const updateReaderRoles: Job = {
 
           for (const roleWithPoints of rolesWithPoints) {
             const logWebhookUrl = guildDoc.config.logWebhookUrl;
-            updateMemberRole(roleWithPoints, member, points, logWebhookUrl);
+            await updateMemberRole(
+              roleWithPoints,
+              member,
+              points,
+              logWebhookUrl,
+            );
           }
         }
       }
+      captureCheckIn({
+        checkInId,
+        monitorSlug: jobName,
+        status: "ok",
+      });
     } catch (error) {
-      await errorHandler(bot, "jobs > updateReaderRoles", error);
+      await errorHandler(bot, `jobs > ${jobName}`, error);
+      captureCheckIn({
+        checkInId,
+        monitorSlug: jobName,
+        status: "error",
+      });
     }
   },
 };

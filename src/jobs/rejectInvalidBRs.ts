@@ -1,4 +1,5 @@
 import { EventDtoStatusEnum, EventDtoTypeEnum } from "@orgbookclub/ows-client";
+import { captureCheckIn } from "@sentry/node";
 
 import { Job } from "../models";
 import { getAllGuildConfigs } from "../utils/dbUtils";
@@ -6,10 +7,25 @@ import { errorHandler } from "../utils/errorHandler";
 import { getEventUpdateLogEmbed } from "../utils/eventUtils";
 import { logToWebhook } from "../utils/logHandler";
 
+const jobName = "rejectInvalidBRs";
+const cronTime = "10 23 * * *";
 export const rejectInvalidBRs: Job = {
-  name: "rejectInvalidBRs",
-  cronTime: "10 */12 * * *",
+  name: jobName,
+  cronTime: cronTime,
   callBack: async (bot) => {
+    const checkInId = captureCheckIn(
+      {
+        monitorSlug: jobName,
+        status: "in_progress",
+      },
+      {
+        schedule: {
+          type: "crontab",
+          value: cronTime,
+        },
+      },
+    );
+
     try {
       const guilds = await getAllGuildConfigs(bot);
       for (const guildDoc of guilds) {
@@ -34,12 +50,26 @@ export const rejectInvalidBRs: Job = {
               })
             ).data;
             const embed = getEventUpdateLogEmbed(eventDoc, updatedEventDoc);
-            logToWebhook({ embeds: [embed] }, guildDoc.config.logWebhookUrl);
+            await logToWebhook(
+              { embeds: [embed] },
+              guildDoc.config.logWebhookUrl,
+            );
           }
         }
       }
+
+      captureCheckIn({
+        checkInId,
+        monitorSlug: jobName,
+        status: "ok",
+      });
     } catch (error) {
-      await errorHandler(bot, "jobs > rejectInvalidBRs", error);
+      await errorHandler(bot, `jobs > ${jobName}`, error);
+      captureCheckIn({
+        checkInId,
+        monitorSlug: jobName,
+        status: "error",
+      });
     }
   },
 };
