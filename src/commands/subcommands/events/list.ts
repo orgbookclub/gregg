@@ -4,6 +4,7 @@ import {
   EventDtoTypeEnum,
 } from "@orgbookclub/ows-client";
 
+import { errors } from "../../../config/constants";
 import { CommandHandler } from "../../../models";
 import { errorHandler } from "../../../utils/errorHandler";
 import { getEventsListEmbed } from "../../../utils/eventUtils";
@@ -27,11 +28,15 @@ export const handleList: CommandHandler = async (bot, interaction) => {
       true,
     ) as keyof typeof EventDtoStatusEnum;
 
-    const response = await bot.api.events.eventsControllerFind({
-      status: eventStatus,
-      type: eventType,
-    });
-    if (!response || response.data.length === 0) {
+    let eventList: EventDocument[];
+    try {
+      const response = await bot.api.events.eventsControllerFind({
+        status: eventStatus,
+        type: eventType,
+      });
+      eventList = response.data;
+      if (eventList.length === 0) throw new Error();
+    } catch (error) {
       await interaction.editReply(
         "There are no events to display with the given filters",
       );
@@ -40,7 +45,7 @@ export const handleList: CommandHandler = async (bot, interaction) => {
     const pageSize = 5;
     const pagedContentManager = new PaginationManager<EventDocument>(
       pageSize,
-      response.data,
+      eventList,
       bot,
       getEventsListEmbed,
     );
@@ -49,7 +54,7 @@ export const handleList: CommandHandler = async (bot, interaction) => {
     );
     pagedContentManager.createCollectors(message, interaction, 5 * 60 * 1000);
   } catch (err) {
-    await interaction.editReply("Something went wrong! Please try again later");
+    await interaction.editReply(errors.SomethingWentWrongError);
     await errorHandler(
       bot,
       "commands > events > list",

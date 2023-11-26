@@ -1,3 +1,4 @@
+import { EventDocument } from "@orgbookclub/ows-client";
 import {
   ModalSubmitInteraction,
   TextInputStyle,
@@ -7,10 +8,15 @@ import {
   ModalBuilder,
   TextInputBuilder,
   GuildMember,
+  EmbedBuilder,
+  Colors,
+  userMention,
 } from "discord.js";
 
+import { errors } from "../../../config/constants";
 import { CommandHandler } from "../../../models";
 import { errorHandler } from "../../../utils/errorHandler";
+import { logToWebhook } from "../../../utils/logHandler";
 import { getUserMentionString, hasRole } from "../../../utils/userUtils";
 
 const EVENT_BROADCAST_MODAL_ID = "eventBroadcastModal";
@@ -36,7 +42,7 @@ const handleBroadcast: CommandHandler = async (
       !hasRole(interaction.member as GuildMember, guildConfig.staffRole)
     ) {
       await interaction.reply({
-        content: "Sorry, this command is restricted for BR Leader use only!",
+        content: errors.BRLeaderRestrictionError,
         ephemeral: true,
       });
       return;
@@ -63,18 +69,19 @@ const handleBroadcast: CommandHandler = async (
       modalSubmitInteraction.fields.getTextInputValue(MESSAGE_FIELD_ID);
 
     // Get event details
-    const response = await bot.api.events.eventsControllerFindOne({
-      id: eventId,
-    });
-    if (!response) {
+    let eventDoc: EventDocument;
+    try {
+      const response = await bot.api.events.eventsControllerFindOne({
+        id: eventId,
+      });
+      eventDoc = response.data;
+    } catch (error) {
       await modalSubmitInteraction.reply({
-        content: "Invalid Event ID!",
+        content: errors.InvalidEventIdError,
         ephemeral: true,
       });
       return;
     }
-
-    const eventDoc = response.data;
 
     let threadToPost;
     if (!channel) {
@@ -96,15 +103,29 @@ const handleBroadcast: CommandHandler = async (
       await threadToPost.send({ content: mentionString });
     }
     if (messageContent.length !== 0) {
-      await threadToPost.send({ content: messageContent });
+      const message = await threadToPost.send({ content: messageContent });
+      await message.pin();
     }
 
     await modalSubmitInteraction.reply({
       content: "Your message has been broadcasted!",
       ephemeral: true,
     });
+
+    if (guildConfig) {
+      const embed = new EmbedBuilder()
+        .setColor(Colors.Green)
+        .setTimestamp()
+        .setTitle("Event Broadcast")
+        .setDescription(
+          `${userMention(interaction.user.id)} broadcasted message for event ${
+            eventDoc._id
+          } `,
+        );
+      await logToWebhook({ embeds: [embed] }, guildConfig.logWebhookUrl);
+    }
   } catch (err) {
-    await interaction.editReply("Something went wrong! Please try again later");
+    await interaction.followUp(errors.SomethingWentWrongError);
     await errorHandler(
       bot,
       "commands > events > broadcast",

@@ -1,17 +1,17 @@
-import { EventDtoStatusEnum } from "@orgbookclub/ows-client";
+import { EventDocument, EventDtoStatusEnum } from "@orgbookclub/ows-client";
 import {
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
   ChannelType,
   GuildMember,
   channelMention,
   roleMention,
 } from "discord.js";
 
+import { errors } from "../../../config/constants";
 import { CommandHandler } from "../../../models";
+import { createEventMessageDoc } from "../../../utils/dbUtils";
 import { errorHandler } from "../../../utils/errorHandler";
 import { getEventInfoEmbed } from "../../../utils/eventUtils";
+import { getButtonActionRow } from "../../../utils/messageUtils";
 import { hasRole } from "../../../utils/userUtils";
 
 /**
@@ -33,9 +33,13 @@ const handleAnnounce: CommandHandler = async (
       !hasRole(interaction.member as GuildMember, guildConfig.staffRole)
     ) {
       await interaction.reply({
-        content: "Sorry, this command is restricted for staff use only!",
+        content: errors.StaffRestrictionError,
         ephemeral: true,
       });
+      return;
+    }
+    if (!interaction.guild) {
+      await interaction.reply("You can't use this outside a guild!");
       return;
     }
 
@@ -44,22 +48,24 @@ const handleAnnounce: CommandHandler = async (
     const channel =
       interaction.options.getChannel<ChannelType.GuildAnnouncement>("channel");
 
-    const response = await bot.api.events.eventsControllerFindOne({ id: id });
-    if (!response) {
-      await interaction.editReply("Invalid Event ID!");
+    let eventDoc: EventDocument;
+    try {
+      const response = await bot.api.events.eventsControllerFindOne({ id: id });
+      eventDoc = response.data;
+    } catch (error) {
+      await interaction.editReply(errors.InvalidEventIdError);
       return;
     }
 
-    const eventDoc = response.data;
     if (eventDoc.status !== EventDtoStatusEnum.Approved) {
       await interaction.editReply(
-        "Event must be in 'Approved' state! Announcements can only be created for approved events",
+        "Event must be in 'Approved' state! Announcements can only be created for Approved events",
       );
       return;
     }
+
     let announcementChannel = channel;
     if (!channel) {
-      if (!interaction.guild) return;
       const channelId = guildConfig?.eventAnnouncementChannel ?? "Not set";
       const configuredChannel = await bot.channels.fetch(channelId);
 
@@ -77,34 +83,34 @@ const handleAnnounce: CommandHandler = async (
     if (!announcementChannel) return;
     const pingRole = guildConfig?.serverEventsRole ?? "Not set";
     const message = await announcementChannel.send({
-      content:
-        `${roleMention(pingRole)} New ${
-          eventDoc.type
-        }! Please click on the button if you'd like to be pinged for discussions.` +
-        "\n" +
-        `Discussion will take place in ${eventDoc.threads
-          .map((x) => channelMention(x))
-          .join(", ")}`,
+      content: getAnnouncementString(pingRole, eventDoc),
       embeds: [getEventInfoEmbed(eventDoc, interaction)],
-      components: [getButtonActionRow(eventDoc._id)],
+      components: [getButtonActionRow(eventDoc._id, "ea")],
     });
-    await interaction.editReply(`Announcement posted: ${message.url}`);
 
-    const updateResponse = await bot.api.events.eventsControllerUpdate({
-      id: eventDoc._id,
-      updateEventDto: { status: EventDtoStatusEnum.Announced },
-    });
-    if (!updateResponse) {
+    await createEventMessageDoc(
+      bot,
+      interaction.guild.id,
+      eventDoc._id,
+      message,
+      "Announcement",
+    );
+
+    try {
+      await bot.api.events.eventsControllerUpdate({
+        id: eventDoc._id,
+        updateEventDto: { status: EventDtoStatusEnum.Announced },
+      });
+      await interaction.editReply({
+        content: `Announcement posted: ${message.url} and event status changed to 'Announced'`,
+      });
+    } catch (error) {
       await interaction.editReply(
-        `Announcement posted: ${message.url} but There was an error updating the event status :(`,
+        `Announcement posted: ${message.url} but there was an error updating the event status :(`,
       );
-      return;
     }
-    await interaction.editReply({
-      content: `Announcement posted: ${message.url} and event status changed to 'Announced'`,
-    });
   } catch (err) {
-    await interaction.reply("Something went wrong! Please try again later");
+    await interaction.reply(errors.SomethingWentWrongError);
     await errorHandler(
       bot,
       "commands > events > announce",
@@ -116,22 +122,19 @@ const handleAnnounce: CommandHandler = async (
   }
 };
 
-function getButtonActionRow(eventId: string) {
-  const interestedButton = new ButtonBuilder()
-    .setLabel("Join")
-    .setEmoji({ name: "✅" })
-    .setStyle(ButtonStyle.Success)
-    .setCustomId(`ea-${eventId}-interested`);
-  const notInterestedButton = new ButtonBuilder()
-    .setLabel("Leave")
-    .setEmoji({ name: "⛔" })
-    .setStyle(ButtonStyle.Danger)
-    .setCustomId(`ea-${eventId}-notInterested`);
-  const buttonActionRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
-    interestedButton,
-    notInterestedButton,
+function getAnnouncementString(
+  pingRole: string,
+  eventDoc: EventDocument,
+): string | undefined {
+  return (
+    `${roleMention(pingRole)} New ${
+      eventDoc.type
+    }! Please click on the Join ✅ button if you'd like to be pinged for discussions.` +
+    "\n" +
+    `Discussion will take place in ${eventDoc.threads
+      .map((x) => channelMention(x))
+      .join(", ")}`
   );
-  return buttonActionRow;
 }
 
 export { handleAnnounce };

@@ -1,4 +1,8 @@
-import { Participant, ParticipantDto } from "@orgbookclub/ows-client";
+import {
+  Participant,
+  ParticipantDto,
+  UserDocument,
+} from "@orgbookclub/ows-client";
 import { GuildMember, userMention } from "discord.js";
 
 import { OWSClient } from "../providers/owsClient";
@@ -31,11 +35,8 @@ export async function upsertUser(
   userId: string,
   username: string,
 ) {
-  const response = await api.users.usersControllerFindOneByUserId({
-    userid: userId,
-  });
-  let userDoc = response.data;
-  if (!userDoc) {
+  const existingUser = await getUserByDiscordId(api, userId);
+  if (existingUser === undefined) {
     logger.debug(`Creating new user ${userId}`);
     const userCreateResponse = await api.users.usersControllerCreate({
       createUserDto: {
@@ -45,9 +46,10 @@ export async function upsertUser(
         profile: { bio: "" },
       },
     });
-    userDoc = userCreateResponse.data;
+    return userCreateResponse.data;
+  } else {
+    return existingUser;
   }
-  return userDoc;
 }
 
 /**
@@ -89,4 +91,24 @@ export function participantToDto(participant: Participant) {
     user: participant.user._id,
   };
   return participantDto;
+}
+
+/**
+ * Gets a user by their Discord ID.
+ *
+ * @param api The ows client.
+ * @param id The discord ID of the user.
+ * @returns The user if found, undefined otherwise.
+ */
+export async function getUserByDiscordId(api: OWSClient, id: string) {
+  let userDoc: UserDocument;
+  try {
+    const userResponse = await api.users.usersControllerFindOneByUserId({
+      userid: id,
+    });
+    userDoc = userResponse.data;
+  } catch (error) {
+    return undefined;
+  }
+  return userDoc;
 }

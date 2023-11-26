@@ -8,4 +8,5 @@ All commands listed below can be used after typing `/config` in the chat bar on 
 
 | Command                          | Description                                                               |
 | -------------------------------- | ------------------------------------------------------------------------- |
+| get                              | Gets the current guild config for the server                              |
 | setreaderole \<role\> \<points\> | Sets a reader role, along with its minimum required points for the server |

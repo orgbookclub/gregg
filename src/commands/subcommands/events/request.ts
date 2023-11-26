@@ -1,11 +1,10 @@
 import {
+  CreateEventDto,
   EventDocumentTypeEnum,
   EventDtoTypeEnum,
 } from "@orgbookclub/ows-client";
 import {
   ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
   GuildMember,
   ModalActionRowComponentBuilder,
   ModalBuilder,
@@ -14,13 +13,16 @@ import {
   TextInputStyle,
 } from "discord.js";
 
+import { errors } from "../../../config/constants";
 import { Bot, CommandHandler } from "../../../models";
 import { EventRequestSubmission } from "../../../models/commands/events/EventRequestSubmission";
+import { createEventMessageDoc } from "../../../utils/dbUtils";
 import { errorHandler } from "../../../utils/errorHandler";
 import {
   getEventRequestEmbed,
   getNextMonthRange,
 } from "../../../utils/eventUtils";
+import { getButtonActionRow } from "../../../utils/messageUtils";
 import { hasRole, upsertUser } from "../../../utils/userUtils";
 
 const EVENT_REQUEST_MODAL_ID = "eventRequestModal";
@@ -105,16 +107,24 @@ const handleRequest: CommandHandler = async (bot, interaction, guildConfig) => {
       const channel = await bot.channels.fetch(channelId);
       if (!channel?.isTextBased()) {
         await modalSubmitInteraction.editReply(
-          "Unable to post event request in the configured channel. Please contact staff",
+          "Unable to post event request in the configured channel. Please contact staff!",
         );
         return;
       }
       const embed = getEventRequestEmbed(eventDoc, modalSubmitInteraction);
-      const buttonActionRow = getButtonActionRow(eventDoc._id);
-      await channel.send({
+      const buttonActionRow = getButtonActionRow(eventDoc._id, "er");
+      const message = await channel.send({
         embeds: [embed],
         components: [buttonActionRow],
       });
+
+      await createEventMessageDoc(
+        bot,
+        interaction.guild.id,
+        eventDoc._id,
+        message,
+        "BRRequest",
+      );
     }
 
     await modalSubmitInteraction.editReply({
@@ -126,12 +136,9 @@ const handleRequest: CommandHandler = async (bot, interaction, guildConfig) => {
       error.name === "AxiosError" &&
       error.message === "Request failed with status code 503"
     ) {
-      await interaction.reply(
-        "Unfortunately, due to Goodreads being Goodreads, I cannot complete your request at the moment :(" +
-          "\n" +
-          "Please try again later, or use Storygraph instead �",
-      );
+      await interaction.followUp(errors.GoodreadsIssueError);
     } else {
+      await interaction.followUp(errors.SomethingWentWrongError);
       await errorHandler(
         bot,
         "commands > events > request",
@@ -140,7 +147,6 @@ const handleRequest: CommandHandler = async (bot, interaction, guildConfig) => {
         undefined,
         interaction,
       );
-      await interaction.reply("Something went wrong! Please try again later");
     }
   }
 };
@@ -151,7 +157,7 @@ async function createEvent(
   userId: string,
   bot: Bot,
 ) {
-  const createEventDto = {
+  const createEventDto: CreateEventDto = {
     type: eventType,
     dates: {
       startDate: new Date(submission.startDate).toISOString(),
@@ -167,24 +173,6 @@ async function createEvent(
     createEventDto: createEventDto,
   });
   return response;
-}
-
-function getButtonActionRow(eventId: string) {
-  const interestedButton = new ButtonBuilder()
-    .setLabel("Join")
-    .setEmoji({ name: "✅" })
-    .setStyle(ButtonStyle.Success)
-    .setCustomId(`er-${eventId}-interested`);
-  const notInterestedButton = new ButtonBuilder()
-    .setLabel("Leave")
-    .setEmoji({ name: "⛔" })
-    .setStyle(ButtonStyle.Danger)
-    .setCustomId(`er-${eventId}-notInterested`);
-  const buttonActionRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
-    interestedButton,
-    notInterestedButton,
-  );
-  return buttonActionRow;
 }
 
 function getEventRequestModal(eventType: string) {
@@ -237,6 +225,9 @@ function getEventRequestModal(eventType: string) {
   const reasonInput = new TextInputBuilder()
     .setCustomId(REQUEST_REASON_FIELD_ID)
     .setLabel("Why are you requesting this book?")
+    .setPlaceholder(
+      "A short description of why other folks should join your event",
+    )
     .setRequired(true)
     .setStyle(TextInputStyle.Paragraph);
   const reasonActionRow =

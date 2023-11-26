@@ -1,5 +1,6 @@
 import { GuildMember } from "discord.js";
 
+import { errors } from "../../../config/constants";
 import { CommandHandler } from "../../../models";
 import { errorHandler } from "../../../utils/errorHandler";
 import { hasRole } from "../../../utils/userUtils";
@@ -23,14 +24,14 @@ const handleSetReaderRole: CommandHandler = async (
       !hasRole(interaction.member as GuildMember, guildConfig.staffRole)
     ) {
       await interaction.reply({
-        content: "Sorry, this command is restricted for staff use only!",
+        content: errors.StaffRestrictionError,
         ephemeral: true,
       });
       return;
     }
     await interaction.deferReply();
     if (!interaction.guild) {
-      await interaction.editReply("Something went wrong!");
+      await interaction.editReply(errors.SomethingWentWrongError);
       return;
     }
 
@@ -74,9 +75,9 @@ const handleSetReaderRole: CommandHandler = async (
         },
       },
     });
-    await interaction.editReply("Guild Config Updated");
+    await interaction.editReply("Guild Config Updated!");
   } catch (err) {
-    await interaction.editReply("Something went wrong! Please try again later");
+    await interaction.editReply(errors.SomethingWentWrongError);
     await errorHandler(
       bot,
       "commands > config > setReaderRole",

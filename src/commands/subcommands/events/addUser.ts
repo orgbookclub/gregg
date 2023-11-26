@@ -1,6 +1,7 @@
-import { UpdateEventDto } from "@orgbookclub/ows-client";
+import { EventDocument, UpdateEventDto } from "@orgbookclub/ows-client";
 import { GuildMember } from "discord.js";
 
+import { errors } from "../../../config/constants";
 import { CommandHandler } from "../../../models";
 import { errorHandler } from "../../../utils/errorHandler";
 import { getEventInfoEmbed } from "../../../utils/eventUtils";
@@ -25,7 +26,7 @@ const handleAddUser: CommandHandler = async (bot, interaction, guildConfig) => {
       !hasRole(interaction.member as GuildMember, guildConfig.staffRole)
     ) {
       await interaction.reply({
-        content: "Sorry, this command is restricted for staff use only!",
+        content: errors.StaffRestrictionError,
         ephemeral: true,
       });
       return;
@@ -45,16 +46,17 @@ const handleAddUser: CommandHandler = async (bot, interaction, guildConfig) => {
       return;
     }
 
-    const response = await bot.api.events.eventsControllerFindOne({ id: id });
-    if (!response) {
-      await interaction.editReply({
-        content: "Invalid event ID! Please try again with a valid event ID.",
-      });
+    let eventDoc: EventDocument;
+    try {
+      const response = await bot.api.events.eventsControllerFindOne({ id: id });
+      eventDoc = response.data;
+    } catch (error) {
+      await interaction.editReply(errors.InvalidEventIdError);
       return;
     }
+
     const userDoc = await upsertUser(bot.api, user.id, user.username);
 
-    const eventDoc = response.data;
     const allParticipants = eventDoc[participantType];
     const participantsWithoutCurrentUser = allParticipants.filter(
       (x) => x.user.userId !== user.id,
@@ -79,7 +81,7 @@ const handleAddUser: CommandHandler = async (bot, interaction, guildConfig) => {
       embeds: [getEventInfoEmbed(updatedResponse.data, interaction)],
     });
   } catch (err) {
-    await interaction.reply("Something went wrong! Please try again later");
+    await interaction.reply(errors.SomethingWentWrongError);
     await errorHandler(
       bot,
       "commands > events > addUser",

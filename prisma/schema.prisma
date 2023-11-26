@@ -113,3 +113,16 @@ model users {
   username String
   v        Int?   @map("__v") @ignore
 }
+
+model eventMessages {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  guildId    String
+  eventId    String
+  channelId  String
+  messageId  String
+  messageUrl String
+  type       String
+  createdOn  DateTime @db.Date
+  updatedOn  DateTime @db.Date
+  v          Int?     @map("__v") @ignore
+}
