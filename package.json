@@ -25,11 +25,10 @@
     "lint": "eslint src --max-warnings 0 && prettier src --check",
     "lint:fix": "eslint src --max-warnings 0 --fix && prettier src --write",
     "start": "node ./dist/index.js",
-    "start:dev": "tsc && node -r dotenv/config ./dist/index.js",
-    "docs:serve": "docsify serve docs"
+    "start:dev": "tsc && node -r dotenv/config ./dist/index.js"
   },
   "dependencies": {
-    "@orgbookclub/ows-client": "^0.4.0",
+    "@orgbookclub/ows-client": "^1.0.0",
     "@prisma/client": "^5.6.0",
     "@sentry/node": "^7.80.1",
     "@sentry/profiling-node": "^1.2.6",
@@ -46,7 +45,6 @@
     "@typescript-eslint/eslint-plugin": "^6.8.0",
     "@typescript-eslint/parser": "^6.1.0",
     "csv": "^6.3.5",
-    "docsify-cli": "^4.4.4",
     "dotenv": "^16.0.3",
     "eslint": "^8.45.0",
     "eslint-config-prettier": "^9.0.0",
