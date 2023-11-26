@@ -36,7 +36,7 @@ export async function upsertUser(
   username: string,
 ) {
   const existingUser = await getUserByDiscordId(api, userId);
-  if (existingUser === undefined) {
+  if (existingUser === undefined || existingUser === null) {
     logger.debug(`Creating new user ${userId}`);
     const userCreateResponse = await api.users.usersControllerCreate({
       createUserDto: {
@@ -101,14 +101,12 @@ export function participantToDto(participant: Participant) {
  * @returns The user if found, undefined otherwise.
  */
 export async function getUserByDiscordId(api: OWSClient, id: string) {
-  let userDoc: UserDocument;
   try {
     const userResponse = await api.users.usersControllerFindOneByUserId({
       userid: id,
     });
-    userDoc = userResponse.data;
+    return userResponse.data;
   } catch (error) {
     return undefined;
   }
-  return userDoc;
 }
