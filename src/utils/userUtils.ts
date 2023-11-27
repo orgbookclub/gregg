@@ -1,8 +1,4 @@
-import {
-  Participant,
-  ParticipantDto,
-  UserDocument,
-} from "@orgbookclub/ows-client";
+import { Participant, ParticipantDto } from "@orgbookclub/ows-client";
 import { GuildMember, userMention } from "discord.js";
 
 import { OWSClient } from "../providers/owsClient";
