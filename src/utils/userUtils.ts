@@ -101,12 +101,24 @@ export function participantToDto(participant: Participant) {
  * @returns The user if found, undefined otherwise.
  */
 export async function getUserByDiscordId(api: OWSClient, id: string) {
+<<<<<<< HEAD
+=======
+  let userDoc: UserDocument;
+>>>>>>> origin/develop
   try {
     const userResponse = await api.users.usersControllerFindOneByUserId({
       userid: id,
     });
+<<<<<<< HEAD
     return userResponse.data;
   } catch (error) {
     return undefined;
   }
+=======
+    userDoc = userResponse.data;
+  } catch (error) {
+    return undefined;
+  }
+  return userDoc;
+>>>>>>> origin/develop
 }
