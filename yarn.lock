@@ -179,10 +179,10 @@
     mkdirp "^1.0.4"
     rimraf "^3.0.2"
 
-"@orgbookclub/ows-client@^1.0.0":
-  version "1.0.0"
-  resolved "https://npm.pkg.github.com/download/@orgbookclub/ows-client/1.0.0/3eb9ab9178fa21006ddae50686ddbc07221d6ec2#3eb9ab9178fa21006ddae50686ddbc07221d6ec2"
-  integrity sha512-WySHyu5m44KHRU3LzdGdUwLi8n6BxdU+zYbXVfmzEMLWBNG065htyh17eyPMTe4JC8s24IeH3IW/1Zcf7PB2fw==
+"@orgbookclub/ows-client@^1.1.0":
+  version "1.1.0"
+  resolved "https://npm.pkg.github.com/download/@orgbookclub/ows-client/1.1.0/241c10a9d3db85afbdff3b82adcaea041f83c3ae#241c10a9d3db85afbdff3b82adcaea041f83c3ae"
+  integrity sha512-SXbw2GLTd+Nhcdo2+gpPsR/PXNmDrodlnHpDmHdDKNX06Sdv/HsM1W9Fac5Qs0TgwNDyF3XLe5fIf1r6zyDuSw==
   dependencies:
     axios "^0.27.2"
 
