@@ -13,6 +13,7 @@ import {
 
 import { Context, Bot } from "../models";
 import { errorHandler } from "../utils/errorHandler";
+import { customSubstring } from "../utils/stringUtils";
 
 const bookmark: Context = {
   data: new ContextMenuCommandBuilder()
@@ -78,7 +79,7 @@ function createBookmarkEmbed(message: Message<boolean>) {
     embed.addFields([
       {
         name: "Message",
-        value: message.content,
+        value: customSubstring(message.content, 1000),
         inline: false,
       },
     ]);
