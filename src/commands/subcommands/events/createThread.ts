@@ -15,6 +15,7 @@ import {
 
 import { errors } from "../../../config/constants";
 import { Bot, CommandHandler } from "../../../models";
+import { createEventMessageDoc } from "../../../utils/dbUtils";
 import { errorHandler } from "../../../utils/errorHandler";
 import {
   getEventInfoEmbed,
@@ -90,7 +91,20 @@ const handleCreateThread: CommandHandler = async (
       const post = await forum.threads.create({
         name: threadTitle ?? getBookTitleWithAuthors(eventDoc.book),
         message: { content: getPostContent(eventDoc) },
+        appliedTags: ["ongoing"],
       });
+      const starterMessage = await post.fetchStarterMessage();
+      if (starterMessage && interaction.guild) {
+        await starterMessage.pin();
+
+        await createEventMessageDoc(
+          bot,
+          interaction.guild.id,
+          eventDoc._id,
+          starterMessage,
+          "eventThreadStarterMessage",
+        );
+      }
       await bot.api.events.eventsControllerUpdate({
         id: eventDoc._id,
         updateEventDto: {
