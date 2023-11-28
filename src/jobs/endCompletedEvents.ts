@@ -76,7 +76,7 @@ async function endEvent(bot: Bot, eventDoc: EventDocument, webhookUrl: string) {
       type: "BRRequest",
     },
   });
-  const messageDeleteEmbed = new EmbedBuilder()
+  const messageUpdateEmbed = new EmbedBuilder()
     .setColor(Colors.Yellow)
     .setTitle("Message Update")
     .setDescription(`Updated BR Announcement Message for ${eventDoc._id}`)
@@ -90,7 +90,7 @@ async function endEvent(bot: Bot, eventDoc: EventDocument, webhookUrl: string) {
         embeds: message.embeds,
         content: message.content,
       });
-      await logToWebhook({ embeds: [messageDeleteEmbed] }, webhookUrl);
+      await logToWebhook({ embeds: [messageUpdateEmbed] }, webhookUrl);
     } catch (error) {
       logger.error(
         `Unable to update message ${doc.messageId} in channel ${doc.channelId}`,
