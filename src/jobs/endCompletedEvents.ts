@@ -79,7 +79,7 @@ async function endEvent(bot: Bot, eventDoc: EventDocument, webhookUrl: string) {
   const messageUpdateEmbed = new EmbedBuilder()
     .setColor(Colors.Yellow)
     .setTitle("Message Update")
-    .setDescription(`Updated BR Announcement Message for ${eventDoc._id}`)
+    .setDescription(`Updated BR Announcement Message for \`${eventDoc._id}\``)
     .setTimestamp();
   for (const doc of announcementMessages) {
     try {

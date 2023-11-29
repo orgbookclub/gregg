@@ -151,7 +151,9 @@ async function addAnnouncementLinkInThread(
   const messageUpdateEmbed = new EmbedBuilder()
     .setColor(Colors.Yellow)
     .setTitle("Message Update")
-    .setDescription(`Updated Event thread starter message for ${eventDoc._id}`)
+    .setDescription(
+      `Updated Event thread starter message with announcement link for \`${eventDoc._id}\``,
+    )
     .setTimestamp();
   for (const doc of starterMessages) {
     try {
@@ -160,7 +162,7 @@ async function addAnnouncementLinkInThread(
       )) as TextChannel;
       const message = await threadChannel.messages.fetch(doc.messageId);
       const updatedMessageContent =
-        message.content + `\nAnnouncement: ${announcementMessage.url}`;
+        message.content + `\n**Announcement**: ${announcementMessage.url}`;
       await message.edit({
         components: message.components,
         embeds: message.embeds,
