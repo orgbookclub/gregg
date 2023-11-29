@@ -191,7 +191,7 @@ export function getEventAnnouncementEmbed(
     embed.addFields({
       name: "Leader(s)",
       value: getUserMentionString(event.leaders, false),
-      inline: true,
+      inline: false,
     });
   }
   if (event.book.numPages) {

@@ -53,7 +53,10 @@ const handleEdit: CommandHandler = async (bot, interaction, guildConfig) => {
           value as keyof typeof EventDtoStatusEnum,
         )
       ) {
-        await interaction.reply({ content: "Invalid event status!" });
+        await interaction.editReply({
+          content:
+            "Invalid event status! Input is case-sensitive, please try again",
+        });
         return;
       }
       const status = value as keyof typeof EventDtoStatusEnum;
@@ -65,7 +68,10 @@ const handleEdit: CommandHandler = async (bot, interaction, guildConfig) => {
           value as keyof typeof EventDtoTypeEnum,
         )
       ) {
-        await interaction.reply({ content: "Invalid event type!" });
+        await interaction.editReply({
+          content:
+            "Invalid event type! Input is case-sensitive, please try again",
+        });
         return;
       }
       const type = value as keyof typeof EventDtoTypeEnum;
@@ -73,7 +79,7 @@ const handleEdit: CommandHandler = async (bot, interaction, guildConfig) => {
     }
     if (field === "dates.startDate") {
       if (isNaN(Date.parse(value))) {
-        await interaction.reply({ content: "Invalid date format!" });
+        await interaction.editReply({ content: "Invalid date format!" });
         return;
       }
       const startDate = new Date(value);
@@ -82,7 +88,7 @@ const handleEdit: CommandHandler = async (bot, interaction, guildConfig) => {
     }
     if (field === "dates.endDate") {
       if (isNaN(Date.parse(value))) {
-        await interaction.reply({ content: "Invalid date format!" });
+        await interaction.editReply({ content: "Invalid date format!" });
         return;
       }
       const endDate = new Date(value);
@@ -90,7 +96,7 @@ const handleEdit: CommandHandler = async (bot, interaction, guildConfig) => {
       updateEventDto.dates.endDate = endDate.toISOString();
     }
     if (field === "book") {
-      await interaction.reply({
+      await interaction.editReply({
         content: "Sorry, editing this field is currently not supported :(",
       });
       return;
@@ -102,7 +108,7 @@ const handleEdit: CommandHandler = async (bot, interaction, guildConfig) => {
     if (field === "requestedBy") {
       const userDoc = await getUserByDiscordId(bot.api, value);
       if (!userDoc) {
-        await interaction.reply(`No user found with user Id: ${value}`);
+        await interaction.editReply(`No user found with user Id: ${value}`);
         return;
       }
       updateEventDto.requestedBy = {
@@ -111,23 +117,20 @@ const handleEdit: CommandHandler = async (bot, interaction, guildConfig) => {
       };
     }
     if (field === "interested") {
-      await interaction.reply({
+      await interaction.editReply({
         content: "Sorry, editing this field is currently not supported :(",
-        ephemeral: true,
       });
       return;
     }
     if (field === "readers") {
-      await interaction.reply({
+      await interaction.editReply({
         content: "Sorry, editing this field is currently not supported :(",
-        ephemeral: true,
       });
       return;
     }
     if (field === "leaders") {
-      await interaction.reply({
+      await interaction.editReply({
         content: "Sorry, editing this field is currently not supported :(",
-        ephemeral: true,
       });
       return;
     }
@@ -142,7 +145,7 @@ const handleEdit: CommandHandler = async (bot, interaction, guildConfig) => {
       updateEventDto: updateEventDto,
     });
     await interaction.editReply({
-      content: "Event updated!",
+      content: `Event ${editResponse.data._id} updated`,
       embeds: [getEventInfoEmbed(editResponse.data, interaction)],
     });
   } catch (err) {

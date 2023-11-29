@@ -15,6 +15,7 @@ import {
 
 import { errors } from "../../../config/constants";
 import { Bot, CommandHandler } from "../../../models";
+import { createEventMessageDoc } from "../../../utils/dbUtils";
 import { errorHandler } from "../../../utils/errorHandler";
 import {
   getEventInfoEmbed,
@@ -87,17 +88,36 @@ const handleCreateThread: CommandHandler = async (
         );
         return;
       }
+      const ongoingTag = forum.availableTags.filter(
+        (x) => x.name === "ongoing",
+      );
+
       const post = await forum.threads.create({
         name: threadTitle ?? getBookTitleWithAuthors(eventDoc.book),
         message: { content: getPostContent(eventDoc) },
+        appliedTags: ongoingTag.length !== 0 ? [ongoingTag[0].id] : [],
       });
+      const starterMessage = await post.fetchStarterMessage();
+      if (starterMessage && interaction.guild) {
+        await starterMessage.pin();
+
+        await createEventMessageDoc(
+          bot,
+          interaction.guild.id,
+          eventDoc._id,
+          starterMessage,
+          "eventThreadStarterMessage",
+        );
+      }
       await bot.api.events.eventsControllerUpdate({
         id: eventDoc._id,
         updateEventDto: {
           threads: [...eventDoc.threads, post.id],
         },
       });
-      await interaction.editReply(`Created ${channelMention(post.id)}`);
+      await interaction.editReply(
+        `Created ${channelMention(post.id)} for event ${eventDoc._id}`,
+      );
       return;
     }
 
@@ -120,7 +140,9 @@ const handleCreateThread: CommandHandler = async (
       if (threadTitle) {
         await channel.edit({ name: threadTitle });
       }
-      await interaction.editReply(`Updated ${channelMention(channel.id)}`);
+      await interaction.editReply(
+        `Updated ${channelMention(channel.id)} for event ${eventDoc._id}`,
+      );
     }
   } catch (err) {
     await interaction.editReply(errors.SomethingWentWrongError);
