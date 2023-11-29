@@ -14,6 +14,8 @@ import { OWSClient } from "../src/providers/owsClient";
 import { logger } from "../src/utils/logHandler";
 import { upsertUser } from "../src/utils/userUtils";
 
+import { getOwsClient } from "./utils";
+
 const BASE_URL = process.env.API_URL ?? "http://localhost:3000";
 const DATA_CSV = "data/data.csv";
 const MEMBERS_CSV = "data/members.csv";
@@ -21,7 +23,7 @@ const MEMBERS_CSV = "data/members.csv";
 main();
 
 async function main() {
-  const client = await getOwsClient();
+  const client = await getOwsClient(BASE_URL);
   const memberMap = await getMemberIdMap();
   const groupedEventRecords: Record<string, any[]> =
     await getGroupedEventRecords();
@@ -154,14 +156,6 @@ async function getMemberIdMap() {
     memberMap[row["username"].toString().toLowerCase()] = row["id"];
   });
   return memberMap;
-}
-
-async function getOwsClient() {
-  logger.debug(`Connecting to ${BASE_URL}...`);
-  const client = new OWSClient(BASE_URL);
-  await client.initialize();
-  logger.debug("Initalized API Client!");
-  return client;
 }
 
 async function readCsv(filepath: string) {

@@ -101,7 +101,11 @@ export async function getUserByDiscordId(api: OWSClient, id: string) {
     const userResponse = await api.users.usersControllerFindOneByUserId({
       userid: id,
     });
-    return userResponse.data;
+    if (userResponse.data) {
+      return userResponse.data;
+    } else {
+      throw new Error("Not found!");
+    }
   } catch (error) {
     return undefined;
   }

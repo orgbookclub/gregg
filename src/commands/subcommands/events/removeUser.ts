@@ -31,6 +31,7 @@ const handleRemoveUser: CommandHandler = async (
       });
       return;
     }
+    await interaction.deferReply();
     const id = interaction.options.getString("id", true);
     const user = interaction.options.getUser("user", true);
     const participantType = interaction.options.getString("type", true);

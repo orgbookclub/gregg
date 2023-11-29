@@ -81,7 +81,7 @@ const handleAddUser: CommandHandler = async (bot, interaction, guildConfig) => {
       embeds: [getEventInfoEmbed(updatedResponse.data, interaction)],
     });
   } catch (err) {
-    await interaction.reply(errors.SomethingWentWrongError);
+    await interaction.editReply(errors.SomethingWentWrongError);
     await errorHandler(
       bot,
       "commands > events > addUser",
