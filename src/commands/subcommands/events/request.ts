@@ -128,7 +128,7 @@ const handleRequest: CommandHandler = async (bot, interaction, guildConfig) => {
     }
 
     await modalSubmitInteraction.editReply({
-      content: "Event request successful!",
+      content: `Event request successful! Event ID is ${eventDoc._id}`,
     });
   } catch (err) {
     const error = err as Error;

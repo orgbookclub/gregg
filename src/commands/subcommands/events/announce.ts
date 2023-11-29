@@ -1,16 +1,21 @@
 import { EventDocument, EventDtoStatusEnum } from "@orgbookclub/ows-client";
 import {
   ChannelType,
+  Colors,
+  EmbedBuilder,
   GuildMember,
+  Message,
+  TextChannel,
   channelMention,
   roleMention,
 } from "discord.js";
 
 import { errors } from "../../../config/constants";
-import { CommandHandler } from "../../../models";
+import { Bot, CommandHandler } from "../../../models";
 import { createEventMessageDoc } from "../../../utils/dbUtils";
 import { errorHandler } from "../../../utils/errorHandler";
-import { getEventInfoEmbed } from "../../../utils/eventUtils";
+import { getEventAnnouncementEmbed } from "../../../utils/eventUtils";
+import { logToWebhook, logger } from "../../../utils/logHandler";
 import { getButtonActionRow } from "../../../utils/messageUtils";
 import { hasRole } from "../../../utils/userUtils";
 
@@ -56,7 +61,6 @@ const handleAnnounce: CommandHandler = async (
       await interaction.editReply(errors.InvalidEventIdError);
       return;
     }
-
     if (eventDoc.status !== EventDtoStatusEnum.Approved) {
       await interaction.editReply(
         "Event must be in 'Approved' state! Announcements can only be created for Approved events",
@@ -82,9 +86,9 @@ const handleAnnounce: CommandHandler = async (
     }
     if (!announcementChannel) return;
     const pingRole = guildConfig?.serverEventsRole ?? "Not set";
-    const message = await announcementChannel.send({
+    const announcementMessage = await announcementChannel.send({
       content: getAnnouncementString(pingRole, eventDoc),
-      embeds: [getEventInfoEmbed(eventDoc, interaction)],
+      embeds: [getEventAnnouncementEmbed(eventDoc, interaction)],
       components: [getButtonActionRow(eventDoc._id, "ea")],
     });
 
@@ -92,7 +96,7 @@ const handleAnnounce: CommandHandler = async (
       bot,
       interaction.guild.id,
       eventDoc._id,
-      message,
+      announcementMessage,
       "Announcement",
     );
 
@@ -102,13 +106,23 @@ const handleAnnounce: CommandHandler = async (
         updateEventDto: { status: EventDtoStatusEnum.Announced },
       });
       await interaction.editReply({
-        content: `Announcement posted: ${message.url} and event status changed to 'Announced'`,
+        content: `Announcement posted for event ${eventDoc._id}: ${announcementMessage.url} and event status changed to 'Announced'`,
       });
     } catch (error) {
       await interaction.editReply(
-        `Announcement posted: ${message.url} but there was an error updating the event status :(`,
+        `Announcement posted for event ${eventDoc._id}: ${announcementMessage.url} but there was an error updating the event status :(`,
       );
     }
+    // Also post the link to the announcement in the thread.
+    if (!guildConfig) return;
+
+    const webhookUrl = guildConfig.logWebhookUrl;
+    await addAnnouncementLinkInThread(
+      bot,
+      eventDoc,
+      announcementMessage,
+      webhookUrl,
+    );
   } catch (err) {
     await interaction.reply(errors.SomethingWentWrongError);
     await errorHandler(
@@ -121,6 +135,47 @@ const handleAnnounce: CommandHandler = async (
     );
   }
 };
+
+async function addAnnouncementLinkInThread(
+  bot: Bot,
+  eventDoc: EventDocument,
+  announcementMessage: Message,
+  webhookUrl: string,
+) {
+  const starterMessages = await bot.db.eventMessages.findMany({
+    where: {
+      eventId: eventDoc._id,
+      type: "eventThreadStarterMessage",
+    },
+  });
+  const messageUpdateEmbed = new EmbedBuilder()
+    .setColor(Colors.Yellow)
+    .setTitle("Message Update")
+    .setDescription(
+      `Updated Event thread starter message with announcement link for \`${eventDoc._id}\``,
+    )
+    .setTimestamp();
+  for (const doc of starterMessages) {
+    try {
+      const threadChannel = (await bot.channels.fetch(
+        doc.channelId,
+      )) as TextChannel;
+      const message = await threadChannel.messages.fetch(doc.messageId);
+      const updatedMessageContent =
+        message.content + `\n**Announcement**: ${announcementMessage.url}`;
+      await message.edit({
+        components: message.components,
+        embeds: message.embeds,
+        content: updatedMessageContent,
+      });
+      await logToWebhook({ embeds: [messageUpdateEmbed] }, webhookUrl);
+    } catch (error) {
+      logger.error(
+        `Unable to update message ${doc.messageId} in channel ${doc.channelId}`,
+      );
+    }
+  }
+}
 
 function getAnnouncementString(
   pingRole: string,

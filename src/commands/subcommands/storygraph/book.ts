@@ -52,10 +52,11 @@ function getStorygraphBookEmbed(book: StorygraphBookDto) {
     .setThumbnail(book.coverUrl)
     .addFields(
       { name: "Rating ⭐", value: `${book.avgRating}`, inline: true },
+      { name: "Pages 📄", value: book.numPages.toString(), inline: true },
       {
         name: "Moods 🤔",
         value: `${book.moods.slice(0, 3).join(", ")}`,
-        inline: true,
+        inline: false,
       },
       { name: "Pace 🏃‍♂️", value: `${book.pace.join(", ")}`, inline: true },
     )

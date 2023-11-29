@@ -77,7 +77,7 @@ const handleAddUser: CommandHandler = async (bot, interaction, guildConfig) => {
       updateEventDto: updateEventDto,
     });
     await interaction.editReply({
-      content: "Added user to event!",
+      content: `Added user ${user.username} to event ${updatedResponse.data._id}!`,
       embeds: [getEventInfoEmbed(updatedResponse.data, interaction)],
     });
   } catch (err) {

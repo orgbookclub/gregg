@@ -148,6 +148,77 @@ export function getEventInfoEmbed(
 }
 
 /**
+ * Creates an embed to display details of an event announcement.
+ *
+ * @param event The event.
+ * @param interaction The interaction instance.
+ * @returns The embed.
+ */
+export function getEventAnnouncementEmbed(
+  event: EventDocument,
+  interaction: ChatInputCommandInteraction | ButtonInteraction,
+) {
+  const embed = new EmbedBuilder()
+    .setTitle(getBookTitleWithAuthors(event.book))
+    .setURL(event.book.url)
+    .setFooter({ text: `Event ID: ${event._id}` })
+    .setColor(Colors.Gold)
+    .setAuthor({
+      name: `${event.status} ${event.type}`,
+      iconURL: interaction.guild?.iconURL() ?? undefined,
+    });
+  if (event.book.coverUrl) {
+    embed.setThumbnail(event.book.coverUrl);
+  }
+  if (event.description) {
+    embed.addFields({
+      name: "Description",
+      value: customSubstring(event.description, 1000),
+      inline: false,
+    });
+  }
+  embed.addFields({
+    name: "Start Date",
+    value: `${time(new Date(event.dates.startDate), TimestampStyles.LongDate)}`,
+    inline: true,
+  });
+  embed.addFields({
+    name: "End Date",
+    value: `${time(new Date(event.dates.endDate), TimestampStyles.LongDate)}`,
+    inline: true,
+  });
+  if (event.leaders && event.leaders.length > 0) {
+    embed.addFields({
+      name: "Leader(s)",
+      value: getUserMentionString(event.leaders, false),
+      inline: false,
+    });
+  }
+  if (event.book.numPages) {
+    embed.addFields({
+      name: "Pages 📄",
+      value: event.book.numPages.toString(),
+      inline: true,
+    });
+  }
+  if (event.interested && event.interested.length > 0) {
+    embed.addFields({
+      name: `Interested (${event.interested.length})`,
+      value: getUserMentionString(event.interested, false),
+      inline: false,
+    });
+  }
+  if (event.readers && event.readers.length > 0) {
+    embed.addFields({
+      name: `Reader(s) (${event.readers.length})`,
+      value: getUserMentionString(event.readers, true),
+      inline: false,
+    });
+  }
+  return embed;
+}
+
+/**
  * Creates an embed to display an event request.
  *
  * @param event The event document.
