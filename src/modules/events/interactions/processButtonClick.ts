@@ -4,7 +4,7 @@ import { Bot } from "../../../models";
 import { QotdSuggestionStatus } from "../../../models/commands/qotd/QotdSuggestionStatus";
 import { errorHandler } from "../../../utils/errorHandler";
 import {
-  getEventInfoEmbed,
+  getEventAnnouncementEmbed,
   getEventRequestEmbed,
 } from "../../../utils/eventUtils";
 import { participantToDto, upsertUser } from "../../../utils/userUtils";
@@ -133,7 +133,7 @@ async function handleEventActions(interaction: ButtonInteraction, bot: Bot) {
   if (embedType === "er") {
     updatedEmbed = getEventRequestEmbed(updatedEventDoc, interaction);
   } else if (embedType === "ea") {
-    updatedEmbed = getEventInfoEmbed(updatedEventDoc, interaction);
+    updatedEmbed = getEventAnnouncementEmbed(updatedEventDoc, interaction);
   }
   if (!updatedEmbed) {
     await interaction.editReply(

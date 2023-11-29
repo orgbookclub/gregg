@@ -88,10 +88,14 @@ const handleCreateThread: CommandHandler = async (
         );
         return;
       }
+      const ongoingTag = forum.availableTags.filter(
+        (x) => x.name === "ongoing",
+      );
+
       const post = await forum.threads.create({
         name: threadTitle ?? getBookTitleWithAuthors(eventDoc.book),
         message: { content: getPostContent(eventDoc) },
-        appliedTags: ["ongoing"],
+        appliedTags: ongoingTag.length !== 0 ? [ongoingTag[0].id] : [],
       });
       const starterMessage = await post.fetchStarterMessage();
       if (starterMessage && interaction.guild) {

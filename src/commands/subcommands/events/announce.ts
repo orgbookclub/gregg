@@ -166,7 +166,6 @@ async function addAnnouncementLinkInThread(
         embeds: message.embeds,
         content: updatedMessageContent,
       });
-      await message.delete();
       await logToWebhook({ embeds: [messageUpdateEmbed] }, webhookUrl);
     } catch (error) {
       logger.error(
