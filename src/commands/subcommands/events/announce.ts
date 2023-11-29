@@ -106,11 +106,11 @@ const handleAnnounce: CommandHandler = async (
         updateEventDto: { status: EventDtoStatusEnum.Announced },
       });
       await interaction.editReply({
-        content: `Announcement posted: ${announcementMessage.url} and event status changed to 'Announced'`,
+        content: `Announcement posted for event ${eventDoc._id}: ${announcementMessage.url} and event status changed to 'Announced'`,
       });
     } catch (error) {
       await interaction.editReply(
-        `Announcement posted: ${announcementMessage.url} but there was an error updating the event status :(`,
+        `Announcement posted for event ${eventDoc._id}: ${announcementMessage.url} but there was an error updating the event status :(`,
       );
     }
     // Also post the link to the announcement in the thread.

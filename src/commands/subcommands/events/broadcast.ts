@@ -88,7 +88,7 @@ const handleBroadcast: CommandHandler = async (
       const threadId = eventDoc.threads[0];
       const eventThreadChannel = await bot.channels.fetch(threadId);
       if (!eventThreadChannel?.isTextBased()) {
-        await interaction.editReply(
+        await interaction.followUp(
           "Configured channel in event is not a valid text channel! Please try manually giving the channel as input",
         );
         return;
@@ -108,7 +108,7 @@ const handleBroadcast: CommandHandler = async (
     }
 
     await modalSubmitInteraction.reply({
-      content: "Your message has been broadcasted!",
+      content: `Your message for event ${eventDoc._id} has been broadcasted!`,
       ephemeral: true,
     });
 

@@ -115,7 +115,9 @@ const handleCreateThread: CommandHandler = async (
           threads: [...eventDoc.threads, post.id],
         },
       });
-      await interaction.editReply(`Created ${channelMention(post.id)}`);
+      await interaction.editReply(
+        `Created ${channelMention(post.id)} for event ${eventDoc._id}`,
+      );
       return;
     }
 
@@ -138,7 +140,9 @@ const handleCreateThread: CommandHandler = async (
       if (threadTitle) {
         await channel.edit({ name: threadTitle });
       }
-      await interaction.editReply(`Updated ${channelMention(channel.id)}`);
+      await interaction.editReply(
+        `Updated ${channelMention(channel.id)} for event ${eventDoc._id}`,
+      );
     }
   } catch (err) {
     await interaction.editReply(errors.SomethingWentWrongError);

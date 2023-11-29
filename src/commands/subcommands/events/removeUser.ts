@@ -65,7 +65,7 @@ const handleRemoveUser: CommandHandler = async (
       updateEventDto: updateEventDto,
     });
     await interaction.editReply({
-      content: "Removed user from event!",
+      content: `Removed user ${user.username} from event ${updatedResponse.data._id}!`,
       embeds: [getEventInfoEmbed(updatedResponse.data, interaction)],
     });
   } catch (err) {
