@@ -43,7 +43,7 @@
     "@types/express": "^4.17.17",
     "@types/node": "^20.4.4",
     "@typescript-eslint/eslint-plugin": "^6.8.0",
-    "@typescript-eslint/parser": "^6.1.0",
+    "@typescript-eslint/parser": "^6.13.1",
     "csv": "^6.3.5",
     "dotenv": "^16.0.3",
     "eslint": "^8.45.0",
