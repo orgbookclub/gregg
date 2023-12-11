@@ -11,6 +11,8 @@ import {
   EmbedBuilder,
   Colors,
   userMention,
+  DiscordjsError,
+  channelMention,
 } from "discord.js";
 
 import { errors } from "../../../config/constants";
@@ -56,11 +58,12 @@ const handleBroadcast: CommandHandler = async (
     }
 
     // Create and show modal
-    const modal = getBroadcastModal(eventId);
+    const salt = Math.random() * 100;
+    const modal = getBroadcastModal(eventId, salt);
     await interaction.showModal(modal);
 
     const filter = (msInteraction: ModalSubmitInteraction) =>
-      msInteraction.customId === EVENT_BROADCAST_MODAL_ID;
+      msInteraction.customId === EVENT_BROADCAST_MODAL_ID + salt;
     const modalSubmitInteraction = await interaction.awaitModalSubmit({
       filter,
       time: 5 * 60 * 1000,
@@ -108,7 +111,7 @@ const handleBroadcast: CommandHandler = async (
     }
 
     await modalSubmitInteraction.reply({
-      content: `Your message for event ${eventDoc._id} has been broadcasted!`,
+      content: `Your message has been broadcasted!`,
       ephemeral: true,
     });
 
@@ -120,26 +123,34 @@ const handleBroadcast: CommandHandler = async (
         .setDescription(
           `${userMention(interaction.user.id)} broadcasted message for event ${
             eventDoc._id
-          } `,
+          } in ${channelMention(interaction.channelId)}`,
         );
       await logToWebhook({ embeds: [embed] }, guildConfig.logWebhookUrl);
     }
   } catch (err) {
-    await interaction.followUp(errors.SomethingWentWrongError);
-    await errorHandler(
-      bot,
-      "commands > events > broadcast",
-      err,
-      interaction.guild?.name,
-      undefined,
-      interaction,
-    );
+    if (err instanceof DiscordjsError) {
+      await interaction.followUp({
+        ephemeral: true,
+        content:
+          "Your request timed out! Please try again and submit the form within 5 minutes",
+      });
+    } else {
+      await interaction.followUp(errors.SomethingWentWrongError);
+      await errorHandler(
+        bot,
+        "commands > events > broadcast",
+        err,
+        interaction.guild?.name,
+        undefined,
+        interaction,
+      );
+    }
   }
 };
 
-function getBroadcastModal(id: string) {
+function getBroadcastModal(id: string, salt: number) {
   const modal = new ModalBuilder()
-    .setCustomId(EVENT_BROADCAST_MODAL_ID)
+    .setCustomId(EVENT_BROADCAST_MODAL_ID + salt)
     .setTitle(`Event Broadcast: ${id}`);
   const messageInput = new TextInputBuilder()
     .setCustomId(MESSAGE_FIELD_ID)

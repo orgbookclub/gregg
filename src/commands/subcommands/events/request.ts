@@ -5,6 +5,7 @@ import {
 } from "@orgbookclub/ows-client";
 import {
   ActionRowBuilder,
+  DiscordjsError,
   GuildMember,
   ModalActionRowComponentBuilder,
   ModalBuilder,
@@ -48,10 +49,11 @@ const handleRequest: CommandHandler = async (bot, interaction, guildConfig) => {
       "type",
       true,
     ) as keyof typeof EventDtoTypeEnum;
-    const modal = getEventRequestModal(eventType);
+    const salt = Math.random() * 100;
+    const modal = getEventRequestModal(eventType, salt);
     await interaction.showModal(modal);
     const filter = (msInteraction: ModalSubmitInteraction) =>
-      msInteraction.customId === EVENT_REQUEST_MODAL_ID;
+      msInteraction.customId === EVENT_REQUEST_MODAL_ID + salt;
     const modalSubmitInteraction = await interaction.awaitModalSubmit({
       filter,
       time: 5 * 60 * 1000,
@@ -128,11 +130,17 @@ const handleRequest: CommandHandler = async (bot, interaction, guildConfig) => {
     }
 
     await modalSubmitInteraction.editReply({
-      content: `Event request successful! Event ID is ${eventDoc._id}`,
+      content: `Event request for ${eventDoc.book.title} successful!\n Event ID: ${eventDoc._id}`,
     });
   } catch (err) {
     const error = err as Error;
-    if (
+    if (error instanceof DiscordjsError) {
+      await interaction.followUp({
+        ephemeral: true,
+        content:
+          "Your request timed out! Please try again and submit the form within 5 minutes",
+      });
+    } else if (
       error.name === "AxiosError" &&
       error.message === "Request failed with status code 503"
     ) {
@@ -175,9 +183,9 @@ async function createEvent(
   return response;
 }
 
-function getEventRequestModal(eventType: string) {
+function getEventRequestModal(eventType: string, salt: number) {
   const modal = new ModalBuilder()
-    .setCustomId(EVENT_REQUEST_MODAL_ID)
+    .setCustomId(EVENT_REQUEST_MODAL_ID + salt)
     .setTitle(`${eventType} Request`);
   const linkInput = new TextInputBuilder()
     .setCustomId(BOOK_LINK_FIELD_ID)

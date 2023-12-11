@@ -57,10 +57,12 @@ function getGoodreadsBookEmbed(book: GoodreadsBookDto) {
     .addFields(
       { name: "Rating ⭐", value: `${book.avgRating}`, inline: true },
       { name: "Pages 📄", value: `${book.numPages}`, inline: true },
-      { name: "Genres 🔖", value: `${book.genres.join(", ")}` },
     )
     .setFooter({ text: `Fetched from Goodreads` })
     .setColor(Colors.Aqua);
+  if (book.genres.length > 0) {
+    embed.addFields({ name: "Genres 🔖", value: `${book.genres.join(", ")}` });
+  }
   return embed;
 }
 
