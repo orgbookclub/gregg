@@ -172,7 +172,7 @@ export class Sprint {
       "\n" +
       "**SPRINT STATS**" +
       "\n" +
-      `${scoreStrings}`
+      `${scoreStrings.join()}`
     );
   }
 }
