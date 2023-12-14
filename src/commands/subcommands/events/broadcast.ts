@@ -88,6 +88,12 @@ const handleBroadcast: CommandHandler = async (
 
     let threadToPost;
     if (!channel) {
+      if (eventDoc.threads === undefined || eventDoc.threads.length === 0) {
+        await interaction.followUp(
+          "Sorry, this event doesn't have any threads listed. Please try manually giving the channel as input",
+        );
+        return;
+      }
       const threadId = eventDoc.threads[0];
       const eventThreadChannel = await bot.channels.fetch(threadId);
       if (!eventThreadChannel?.isTextBased()) {
@@ -156,9 +162,13 @@ function getBroadcastModal(id: string, salt: number) {
     .setCustomId(MESSAGE_FIELD_ID)
     .setLabel("What message would you like to send?")
     .setPlaceholder(
-      "Write a message to make the bot send it along with the pings",
+      "Write a message to make the bot send it along with the pings." +
+        " Note that there is a 2000 character limit. " +
+        "If you need to send a longer message, or need to attach images, " +
+        "please leave this empty use the bot to ping, and then later send the message yourself.",
     )
     .setStyle(TextInputStyle.Paragraph)
+    .setMaxLength(2000)
     .setRequired(false);
   const messageRow =
     new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
