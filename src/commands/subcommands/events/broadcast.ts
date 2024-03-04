@@ -107,9 +107,20 @@ const handleBroadcast: CommandHandler = async (
       threadToPost = channel;
     }
 
-    const mentionString = getUserMentionString(eventDoc.interested, false);
+    const mentionString = getUserMentionString(eventDoc.interested, false, 200);
+
     if (mentionString.length !== 0) {
-      await threadToPost.send({ content: mentionString });
+      if (mentionString.length > 2000) {
+        const participants = eventDoc.interested;
+        const chunkSize = 25;
+        for (let i = 0; i < participants.length; i += chunkSize) {
+          const chunk = participants.slice(i, i + chunkSize);
+          const partialMentionString = getUserMentionString(chunk, false, 25);
+          await threadToPost.send({ content: partialMentionString });
+        }
+      } else {
+        await threadToPost.send({ content: mentionString });
+      }
     }
     if (messageContent.length !== 0) {
       const message = await threadToPost.send({ content: messageContent });
