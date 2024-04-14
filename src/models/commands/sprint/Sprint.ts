@@ -91,13 +91,40 @@ export class Sprint {
    * @returns The string representing the sprint status.
    */
   getStatusMessage() {
-    return (
-      `**Sprint Status**: ${this.status}` +
-      "\n" +
-      `**Duration** : ${this.duration} minute(s)` +
-      "\n" +
-      `**Number of participants**: ${Object.keys(this.participants).length}`
+    if (this.startedOn === undefined) {
+      throw new Error("startedOn is undefined!");
+    }
+    const endTime = new Date(
+      this.startedOn.getTime() + this.duration * 60 * 1000,
     );
+    const currentTime = new Date();
+    const timeDifference = endTime.getTime() - currentTime.getTime();
+
+    if (timeDifference > 0) {
+      // Convert the time difference to minutes
+      const minutesLeft = Math.floor(timeDifference / (1000 * 60));
+
+      // Calculate the remaining seconds
+      const secondsLeft = Math.floor((timeDifference % (1000 * 60)) / 1000);
+
+      return (
+        `**Sprint Status**: ${this.status}` +
+        "\n" +
+        `**Duration** : ${this.duration} minute(s)` +
+        "\n" +
+        `**Time left**: ${minutesLeft} minutes and ${secondsLeft} seconds left` +
+        "\n" +
+        `**Number of participants**: ${Object.keys(this.participants).length}`
+      );
+    } else {
+      return (
+        `**Sprint Status**: ${this.status}` +
+        "\n" +
+        `**Duration** : ${this.duration} minute(s)` +
+        "\n" +
+        `**Number of participants**: ${Object.keys(this.participants).length}`
+      );
+    }
   }
 
   /**
