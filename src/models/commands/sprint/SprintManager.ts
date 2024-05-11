@@ -205,11 +205,12 @@ export class SprintManager {
     sprint.status = SprintStatus.Finished;
 
     const channel = await this.fetchSprintChannel(bot, sprint.channelId);
-    await channel.send({ content: sprint.getFinishMessage() });
+    const minutesToWait = 5;
+    await channel.send({ content: sprint.getFinishMessage(minutesToWait) });
 
     sprint.timer = setTimeout(() => {
       bot.sprintManager.endSprint(sprintId, bot);
-    }, 2 * 60 * 1000);
+    }, minutesToWait * 60 * 1000);
   }
 
   /**
