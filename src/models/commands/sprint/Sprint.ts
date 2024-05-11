@@ -143,14 +143,15 @@ export class Sprint {
   /**
    * Creates a message for the sprint finish announcement.
    *
+   * @param minutesToWait The time to wait before the sprint ends.
    * @returns The string representing the finish announcement.
    */
-  getFinishMessage() {
+  getFinishMessage(minutesToWait: number) {
     return (
       // `${getUserMentionString(Array.from(this.participants.keys()))}` +
       `${getUserMentionString(Object.keys(this.participants))}` +
       "\n" +
-      `Sprint Finished! Please log your end count within the next 2 minutes using \`/sprint finish\``
+      `Sprint Finished! Please log your end count within the next ${minutesToWait} minutes using \`/sprint finish\``
     );
   }
 
