@@ -1,7 +1,7 @@
 {
   "name": "gregg",
   "author": "ravsodhi",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Discord Bot",
   "main": "./dist/index.js",
   "private": true,
