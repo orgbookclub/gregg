@@ -30,6 +30,9 @@ const approveValidBRs: Job = {
     try {
       const guilds = await getAllGuildConfigs(bot);
       for (const guildDoc of guilds) {
+        if (!guildDoc.config.enableEventJobs) {
+          continue;
+        }
         const nowPlus10Days = new Date(Date.now() + 10 * 24 * 3600 * 1000);
         const eventDocs = (
           await bot.api.events.eventsControllerFind({

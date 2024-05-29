@@ -30,6 +30,9 @@ export const startAnnouncedEvents: Job = {
     try {
       const guilds = await getAllGuildConfigs(bot);
       for (const guildDoc of guilds) {
+        if (!guildDoc.config.enableEventJobs) {
+          continue;
+        }
         const now = new Date(Date.now());
         const eventDocs = (
           await bot.api.events.eventsControllerFind({
