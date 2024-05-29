@@ -27,6 +27,7 @@ type GuildsConfig {
   brLeaderRole             String              @default("")
   qotdPingRole             String              @default("")
   serverEventsRole         String              @default("")
+  enableEventJobs          Boolean             @default(false)
   readerRoles              GuildsReaderRoles[]
 }
 

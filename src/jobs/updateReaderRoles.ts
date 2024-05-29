@@ -98,6 +98,9 @@ export const updateReaderRoles: Job = {
       const guilds = await getAllGuildConfigs(bot);
 
       for (const guildDoc of guilds) {
+        if (!guildDoc.config.enableEventJobs) {
+          continue;
+        }
         const readerRoles = guildDoc.config.readerRoles;
         if (readerRoles.length === 0) continue;
 
