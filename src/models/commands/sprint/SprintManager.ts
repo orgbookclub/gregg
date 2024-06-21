@@ -63,9 +63,12 @@ export class SprintManager {
     }
     const sprint = this.sprints[sprintId];
     sprint.status = SprintStatus.Scheduled;
-    sprint.timer = setTimeout(() => {
-      bot.sprintManager.startSprint(sprintId, bot);
-    }, delayBy * 60 * 1000);
+    sprint.timer = setTimeout(
+      () => {
+        bot.sprintManager.startSprint(sprintId, bot);
+      },
+      delayBy * 60 * 1000,
+    );
   }
 
   /**
@@ -85,9 +88,12 @@ export class SprintManager {
     const channel = await this.fetchSprintChannel(bot, sprint.channelId);
     await channel.send({ content: sprint.getStartMessage() });
 
-    sprint.timer = setTimeout(() => {
-      bot.sprintManager.finishSprint(sprintId, bot);
-    }, sprint.duration * 60 * 1000);
+    sprint.timer = setTimeout(
+      () => {
+        bot.sprintManager.finishSprint(sprintId, bot);
+      },
+      sprint.duration * 60 * 1000,
+    );
   }
 
   /**
@@ -208,9 +214,12 @@ export class SprintManager {
     const minutesToWait = 5;
     await channel.send({ content: sprint.getFinishMessage(minutesToWait) });
 
-    sprint.timer = setTimeout(() => {
-      bot.sprintManager.endSprint(sprintId, bot);
-    }, minutesToWait * 60 * 1000);
+    sprint.timer = setTimeout(
+      () => {
+        bot.sprintManager.endSprint(sprintId, bot);
+      },
+      minutesToWait * 60 * 1000,
+    );
   }
 
   /**
