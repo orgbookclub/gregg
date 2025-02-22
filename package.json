@@ -46,7 +46,7 @@
     "@typescript-eslint/parser": "^7.13.1",
     "csv": "^6.3.11",
     "dotenv": "^16.4.5",
-    "eslint": "^8",
+    "eslint": "^9",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-import": "^2.29.1",
     "eslint-plugin-jsdoc": "^50.2.2",
