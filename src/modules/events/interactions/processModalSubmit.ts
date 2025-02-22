@@ -15,7 +15,7 @@ export async function processModalSubmit(
 ) {
   try {
     // TODO: ... figure out something to do here.
-  } catch (error) {
+  } catch (_error) {
     //
   }
 }

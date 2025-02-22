@@ -15,7 +15,7 @@ export async function processStringSelectMenu(
 ) {
   try {
     // TODO: ... okay nothing to do here.
-  } catch (error) {
+  } catch (_error) {
     //
   }
 }

@@ -22,7 +22,7 @@ export const handleInfo: CommandHandler = async (bot, interaction) => {
         id: eventId,
       });
       eventDoc = response.data;
-    } catch (error) {
+    } catch (_error) {
       await interaction.editReply(errors.InvalidEventIdError);
       return;
     }

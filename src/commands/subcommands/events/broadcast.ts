@@ -78,7 +78,7 @@ const handleBroadcast: CommandHandler = async (
         id: eventId,
       });
       eventDoc = response.data;
-    } catch (error) {
+    } catch (_error) {
       await modalSubmitInteraction.reply({
         content: errors.InvalidEventIdError,
         ephemeral: true,

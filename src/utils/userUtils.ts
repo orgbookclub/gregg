@@ -106,7 +106,7 @@ export async function getUserByDiscordId(api: OWSClient, id: string) {
     } else {
       throw new Error("Not found!");
     }
-  } catch (error) {
+  } catch (_error) {
     return undefined;
   }
 }

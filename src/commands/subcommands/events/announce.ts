@@ -57,7 +57,7 @@ const handleAnnounce: CommandHandler = async (
     try {
       const response = await bot.api.events.eventsControllerFindOne({ id: id });
       eventDoc = response.data;
-    } catch (error) {
+    } catch (_error) {
       await interaction.editReply(errors.InvalidEventIdError);
       return;
     }
@@ -108,7 +108,7 @@ const handleAnnounce: CommandHandler = async (
       await interaction.editReply({
         content: `Announcement posted for event ${eventDoc._id}: ${announcementMessage.url} and event status changed to 'Announced'`,
       });
-    } catch (error) {
+    } catch (_error) {
       await interaction.editReply(
         `Announcement posted for event ${eventDoc._id}: ${announcementMessage.url} but there was an error updating the event status :(`,
       );
@@ -171,6 +171,7 @@ async function addAnnouncementLinkInThread(
       await logToWebhook({ embeds: [messageUpdateEmbed] }, webhookUrl);
     } catch (error) {
       logger.error(
+        error,
         `Unable to update message ${doc.messageId} in channel ${doc.channelId}`,
       );
     }

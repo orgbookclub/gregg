@@ -50,7 +50,7 @@ const loadJobs = async () => {
     const filePathExp = `${OUT_DIR}/jobs/*.js`;
     return await parseActionFiles<Job>(filePathExp);
   } catch (err) {
-    logger.error(`Error while loading jobs`);
+    logger.error(err, `Error while loading jobs`);
     return [];
   }
 };
