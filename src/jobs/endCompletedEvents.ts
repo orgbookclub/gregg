@@ -96,6 +96,7 @@ async function endEvent(bot: Bot, eventDoc: EventDocument, webhookUrl: string) {
       await logToWebhook({ embeds: [messageUpdateEmbed] }, webhookUrl);
     } catch (error) {
       logger.error(
+        error,
         `Unable to update message ${doc.messageId} in channel ${doc.channelId}`,
       );
     }

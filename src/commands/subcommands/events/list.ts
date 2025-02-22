@@ -36,7 +36,7 @@ export const handleList: CommandHandler = async (bot, interaction) => {
       });
       eventList = response.data;
       if (eventList.length === 0) throw new Error();
-    } catch (error) {
+    } catch (_error) {
       await interaction.editReply(
         "There are no events to display with the given filters",
       );

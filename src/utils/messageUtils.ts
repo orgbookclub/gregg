@@ -75,6 +75,7 @@ export async function deleteBRRequest(
       await logToWebhook({ embeds: [messageDeleteEmbed] }, webhookUrl);
     } catch (error) {
       logger.error(
+        error,
         `Unable to delete message ${doc.messageId} in channel ${doc.channelId}`,
       );
     }

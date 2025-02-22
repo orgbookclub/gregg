@@ -44,7 +44,7 @@ export class JobManager {
   startJob(name: string) {
     try {
       this.jobs[name].start();
-    } catch (error) {
+    } catch (_error) {
       throw new Error(`Unable to start job: ${name}`);
     }
   }

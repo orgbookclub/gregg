@@ -60,7 +60,7 @@ const handleCreateThread: CommandHandler = async (
     try {
       const response = await bot.api.events.eventsControllerFindOne({ id: id });
       eventDoc = response.data;
-    } catch (error) {
+    } catch (_error) {
       await interaction.editReply(errors.InvalidEventIdError);
       return;
     }

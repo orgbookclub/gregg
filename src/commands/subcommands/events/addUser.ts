@@ -50,7 +50,7 @@ const handleAddUser: CommandHandler = async (bot, interaction, guildConfig) => {
     try {
       const response = await bot.api.events.eventsControllerFindOne({ id: id });
       eventDoc = response.data;
-    } catch (error) {
+    } catch (_error) {
       await interaction.editReply(errors.InvalidEventIdError);
       return;
     }
