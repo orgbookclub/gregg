@@ -107,7 +107,7 @@ const handleRequest: CommandHandler = async (bot, interaction, guildConfig) => {
       if (!interaction.guild) return;
       const channelId = guildConfig?.brRequestChannel ?? "Not set";
       const channel = await bot.channels.fetch(channelId);
-      if (!channel?.isTextBased()) {
+      if (!channel?.isTextBased() || channel.isDMBased()) {
         await modalSubmitInteraction.editReply(
           "Unable to post event request in the configured channel. Please contact staff!",
         );

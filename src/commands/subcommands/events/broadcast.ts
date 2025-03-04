@@ -107,6 +107,9 @@ const handleBroadcast: CommandHandler = async (
       threadToPost = channel;
     }
 
+    if (threadToPost.isDMBased()) {
+      throw new Error("Cannot broadcast in DM channel");
+    }
     const mentionString = getUserMentionString(eventDoc.interested, false, 200);
 
     if (mentionString.length !== 0) {

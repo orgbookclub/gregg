@@ -28,7 +28,7 @@ export const handleEcho: CommandHandler = async (
       interaction.options.getChannel<ChannelType.GuildText>("channel") ??
       interaction.channel;
 
-    if (!channel?.isTextBased()) {
+    if (!channel?.isTextBased() || channel.isDMBased()) {
       await interaction.reply("Something went wrong!");
       return;
     }

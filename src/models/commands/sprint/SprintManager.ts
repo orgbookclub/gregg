@@ -267,7 +267,7 @@ export class SprintManager {
    */
   private async fetchSprintChannel(bot: Bot, threadId: string) {
     const channel = await bot.channels.fetch(threadId);
-    if (!channel?.isTextBased()) {
+    if (!channel?.isTextBased() || channel.isDMBased()) {
       throw new Error(
         `Unable to find sprint text channel or thread ${threadId}`,
       );

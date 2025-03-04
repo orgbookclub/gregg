@@ -29,7 +29,7 @@ const handleSuggest: CommandHandler = async (bot, interaction, guildConfig) => {
 
     const channel = await bot.channels.fetch(channelId);
 
-    if (!channel?.isTextBased()) {
+    if (!channel?.isTextBased() || channel.isDMBased()) {
       await interaction.editReply(
         "Something went wrong while trying to log the question in the channel. Please contact staff",
       );
