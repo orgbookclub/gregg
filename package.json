@@ -1,7 +1,7 @@
 {
   "name": "gregg",
   "author": "ravsodhi",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "description": "Discord Bot",
   "main": "./dist/index.js",
   "private": true,
@@ -55,7 +55,7 @@
     "eslint-plugin-prettier": "^5.2.3",
     "globals": "^16.0.0",
     "prettier": "^3.5.2",
-    "prisma": "^5.15.1",
+    "prisma": "^6.4.1",
     "rimraf": "^6.0.1",
     "typescript": "^5.5.2"
   }
