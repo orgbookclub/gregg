@@ -1,7 +1,7 @@
 {
   "name": "gregg",
   "author": "ravsodhi",
-  "version": "1.3.1",
+  "version": "1.4.0",
   "description": "Discord Bot",
   "main": "./dist/index.js",
   "private": true,
@@ -28,7 +28,7 @@
     "start:dev": "tsc && node -r dotenv/config ./dist/index.js"
   },
   "dependencies": {
-    "@orgbookclub/ows-client": "^1.1.0",
+    "@orgbookclub/ows-client": "^1.3.0",
     "@prisma/client": "^5.15.1",
     "@sentry/node": "^7.113.0",
     "@sentry/profiling-node": "^1.3.2",
