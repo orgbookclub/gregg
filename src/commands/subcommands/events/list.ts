@@ -27,12 +27,14 @@ export const handleList: CommandHandler = async (bot, interaction) => {
       "status",
       true,
     ) as keyof typeof EventDtoStatusEnum;
+    const eventSortOrder = interaction.options.getString("sort", false);
 
     let eventList: EventDocument[];
     try {
       const response = await bot.api.events.eventsControllerFind({
         status: eventStatus,
         type: eventType,
+        sortBy: eventSortOrder ?? "startDateDesc",
       });
       eventList = response.data;
       if (eventList.length === 0) throw new Error();

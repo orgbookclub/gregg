@@ -10,6 +10,7 @@ import {
   EventTypeOptions,
 } from "../config";
 import { EventParticipantOptions } from "../config/EventParticipantOptions";
+import { EventSortOptions } from "../config/EventSortOptions";
 import { Command, CommandHandler } from "../models";
 import { errorHandler } from "../utils/errorHandler";
 
@@ -57,6 +58,13 @@ const list = new SlashCommandSubcommandBuilder()
       .setDescription("Event Status")
       .addChoices(...EventStatusOptions)
       .setRequired(true),
+  )
+  .addStringOption((option) =>
+    option
+      .setName("sort")
+      .setDescription("Sort by")
+      .addChoices(...EventSortOptions)
+      .setRequired(false),
   );
 
 const broadcast = new SlashCommandSubcommandBuilder()
