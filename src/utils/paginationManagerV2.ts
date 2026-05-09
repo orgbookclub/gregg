@@ -3,7 +3,6 @@ import {
   ButtonBuilder,
   ButtonStyle,
   ChatInputCommandInteraction,
-  Colors,
   ComponentType,
   ContainerBuilder,
   Message,
@@ -44,7 +43,6 @@ export class PaginationManagerV2<T> {
   readonly data: T[];
   readonly bot: Bot;
   readonly title: string;
-  readonly accentColor: number;
   readonly buildPage: V2PageBuilder<T>;
 
   /**
@@ -55,7 +53,6 @@ export class PaginationManagerV2<T> {
    * @param bot The Bot instance.
    * @param buildPage A function which returns a ContainerBuilder for the given page slice.
    * @param title The title of the page (rendered above the body).
-   * @param accentColor The accent color for the container.
    */
   constructor(
     pageSize: number,
@@ -63,7 +60,6 @@ export class PaginationManagerV2<T> {
     bot: Bot,
     buildPage: V2PageBuilder<T>,
     title = "Items",
-    accentColor: number = Colors.Red,
   ) {
     this.currPageNum = 1;
     this.pageSize = pageSize;
@@ -72,7 +68,6 @@ export class PaginationManagerV2<T> {
     this.buildPage = buildPage;
     this.totalPageNum = Math.ceil(objectList.length / pageSize);
     this.title = title;
-    this.accentColor = accentColor;
   }
 
   private getPageData() {

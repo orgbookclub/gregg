@@ -1,10 +1,16 @@
 import { qotds } from "@prisma/client";
 import {
+  ButtonBuilder,
+  ButtonStyle,
   ChatInputCommandInteraction,
   Colors,
-  EmbedBuilder,
+  ContainerBuilder,
   GuildMember,
   MessageFlags,
+  SectionBuilder,
+  SeparatorBuilder,
+  SeparatorSpacingSize,
+  TextDisplayBuilder,
   time,
   userMention,
 } from "discord.js";
@@ -12,7 +18,7 @@ import {
 import { CommandHandler } from "../../../models";
 import { QotdSuggestionStatus } from "../../../models/commands/qotd/QotdSuggestionStatus";
 import { errorHandler } from "../../../utils/errorHandler";
-import { PaginationManager } from "../../../utils/paginationManager";
+import { PaginationManagerV2 } from "../../../utils/paginationManagerV2";
 import { hasRole } from "../../../utils/userUtils";
 
 /**
@@ -47,11 +53,11 @@ const handleList: CommandHandler = async (bot, interaction, guildConfig) => {
       return;
     }
     const pageSize = 7;
-    const pagedContentManager = new PaginationManager<qotds>(
+    const pagedContentManager = new PaginationManagerV2<qotds>(
       pageSize,
       approvedQotdList,
       bot,
-      getQotdListEmbed,
+      getQotdListContainer,
       `Available QOTDs`,
     );
     const message = await interaction.editReply(
@@ -71,29 +77,61 @@ const handleList: CommandHandler = async (bot, interaction, guildConfig) => {
   }
 };
 
-function getQotdListEmbed(
+function getQotdListContainer(
   title: string,
   qotdList: qotds[],
   interaction: ChatInputCommandInteraction,
+  pageInfo: { current: number; total: number },
 ) {
-  const embed = new EmbedBuilder().setTitle(title).setColor(Colors.Blurple);
-  if (interaction.inGuild()) {
-    embed.setAuthor({
-      name: interaction.guild?.name ?? "Unknown Guild",
-      iconURL: interaction.guild?.iconURL() ?? undefined,
-    });
-  }
+  const container = new ContainerBuilder().setAccentColor(Colors.Blurple);
+
+  container.addTextDisplayComponents(
+    new TextDisplayBuilder().setContent(`# ${title}`),
+  );
+  container.addSeparatorComponents(
+    new SeparatorBuilder()
+      .setDivider(true)
+      .setSpacing(SeparatorSpacingSize.Small),
+  );
+
   qotdList.forEach((doc) => {
-    embed.addFields({
-      name: doc.question,
-      value:
-        `> __ID__: \`${doc.id}\`` +
-        "\n" +
-        `> __By__: ${userMention(doc.userId)}` +
-        ` | __On__: ${time(doc.createdOn)}`,
-      inline: false,
-    });
+    const lines = [
+      `### ${doc.question}`,
+      `> by ${userMention(doc.userId)} · ${time(doc.createdOn)}`,
+      `> ID: \`${doc.id}\``,
+    ];
+
+    const section = new SectionBuilder()
+      .addTextDisplayComponents(
+        new TextDisplayBuilder().setContent(lines.join("\n")),
+      )
+      .setButtonAccessory(
+        new ButtonBuilder()
+          .setCustomId(`qotd-post-${doc.id}`)
+          .setLabel("Post")
+          .setEmoji({ name: "📢" })
+          .setStyle(ButtonStyle.Primary),
+      );
+
+    container.addSectionComponents(section);
   });
-  return embed;
+
+  const guildName = interaction.inGuild()
+    ? (interaction.guild?.name ?? "Unknown Guild")
+    : "";
+  const pageStr = `Page ${pageInfo.current} of ${pageInfo.total}`;
+  const footerParts = [guildName, pageStr].filter((s) => s.length > 0);
+  container
+    .addSeparatorComponents(
+      new SeparatorBuilder()
+        .setDivider(true)
+        .setSpacing(SeparatorSpacingSize.Small),
+    )
+    .addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(`-# ${footerParts.join(" · ")}`),
+    );
+
+  return container;
 }
+
 export { handleList };

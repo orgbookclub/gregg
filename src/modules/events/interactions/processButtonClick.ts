@@ -1,14 +1,20 @@
-import { ButtonInteraction, MessageFlags } from "discord.js";
+import { ButtonInteraction, GuildMember, MessageFlags } from "discord.js";
 
+import { showQotdPostModalAndPost } from "../../../commands/subcommands/qotd/post";
 import { Bot } from "../../../models";
 import { QotdSuggestionStatus } from "../../../models/commands/qotd/QotdSuggestionStatus";
+import { getGuildConfigFromDb } from "../../../utils/dbUtils";
 import { errorHandler } from "../../../utils/errorHandler";
 import {
   getEventAnnouncementEmbed,
   getEventInfoEmbed,
   getEventRequestEmbed,
 } from "../../../utils/eventUtils";
-import { participantToDto, upsertUser } from "../../../utils/userUtils";
+import {
+  hasRole,
+  participantToDto,
+  upsertUser,
+} from "../../../utils/userUtils";
 
 /**
  * Handles the logic for button clicks.
@@ -31,6 +37,8 @@ const processButtonClick = async (bot: Bot, interaction: ButtonInteraction) => {
       await handleEventInfo(interaction, bot);
     } else if (interaction.customId.startsWith("evt-join-")) {
       await handleEventListJoin(interaction, bot);
+    } else if (interaction.customId.startsWith("qotd-post-")) {
+      await handleQotdPost(interaction, bot);
     }
   } catch (error) {
     await errorHandler(
@@ -216,6 +224,60 @@ async function handleEventListJoin(interaction: ButtonInteraction, bot: Bot) {
   });
   await interaction.editReply(
     `You have been marked as an interested participant of event withid \`${eventDoc._id}\` of \`${eventDoc.book.title}\`!`,
+  );
+}
+
+async function handleQotdPost(interaction: ButtonInteraction, bot: Bot) {
+  if (!interaction.guild || !interaction.guildId) {
+    await interaction.reply({
+      content: "This action only works inside a server.",
+      flags: MessageFlags.Ephemeral,
+    });
+    return;
+  }
+  const guildConfig = await getGuildConfigFromDb(bot, interaction.guildId);
+  if (!guildConfig) {
+    await interaction.reply({
+      content: "This server is not configured.",
+      flags: MessageFlags.Ephemeral,
+    });
+    return;
+  }
+  if (
+    interaction.member &&
+    !hasRole(interaction.member as GuildMember, guildConfig.staffRole)
+  ) {
+    await interaction.reply({
+      content: "Sorry, this action is restricted for staff use only!",
+      flags: MessageFlags.Ephemeral,
+    });
+    return;
+  }
+
+  const qotdId = interaction.customId.slice("qotd-post-".length);
+  const qotd = await bot.db.qotds.findUnique({ where: { id: qotdId } });
+  if (!qotd) {
+    await interaction.reply({
+      content: "QOTD not found.",
+      flags: MessageFlags.Ephemeral,
+    });
+    return;
+  }
+  if (qotd.status !== QotdSuggestionStatus.Approved) {
+    await interaction.reply({
+      content: "This QOTD is no longer available to post.",
+      flags: MessageFlags.Ephemeral,
+    });
+    return;
+  }
+
+  await showQotdPostModalAndPost(
+    bot,
+    interaction,
+    interaction.guild,
+    guildConfig,
+    qotd,
+    null,
   );
 }
 
