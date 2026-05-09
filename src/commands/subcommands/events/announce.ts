@@ -79,7 +79,7 @@ const handleAnnounce: CommandHandler = async (
       return;
     }
 
-    const announcementMessage = await announceEventForGuild(
+    const announcementResult = await announceEventForGuild(
       bot,
       eventDoc,
       guildConfig as GuildsConfig,
@@ -87,14 +87,17 @@ const handleAnnounce: CommandHandler = async (
       interaction,
       channel as TextChannel | null,
     );
-    if (!announcementMessage) {
+    if (!announcementResult) {
       await interaction.editReply(
         "Configured announcement channel is not valid :(",
       );
       return;
     }
+    const statusMessage = announcementResult.statusUpdated
+      ? "and event status changed to 'Announced'"
+      : "but event status could not be changed to 'Announced'";
     await interaction.editReply({
-      content: `Announcement posted for event ${eventDoc._id}: ${announcementMessage.url} and event status changed to 'Announced'`,
+      content: `Announcement posted for event ${eventDoc._id}: ${announcementResult.message.url} ${statusMessage}`,
     });
   } catch (err) {
     await interaction.reply(errors.SomethingWentWrongError);
@@ -187,7 +190,7 @@ async function announceEventForGuild(
   guildId: string,
   interaction: ChatInputCommandInteraction | ButtonInteraction,
   channelOverride?: TextChannel | null,
-): Promise<Message | null> {
+): Promise<{ message: Message; statusUpdated: boolean } | null> {
   let announcementChannel = channelOverride ?? null;
   if (!announcementChannel) {
     const channelId = guildConfig?.eventAnnouncementChannel ?? "Not set";
@@ -213,13 +216,14 @@ async function announceEventForGuild(
     announcementMessage,
     "Announcement",
   );
+  let statusUpdated = true;
   try {
     await bot.api.events.eventsControllerUpdate({
       id: eventDoc._id,
       updateEventDto: { status: EventDtoStatusEnum.Announced },
     });
   } catch (_error) {
-    // Status update failed but message is already posted; surface to caller via return only.
+    statusUpdated = false;
   }
   await addAnnouncementLinkInThread(
     bot,
@@ -227,7 +231,7 @@ async function announceEventForGuild(
     announcementMessage,
     guildConfig.logWebhookUrl,
   );
-  return announcementMessage;
+  return { message: announcementMessage, statusUpdated };
 }
 
 const ANNOUNCE_MODAL_ID = "eventAnnounceModal";
@@ -317,7 +321,7 @@ async function showAnnounceModalAndPost(
     return;
   }
 
-  const message = await announceEventForGuild(
+  const announcementResult = await announceEventForGuild(
     bot,
     eventDoc,
     guildConfig,
@@ -325,12 +329,15 @@ async function showAnnounceModalAndPost(
     interaction,
     selectedChannel as unknown as TextChannel,
   );
-  if (!message) {
+  if (!announcementResult) {
     await submit.editReply("Could not post in the selected channel :(");
     return;
   }
+  const statusMessage = announcementResult.statusUpdated
+    ? "Event status updated to **Announced**."
+    : "Announcement posted, but the event status could not be updated to **Announced**.";
   await submit.editReply(
-    `Announcement posted: ${message.url}. Event status updated to **Announced**.`,
+    `Announcement posted: ${announcementResult.message.url}. ${statusMessage}`,
   );
 }
 

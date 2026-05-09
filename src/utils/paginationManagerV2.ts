@@ -66,7 +66,7 @@ export class PaginationManagerV2<T> {
     this.bot = bot;
     this.data = objectList;
     this.buildPage = buildPage;
-    this.totalPageNum = Math.ceil(objectList.length / pageSize);
+    this.totalPageNum = Math.max(1, Math.ceil(objectList.length / pageSize));
     this.title = title;
   }
 
@@ -89,7 +89,7 @@ export class PaginationManagerV2<T> {
       .setEmoji({ name: "▶️" })
       .setStyle(ButtonStyle.Secondary)
       .setCustomId(this.forwardId)
-      .setDisabled(disableComponents || this.currPageNum === this.totalPageNum);
+      .setDisabled(disableComponents || this.currPageNum >= this.totalPageNum);
     const selectMenu = new StringSelectMenuBuilder()
       .setPlaceholder(`On Page ${this.currPageNum}`)
       .setCustomId(this.selectId)
@@ -159,9 +159,9 @@ export class PaginationManagerV2<T> {
         return;
       }
       if (i.customId === this.backId) {
-        this.currPageNum -= 1;
+        this.currPageNum = Math.max(1, this.currPageNum - 1);
       } else if (i.customId === this.forwardId) {
-        this.currPageNum += 1;
+        this.currPageNum = Math.min(this.totalPageNum, this.currPageNum + 1);
       } else {
         return;
       }
@@ -191,7 +191,11 @@ export class PaginationManagerV2<T> {
         return;
       }
       if (i.customId === this.selectId) {
-        this.currPageNum = parseInt(i.values[0]);
+        const selectedPage = parseInt(i.values[0], 10);
+        this.currPageNum = Math.min(
+          this.totalPageNum,
+          Math.max(1, selectedPage),
+        );
         await i.update(this.createMessagePayloadForPage(interaction));
       }
     });

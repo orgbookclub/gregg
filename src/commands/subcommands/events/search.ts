@@ -33,6 +33,10 @@ export const handleSearch: CommandHandler = async (bot, interaction) => {
         ? (eventType as keyof typeof EventDtoTypeEnum)
         : undefined,
     });
+    if (response.data.length === 0) {
+      await interaction.editReply(`No events found for "${query}".`);
+      return;
+    }
     const pageSize = 4;
     const pagedContentManager = new PaginationManagerV2<EventDocument>(
       pageSize,

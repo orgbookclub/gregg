@@ -322,34 +322,46 @@ async function showCreateThreadModalAndCreate(
 
   await submit.deferReply({ flags: MessageFlags.Ephemeral });
 
-  const forumChannel = submit.fields
-    .getSelectedChannels(FORUM_FIELD_ID, false)
-    ?.first();
-  const title = submit.fields.getTextInputValue(TITLE_FIELD_ID).trim();
-  if (!forumChannel || forumChannel.type !== ChannelType.GuildForum) {
-    await submit.editReply("Selected channel is not a forum channel.");
-    return;
-  }
-  if (!interaction.guildId) {
-    await submit.editReply(errors.GuildOnlyActionError);
-    return;
-  }
+  try {
+    const forumChannel = submit.fields
+      .getSelectedChannels(FORUM_FIELD_ID, false)
+      ?.first();
+    const title = submit.fields.getTextInputValue(TITLE_FIELD_ID).trim();
+    if (!forumChannel || forumChannel.type !== ChannelType.GuildForum) {
+      await submit.editReply("Selected channel is not a forum channel.");
+      return;
+    }
+    if (!interaction.guildId) {
+      await submit.editReply(errors.GuildOnlyActionError);
+      return;
+    }
 
-  const threadId = await createForumThreadForEvent(
-    bot,
-    eventDoc,
-    guildConfig,
-    interaction.guildId,
-    forumChannel as ForumChannel,
-    title,
-  );
-  if (!threadId) {
-    await submit.editReply("Could not create the thread.");
-    return;
+    const threadId = await createForumThreadForEvent(
+      bot,
+      eventDoc,
+      guildConfig,
+      interaction.guildId,
+      forumChannel as ForumChannel,
+      title,
+    );
+    if (!threadId) {
+      await submit.editReply("Could not create the thread.");
+      return;
+    }
+    await submit.editReply(
+      `Created ${channelMention(threadId)} for event \`${eventDoc._id}\`.`,
+    );
+  } catch (err) {
+    await submit.editReply(errors.SomethingWentWrongError);
+    await errorHandler(
+      bot,
+      "commands > events > createThread > modal",
+      err,
+      interaction.guild?.name,
+      undefined,
+      submit,
+    );
   }
-  await submit.editReply(
-    `Created ${channelMention(threadId)} for event \`${eventDoc._id}\`.`,
-  );
 }
 
 export {

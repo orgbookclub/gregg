@@ -170,39 +170,51 @@ async function showQotdPostModalAndPost(
 
   await submit.deferReply({ flags: MessageFlags.Ephemeral });
 
-  const selectedChannelId = submit.fields
-    .getSelectedChannels(CHANNEL_FIELD_ID, true)
-    .map((c) => c.id)[0];
-  const editedQuestion = submit.fields.getTextInputValue(QUESTION_FIELD_ID);
+  try {
+    const selectedChannelId = submit.fields
+      .getSelectedChannels(CHANNEL_FIELD_ID, true)
+      .map((c) => c.id)[0];
+    const editedQuestion = submit.fields.getTextInputValue(QUESTION_FIELD_ID);
 
-  const fetchedChannel = await bot.channels.fetch(selectedChannelId);
-  if (
-    !fetchedChannel ||
-    fetchedChannel.isDMBased() ||
-    !fetchedChannel.isTextBased()
-  ) {
-    await submit.editReply("Selected channel is not a postable text channel.");
-    return;
+    const fetchedChannel = await bot.channels.fetch(selectedChannelId);
+    if (
+      !fetchedChannel ||
+      fetchedChannel.isDMBased() ||
+      !fetchedChannel.isTextBased()
+    ) {
+      await submit.editReply("Selected channel is not a postable text channel.");
+      return;
+    }
+
+    const pingRoleId = guildConfig.qotdPingRole ?? "Not set";
+    const message = await postQotd(
+      bot,
+      fetchedChannel as TextChannel,
+      qotd,
+      editedQuestion,
+      pingRoleId,
+    );
+
+    const questionEdited = editedQuestion.trim() !== qotd.question.trim();
+    const channelChanged =
+      !!guildConfig.qotdChannel && selectedChannelId !== guildConfig.qotdChannel;
+    const notes: string[] = [];
+    if (questionEdited) notes.push("question was edited");
+    if (channelChanged) notes.push("channel differs from default");
+    const noteSuffix = notes.length > 0 ? ` *(${notes.join("; ")})*` : "";
+
+    await submit.editReply(`QOTD posted: ${message.url}${noteSuffix}`);
+  } catch (err) {
+    await submit.editReply("Something went wrong! Please try again later");
+    await errorHandler(
+      bot,
+      "commands > qotd > post > modal",
+      err,
+      interaction.guild?.name,
+      undefined,
+      submit,
+    );
   }
-
-  const pingRoleId = guildConfig.qotdPingRole ?? "Not set";
-  const message = await postQotd(
-    bot,
-    fetchedChannel as TextChannel,
-    qotd,
-    editedQuestion,
-    pingRoleId,
-  );
-
-  const questionEdited = editedQuestion.trim() !== qotd.question.trim();
-  const channelChanged =
-    !!guildConfig.qotdChannel && selectedChannelId !== guildConfig.qotdChannel;
-  const notes: string[] = [];
-  if (questionEdited) notes.push("question was edited");
-  if (channelChanged) notes.push("channel differs from default");
-  const noteSuffix = notes.length > 0 ? ` *(${notes.join("; ")})*` : "";
-
-  await submit.editReply(`QOTD posted: ${message.url}${noteSuffix}`);
   void guild;
 }
 

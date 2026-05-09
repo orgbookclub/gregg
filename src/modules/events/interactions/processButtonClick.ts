@@ -242,7 +242,7 @@ async function handleEventListJoin(interaction: ButtonInteraction, bot: Bot) {
   const eventDoc = eventResponse.data;
 
   const alreadyInterested = eventDoc.interested.some(
-    (x) => x.user.userId === interaction.user.id,
+    (x) => x.user?.userId === interaction.user.id,
   );
   if (alreadyInterested) {
     await interaction.editReply(
@@ -266,7 +266,7 @@ async function handleEventListJoin(interaction: ButtonInteraction, bot: Bot) {
     },
   });
   await interaction.editReply(
-    `You have been marked as an interested participant of event withid \`${eventDoc._id}\` of \`${eventDoc.book.title}\`!`,
+    `You have been marked as an interested participant of event with id \`${eventDoc._id}\` of \`${eventDoc.book.title}\`!`,
   );
 }
 

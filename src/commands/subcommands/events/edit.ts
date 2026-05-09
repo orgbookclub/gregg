@@ -298,7 +298,7 @@ async function resolveExistingThreadIds(
 
 /**
  * Opens the event edit modal pre-filled with the event's current values
- * (status, start/end dates, threads, description), then applies all changes
+ * (status, start/end dates, threads), then applies all changes
  * in a single update on submit. Used by the Edit button on the event info
  * card. Caller is responsible for the staff role check.
  *
@@ -337,51 +337,63 @@ async function showEventEditModal(
 
   await submit.deferReply({ flags: MessageFlags.Ephemeral });
 
-  const [status] = submit.fields.getStringSelectValues(STATUS_FIELD_ID);
-  const startRaw = submit.fields.getTextInputValue(START_DATE_FIELD_ID);
-  const endRaw = submit.fields.getTextInputValue(END_DATE_FIELD_ID);
-  const selectedThreads =
-    submit.fields
-      .getSelectedChannels(THREADS_FIELD_ID, false)
-      ?.map((c) => c.id) ?? [];
+  try {
+    const [status] = submit.fields.getStringSelectValues(STATUS_FIELD_ID);
+    const startRaw = submit.fields.getTextInputValue(START_DATE_FIELD_ID);
+    const endRaw = submit.fields.getTextInputValue(END_DATE_FIELD_ID);
+    const selectedThreads =
+      submit.fields
+        .getSelectedChannels(THREADS_FIELD_ID, false)
+        ?.map((c) => c.id) ?? [];
 
-  const startTs = Date.parse(startRaw);
-  const endTs = Date.parse(endRaw);
-  if (isNaN(startTs) || isNaN(endTs)) {
-    await submit.editReply("Invalid date format. Use YYYY-MM-DD.");
-    return;
-  }
-  if (endTs < startTs) {
-    await submit.editReply("End date cannot be before start date.");
-    return;
-  }
-  if (
-    !Object.values(EventDtoStatusEnum).includes(
-      status as keyof typeof EventDtoStatusEnum,
-    )
-  ) {
-    await submit.editReply("Invalid status.");
-    return;
-  }
+    const startTs = Date.parse(startRaw);
+    const endTs = Date.parse(endRaw);
+    if (isNaN(startTs) || isNaN(endTs)) {
+      await submit.editReply("Invalid date format. Use YYYY-MM-DD.");
+      return;
+    }
+    if (endTs < startTs) {
+      await submit.editReply("End date cannot be before start date.");
+      return;
+    }
+    if (
+      !Object.values(EventDtoStatusEnum).includes(
+        status as keyof typeof EventDtoStatusEnum,
+      )
+    ) {
+      await submit.editReply("Invalid status.");
+      return;
+    }
 
-  const updateEventDto: UpdateEventDto = {
-    status: status as keyof typeof EventDtoStatusEnum,
-    dates: {
-      startDate: new Date(startTs).toISOString(),
-      endDate: new Date(endTs).toISOString(),
-    },
-    threads: selectedThreads,
-  };
+    const updateEventDto: UpdateEventDto = {
+      status: status as keyof typeof EventDtoStatusEnum,
+      dates: {
+        startDate: new Date(startTs).toISOString(),
+        endDate: new Date(endTs).toISOString(),
+      },
+      threads: selectedThreads,
+    };
 
-  const editResponse = await bot.api.events.eventsControllerUpdate({
-    id: eventDoc._id,
-    updateEventDto,
-  });
-  await submit.editReply({
-    content: `Event \`${editResponse.data._id}\` updated`,
-    embeds: [getEventInfoEmbed(editResponse.data, interaction)],
-    components: actionRowOrEmpty(getEventInfoStaffActionRow(editResponse.data)),
-  });
+    const editResponse = await bot.api.events.eventsControllerUpdate({
+      id: eventDoc._id,
+      updateEventDto,
+    });
+    await submit.editReply({
+      content: `Event \`${editResponse.data._id}\` updated`,
+      embeds: [getEventInfoEmbed(editResponse.data, interaction)],
+      components: actionRowOrEmpty(getEventInfoStaffActionRow(editResponse.data)),
+    });
+  } catch (err) {
+    await submit.editReply(errors.SomethingWentWrongError);
+    await errorHandler(
+      bot,
+      "commands > events > edit > modal",
+      err,
+      interaction.guild?.name,
+      undefined,
+      submit,
+    );
+  }
 }
 
 function actionRowOrEmpty<T>(row: T | null): T[] {
