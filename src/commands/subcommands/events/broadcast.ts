@@ -36,6 +36,7 @@ const handleBroadcast: CommandHandler = async (
   interaction,
   guildConfig,
 ) => {
+  let modalSubmitInteraction: ModalSubmitInteraction | undefined;
   try {
     if (
       guildConfig &&
@@ -64,10 +65,11 @@ const handleBroadcast: CommandHandler = async (
 
     const filter = (msInteraction: ModalSubmitInteraction) =>
       msInteraction.customId === EVENT_BROADCAST_MODAL_ID + salt;
-    const modalSubmitInteraction = await interaction.awaitModalSubmit({
+    modalSubmitInteraction = await interaction.awaitModalSubmit({
       filter,
       time: 5 * 60 * 1000,
     });
+    await modalSubmitInteraction.deferReply({ ephemeral: true });
     const messageContent =
       modalSubmitInteraction.fields.getTextInputValue(MESSAGE_FIELD_ID);
 
@@ -79,17 +81,14 @@ const handleBroadcast: CommandHandler = async (
       });
       eventDoc = response.data;
     } catch (_error) {
-      await modalSubmitInteraction.reply({
-        content: errors.InvalidEventIdError,
-        ephemeral: true,
-      });
+      await modalSubmitInteraction.editReply(errors.InvalidEventIdError);
       return;
     }
 
     let threadToPost;
     if (!channel) {
       if (eventDoc.threads === undefined || eventDoc.threads.length === 0) {
-        await interaction.followUp(
+        await modalSubmitInteraction.editReply(
           "Sorry, this event doesn't have any threads listed. Please try manually giving the channel as input",
         );
         return;
@@ -97,7 +96,7 @@ const handleBroadcast: CommandHandler = async (
       const threadId = eventDoc.threads[0];
       const eventThreadChannel = await bot.channels.fetch(threadId);
       if (!eventThreadChannel?.isTextBased()) {
-        await interaction.followUp(
+        await modalSubmitInteraction.editReply(
           "Configured channel in event is not a valid text channel! Please try manually giving the channel as input",
         );
         return;
@@ -130,10 +129,9 @@ const handleBroadcast: CommandHandler = async (
       await message.pin();
     }
 
-    await modalSubmitInteraction.reply({
-      content: `Your message has been broadcasted!`,
-      ephemeral: true,
-    });
+    await modalSubmitInteraction.editReply(
+      "Your message has been broadcasted!",
+    );
 
     if (guildConfig) {
       const embed = new EmbedBuilder()
@@ -149,13 +147,40 @@ const handleBroadcast: CommandHandler = async (
     }
   } catch (err) {
     if (err instanceof DiscordjsError) {
-      await interaction.followUp({
-        ephemeral: true,
-        content:
-          "Your request timed out! Please try again and submit the form within 5 minutes",
-      });
+      if (modalSubmitInteraction) {
+        if (modalSubmitInteraction.deferred || modalSubmitInteraction.replied) {
+          await modalSubmitInteraction.editReply(
+            "Your request timed out! Please try again and submit the form within 5 minutes",
+          );
+        } else {
+          await modalSubmitInteraction.reply({
+            ephemeral: true,
+            content:
+              "Your request timed out! Please try again and submit the form within 5 minutes",
+          });
+        }
+      } else {
+        await interaction.followUp({
+          ephemeral: true,
+          content:
+            "Your request timed out! Please try again and submit the form within 5 minutes",
+        });
+      }
     } else {
-      await interaction.followUp(errors.SomethingWentWrongError);
+      if (modalSubmitInteraction) {
+        if (modalSubmitInteraction.deferred || modalSubmitInteraction.replied) {
+          await modalSubmitInteraction.editReply(
+            errors.SomethingWentWrongError,
+          );
+        } else {
+          await modalSubmitInteraction.reply({
+            content: errors.SomethingWentWrongError,
+            ephemeral: true,
+          });
+        }
+      } else {
+        await interaction.followUp(errors.SomethingWentWrongError);
+      }
       await errorHandler(
         bot,
         "commands > events > broadcast",

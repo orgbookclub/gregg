@@ -24,5 +24,5 @@ All commands listed below can be used after typing `/events` in the chat bar on 
 | edit \<id\> \<field\> \<value\>             | Updates the `field` of an event with the given `value`                                                                                                           |
 | createthread \<id\> [channel] [title]       | Creates or updates a thread for an event. If `title` is given, sets the title of the thread. If `channel` is given, creates a new thread/message in that channel |
 | announce \<id\> [channel]                   | Makes an announcement for an approved event. If `channel` is given, does it in that channel                                                                      |
-| adduser \<id\> \<user\> \<type\> [points=5] | Adds a user as participant of type `type` to the event, and gives them `points`                                                                                  |
-| removeuser \<id\> \<user\> \<type\>         | Removes a user as a participant from the event                                                                                                                   |
+| adduser \<id\>                              | Opens a form to add up to 25 users as participants of the event in one submission. Type and points (default 5) are picked in the form |
+| removeuser \<id\>                           | Opens a form to remove up to 25 users as participants from the event in one submission. Type is picked in the form                    |
