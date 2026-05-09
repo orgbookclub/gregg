@@ -182,7 +182,9 @@ async function showQotdPostModalAndPost(
       fetchedChannel.isDMBased() ||
       !fetchedChannel.isTextBased()
     ) {
-      await submit.editReply("Selected channel is not a postable text channel.");
+      await submit.editReply(
+        "Selected channel is not a postable text channel.",
+      );
       return;
     }
 
@@ -196,8 +198,8 @@ async function showQotdPostModalAndPost(
     );
 
     const questionEdited = editedQuestion.trim() !== qotd.question.trim();
-    const channelChanged =
-      !!guildConfig.qotdChannel && selectedChannelId !== guildConfig.qotdChannel;
+    const channelChanged = !!guildConfig.qotdChannel &&
+      selectedChannelId !== guildConfig.qotdChannel;
     const notes: string[] = [];
     if (questionEdited) notes.push("question was edited");
     if (channelChanged) notes.push("channel differs from default");

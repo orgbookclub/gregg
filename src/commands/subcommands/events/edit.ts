@@ -383,7 +383,9 @@ async function showEventEditModal(
     await submit.editReply({
       content: `Event \`${editResponse.data._id}\` updated`,
       embeds: [getEventInfoEmbed(editResponse.data, interaction)],
-      components: actionRowOrEmpty(getEventInfoStaffActionRow(editResponse.data)),
+      components: actionRowOrEmpty(
+        getEventInfoStaffActionRow(editResponse.data),
+      ),
     });
   } catch (err) {
     await submit.editReply(errors.SomethingWentWrongError);
