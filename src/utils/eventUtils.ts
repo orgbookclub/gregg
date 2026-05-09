@@ -50,6 +50,74 @@ const EVENT_STATUS_EMOJI: Record<string, string> = {
   Cancelled: "🚫",
 };
 
+const EDIT_BUTTON = (eventId: string) =>
+  new ButtonBuilder()
+    .setCustomId(`evt-edit-${eventId}`)
+    .setLabel("Edit")
+    .setEmoji({ name: "✏️" })
+    .setStyle(ButtonStyle.Secondary);
+
+/**
+ * Builds the state-aware list of staff action buttons for an event card.
+ * Empty array if the status has no staff actions beyond Edit (which is always
+ * appended last).
+ *
+ * @param event The event document.
+ * @returns Array of buttons for the action row.
+ */
+function buildStaffActionButtons(event: EventDocument): ButtonBuilder[] {
+  const buttons: ButtonBuilder[] = [];
+  const id = event._id;
+
+  if (event.status === EventDtoStatusEnum.Requested) {
+    buttons.push(
+      new ButtonBuilder()
+        .setCustomId(`evt-approve-${id}`)
+        .setLabel("Approve")
+        .setEmoji({ name: "✅" })
+        .setStyle(ButtonStyle.Success),
+      new ButtonBuilder()
+        .setCustomId(`evt-reject-${id}`)
+        .setLabel("Reject")
+        .setEmoji({ name: "❌" })
+        .setStyle(ButtonStyle.Danger),
+    );
+  } else if (event.status === EventDtoStatusEnum.Approved) {
+    buttons.push(
+      new ButtonBuilder()
+        .setCustomId(`evt-thread-${id}`)
+        .setLabel("Create Thread")
+        .setEmoji({ name: "🧵" })
+        .setStyle(ButtonStyle.Primary),
+    );
+    if (event.threads && event.threads.length > 0) {
+      buttons.push(
+        new ButtonBuilder()
+          .setCustomId(`evt-announce-${id}`)
+          .setLabel("Announce")
+          .setEmoji({ name: "📢" })
+          .setStyle(ButtonStyle.Primary),
+      );
+    }
+  } else if (event.status === EventDtoStatusEnum.Completed) {
+    buttons.push(
+      new ButtonBuilder()
+        .setCustomId(`evt-addpts-${id}`)
+        .setLabel("Add Points")
+        .setEmoji({ name: "➕" })
+        .setStyle(ButtonStyle.Success),
+      new ButtonBuilder()
+        .setCustomId(`evt-rmpts-${id}`)
+        .setLabel("Remove Points")
+        .setEmoji({ name: "➖" })
+        .setStyle(ButtonStyle.Danger),
+    );
+  }
+
+  buttons.push(EDIT_BUTTON(id));
+  return buttons;
+}
+
 /**
  * Creates a Components V2 Container to display a list of events. Each event
  * renders as its own Section with the cover as a thumbnail accessory.
@@ -229,11 +297,13 @@ export function getEventInfoEmbed(
       inline: true,
     });
   }
-  embed.addFields({
-    name: "Requested By",
-    value: `${userMention(event.requestedBy.user.userId)}`,
-    inline: false,
-  });
+  if (event.requestedBy?.user?.userId) {
+    embed.addFields({
+      name: "Requested By",
+      value: `${userMention(event.requestedBy.user.userId)}`,
+      inline: false,
+    });
+  }
   if (event.leaders && event.leaders.length > 0) {
     embed.addFields({
       name: "Leader(s)",
@@ -256,6 +326,20 @@ export function getEventInfoEmbed(
     });
   }
   return embed;
+}
+
+/**
+ * Returns an ActionRow with state-aware staff action buttons for an event,
+ * or null if there are no buttons to render. Caller decides whether to
+ * include it (typically based on whether the viewer has the staff role).
+ *
+ * @param event The event document.
+ * @returns An ActionRow with buttons, or null.
+ */
+export function getEventInfoStaffActionRow(event: EventDocument) {
+  const buttons = buildStaffActionButtons(event);
+  if (buttons.length === 0) return null;
+  return new ActionRowBuilder<ButtonBuilder>().addComponents(buttons);
 }
 
 /**

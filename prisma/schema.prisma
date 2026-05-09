@@ -50,6 +50,19 @@ model commandUsages {
   @@unique([command, subcommand], map: "command_1_subcommand_1")
 }
 
+model interactionUsages {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  type       String
+  identifier String
+  uses       Int
+  createdOn  DateTime @db.Date
+  updatedOn  DateTime @db.Date
+  v          Int?     @map("__v") @ignore
+
+  @@unique([type, identifier], map: "type_1_identifier_1")
+}
+
 model guilds {
   id        String       @id @default(auto()) @map("_id") @db.ObjectId
   guildId   String       @unique(map: "guildId_1")

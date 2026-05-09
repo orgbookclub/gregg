@@ -13,4 +13,6 @@ export const errors = {
   // Events
   InvalidEventIdError:
     "Invalid event ID! Please try again with a valid event ID.",
+  GuildOnlyActionError: "This action only works inside a server.",
+  GuildNotConfiguredError: "This server is not configured.",
 };

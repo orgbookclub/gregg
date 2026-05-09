@@ -1,7 +1,14 @@
+import { EventDocument, EventDtoStatusEnum } from "@orgbookclub/ows-client";
 import { ButtonInteraction, GuildMember, MessageFlags } from "discord.js";
 
+import { runAddUserFlow } from "../../../commands/subcommands/events/addUser";
+import { showAnnounceModalAndPost } from "../../../commands/subcommands/events/announce";
+import { showCreateThreadModalAndCreate } from "../../../commands/subcommands/events/createThread";
+import { showEventEditModal } from "../../../commands/subcommands/events/edit";
+import { runRemoveUserFlow } from "../../../commands/subcommands/events/removeUser";
 import { buildUserEventStatsEmbed } from "../../../commands/subcommands/events/stats";
 import { showQotdPostModalAndPost } from "../../../commands/subcommands/qotd/post";
+import { errors } from "../../../config/constants";
 import { Bot } from "../../../models";
 import { QotdSuggestionStatus } from "../../../models/commands/qotd/QotdSuggestionStatus";
 import { getGuildConfigFromDb } from "../../../utils/dbUtils";
@@ -11,6 +18,10 @@ import {
   getEventInfoEmbed,
   getEventRequestEmbed,
 } from "../../../utils/eventUtils";
+import {
+  normalizeCustomId,
+  upsertInteractionUsage,
+} from "../../../utils/interactionUsageUtils";
 import {
   hasRole,
   participantToDto,
@@ -36,13 +47,42 @@ const processButtonClick = async (bot: Bot, interaction: ButtonInteraction) => {
       await handleQotdSuggestionActions(interaction, bot);
     } else if (interaction.customId.startsWith("evt-info-")) {
       await handleEventInfo(interaction, bot);
+    } else if (interaction.customId.startsWith("evt-edit-")) {
+      await handleEventEdit(interaction, bot);
+    } else if (interaction.customId.startsWith("evt-approve-")) {
+      await handleEventStatusChange(
+        interaction,
+        bot,
+        EventDtoStatusEnum.Approved,
+      );
+    } else if (interaction.customId.startsWith("evt-reject-")) {
+      await handleEventStatusChange(
+        interaction,
+        bot,
+        EventDtoStatusEnum.Rejected,
+      );
+    } else if (interaction.customId.startsWith("evt-thread-")) {
+      await handleEventThread(interaction, bot);
+    } else if (interaction.customId.startsWith("evt-announce-")) {
+      await handleEventAnnounce(interaction, bot);
+    } else if (interaction.customId.startsWith("evt-addpts-")) {
+      await handleEventAddPoints(interaction, bot);
+    } else if (interaction.customId.startsWith("evt-rmpts-")) {
+      await handleEventRemovePoints(interaction, bot);
     } else if (interaction.customId.startsWith("evt-join-")) {
       await handleEventListJoin(interaction, bot);
     } else if (interaction.customId.startsWith("qotd-post-")) {
       await handleQotdPost(interaction, bot);
     } else if (interaction.customId.startsWith("usr-stats-")) {
       await handleUserStats(interaction, bot);
+    } else {
+      return;
     }
+    await upsertInteractionUsage(
+      bot,
+      "button",
+      normalizeCustomId(interaction.customId),
+    );
   } catch (error) {
     await errorHandler(
       bot,
@@ -298,6 +338,153 @@ async function handleUserStats(interaction: ButtonInteraction, bot: Bot) {
   } catch {
     await interaction.editReply("Could not fetch stats for that user.");
   }
+}
+
+async function handleEventEdit(interaction: ButtonInteraction, bot: Bot) {
+  const ctx = await requireStaffAndEvent(interaction, bot, "evt-edit-");
+  if (!ctx) return;
+  await showEventEditModal(bot, interaction, ctx.eventDoc);
+}
+
+/**
+ * Validates that the click came from staff in a configured guild and resolves
+ * the event id from the customId, fetching the event doc. Replies ephemerally
+ * with the appropriate error and returns null if any check fails.
+ */
+async function requireStaffAndEvent(
+  interaction: ButtonInteraction,
+  bot: Bot,
+  prefix: string,
+): Promise<{
+  eventDoc: EventDocument;
+  guildConfig: NonNullable<Awaited<ReturnType<typeof getGuildConfigFromDb>>>;
+} | null> {
+  if (!interaction.guildId) {
+    await interaction.reply({
+      content: errors.GuildOnlyActionError,
+      flags: MessageFlags.Ephemeral,
+    });
+    return null;
+  }
+  const guildConfig = await getGuildConfigFromDb(bot, interaction.guildId);
+  if (!guildConfig) {
+    await interaction.reply({
+      content: errors.GuildNotConfiguredError,
+      flags: MessageFlags.Ephemeral,
+    });
+    return null;
+  }
+  if (
+    !interaction.member ||
+    !hasRole(interaction.member as GuildMember, guildConfig.staffRole)
+  ) {
+    await interaction.reply({
+      content: errors.StaffRestrictionError,
+      flags: MessageFlags.Ephemeral,
+    });
+    return null;
+  }
+  const eventId = interaction.customId.slice(prefix.length);
+  let eventDoc: EventDocument;
+  try {
+    const response = await bot.api.events.eventsControllerFindOne({
+      id: eventId,
+    });
+    eventDoc = response.data;
+  } catch {
+    await interaction.reply({
+      content: errors.InvalidEventIdError,
+      flags: MessageFlags.Ephemeral,
+    });
+    return null;
+  }
+  return { eventDoc, guildConfig };
+}
+
+async function handleEventStatusChange(
+  interaction: ButtonInteraction,
+  bot: Bot,
+  newStatus: EventDtoStatusEnum,
+) {
+  const prefix =
+    newStatus === EventDtoStatusEnum.Approved ? "evt-approve-" : "evt-reject-";
+  const ctx = await requireStaffAndEvent(interaction, bot, prefix);
+  if (!ctx) return;
+  if (ctx.eventDoc.status !== EventDtoStatusEnum.Requested) {
+    await interaction.reply({
+      content: `Event must be in 'Requested' state to be ${newStatus.toLowerCase()}.`,
+      flags: MessageFlags.Ephemeral,
+    });
+    return;
+  }
+  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+  await bot.api.events.eventsControllerUpdate({
+    id: ctx.eventDoc._id,
+    updateEventDto: { status: newStatus },
+  });
+  await interaction.editReply(
+    `Event \`${ctx.eventDoc._id}\` marked as **${newStatus}**.`,
+  );
+}
+
+async function handleEventThread(interaction: ButtonInteraction, bot: Bot) {
+  const ctx = await requireStaffAndEvent(interaction, bot, "evt-thread-");
+  if (!ctx) return;
+  if (ctx.eventDoc.status !== EventDtoStatusEnum.Approved) {
+    await interaction.reply({
+      content: "Event must be in 'Approved' state to create a thread.",
+      flags: MessageFlags.Ephemeral,
+    });
+    return;
+  }
+  if (!interaction.guildId) return;
+  await showCreateThreadModalAndCreate(
+    bot,
+    interaction,
+    ctx.eventDoc,
+    ctx.guildConfig,
+  );
+}
+
+async function handleEventAnnounce(interaction: ButtonInteraction, bot: Bot) {
+  const ctx = await requireStaffAndEvent(interaction, bot, "evt-announce-");
+  if (!ctx) return;
+  if (ctx.eventDoc.status !== EventDtoStatusEnum.Approved) {
+    await interaction.reply({
+      content: "Event must be in 'Approved' state to be announced.",
+      flags: MessageFlags.Ephemeral,
+    });
+    return;
+  }
+  if (!ctx.eventDoc.threads || ctx.eventDoc.threads.length === 0) {
+    await interaction.reply({
+      content: "Create a thread first before announcing.",
+      flags: MessageFlags.Ephemeral,
+    });
+    return;
+  }
+  if (!interaction.guildId) return;
+  await showAnnounceModalAndPost(
+    bot,
+    interaction,
+    ctx.eventDoc,
+    ctx.guildConfig,
+  );
+}
+
+async function handleEventAddPoints(interaction: ButtonInteraction, bot: Bot) {
+  const ctx = await requireStaffAndEvent(interaction, bot, "evt-addpts-");
+  if (!ctx) return;
+  await runAddUserFlow(bot, interaction, ctx.eventDoc._id);
+}
+
+async function handleEventRemovePoints(
+  interaction: ButtonInteraction,
+  bot: Bot,
+) {
+  const ctx = await requireStaffAndEvent(interaction, bot, "evt-rmpts-");
+  if (!ctx) return;
+  await runRemoveUserFlow(bot, interaction, ctx.eventDoc._id);
 }
 
 export { processButtonClick };

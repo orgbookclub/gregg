@@ -2,6 +2,7 @@ import { ContextMenuCommandInteraction, MessageFlags } from "discord.js";
 
 import { Bot } from "../../../models";
 import { errorHandler } from "../../../utils/errorHandler";
+import { upsertInteractionUsage } from "../../../utils/interactionUsageUtils";
 
 /**
  * Handles all context commands.
@@ -52,7 +53,7 @@ export async function processContextMenuCommand(
     // TODO: Type guards
     // TODO: Can also get guild-specific config settings from here.
     await command.run(bot, interaction);
-    // TODO: Usage logging
+    await upsertInteractionUsage(bot, "contextMenu", interaction.commandName);
   } catch (error) {
     await errorHandler(
       bot,

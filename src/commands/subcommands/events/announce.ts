@@ -1,12 +1,21 @@
 import { EventDocument, EventDtoStatusEnum } from "@orgbookclub/ows-client";
+import { GuildsConfig } from "@prisma/client";
 import {
+  ButtonInteraction,
+  ChannelSelectMenuBuilder,
   ChannelType,
+  ChatInputCommandInteraction,
   Colors,
+  DiscordjsError,
   EmbedBuilder,
   GuildMember,
+  LabelBuilder,
   Message,
   MessageFlags,
+  ModalBuilder,
+  ModalSubmitInteraction,
   TextChannel,
+  TextDisplayBuilder,
   channelMention,
   roleMention,
 } from "discord.js";
@@ -27,6 +36,7 @@ import { hasRole } from "../../../utils/userUtils";
  * @param interaction The interaction.
  * @param guildConfig The guild config.
  */
+// TODO: switch slash command to also use showAnnounceModalAndPost for UX consistency with the Announce button.
 const handleAnnounce: CommandHandler = async (
   bot,
   interaction,
@@ -69,61 +79,23 @@ const handleAnnounce: CommandHandler = async (
       return;
     }
 
-    let announcementChannel = channel;
-    if (!channel) {
-      const channelId = guildConfig?.eventAnnouncementChannel ?? "Not set";
-      const configuredChannel = await bot.channels.fetch(channelId);
-
-      if (
-        !configuredChannel ||
-        configuredChannel.type !== ChannelType.GuildAnnouncement
-      ) {
-        await interaction.editReply(
-          "Configured announcement channel is not valid :(",
-        );
-        return;
-      }
-      announcementChannel = configuredChannel;
-    }
-    if (!announcementChannel) return;
-    const pingRole = guildConfig?.serverEventsRole ?? "Not set";
-    const announcementMessage = await announcementChannel.send({
-      content: getAnnouncementString(pingRole, eventDoc),
-      embeds: [getEventAnnouncementEmbed(eventDoc, interaction)],
-      components: [getButtonActionRow(eventDoc._id, "ea")],
-    });
-
-    await createEventMessageDoc(
-      bot,
-      interaction.guild.id,
-      eventDoc._id,
-      announcementMessage,
-      "Announcement",
-    );
-
-    try {
-      await bot.api.events.eventsControllerUpdate({
-        id: eventDoc._id,
-        updateEventDto: { status: EventDtoStatusEnum.Announced },
-      });
-      await interaction.editReply({
-        content: `Announcement posted for event ${eventDoc._id}: ${announcementMessage.url} and event status changed to 'Announced'`,
-      });
-    } catch (_error) {
-      await interaction.editReply(
-        `Announcement posted for event ${eventDoc._id}: ${announcementMessage.url} but there was an error updating the event status :(`,
-      );
-    }
-    // Also post the link to the announcement in the thread.
-    if (!guildConfig) return;
-
-    const webhookUrl = guildConfig.logWebhookUrl;
-    await addAnnouncementLinkInThread(
+    const announcementMessage = await announceEventForGuild(
       bot,
       eventDoc,
-      announcementMessage,
-      webhookUrl,
+      guildConfig as GuildsConfig,
+      interaction.guild.id,
+      interaction,
+      channel as TextChannel | null,
     );
+    if (!announcementMessage) {
+      await interaction.editReply(
+        "Configured announcement channel is not valid :(",
+      );
+      return;
+    }
+    await interaction.editReply({
+      content: `Announcement posted for event ${eventDoc._id}: ${announcementMessage.url} and event status changed to 'Announced'`,
+    });
   } catch (err) {
     await interaction.reply(errors.SomethingWentWrongError);
     await errorHandler(
@@ -194,4 +166,172 @@ function getAnnouncementString(
   );
 }
 
-export { handleAnnounce };
+/**
+ * Announces an Approved event using the existing announcement embed +
+ * Join/Leave button row, marks the event as Announced, and links the
+ * announcement back into the event thread(s). Used by both the slash
+ * command and the Announce button on the event info card.
+ *
+ * @param bot The bot instance.
+ * @param eventDoc The event (must be Approved).
+ * @param guildConfig The guild config.
+ * @param guildId The guild id.
+ * @param interaction The interaction (used by the announcement embed builder).
+ * @param channelOverride Optional channel to post in instead of the configured one.
+ * @returns The posted announcement message, or null if the channel is misconfigured.
+ */
+async function announceEventForGuild(
+  bot: Bot,
+  eventDoc: EventDocument,
+  guildConfig: GuildsConfig,
+  guildId: string,
+  interaction: ChatInputCommandInteraction | ButtonInteraction,
+  channelOverride?: TextChannel | null,
+): Promise<Message | null> {
+  let announcementChannel = channelOverride ?? null;
+  if (!announcementChannel) {
+    const channelId = guildConfig?.eventAnnouncementChannel ?? "Not set";
+    const configuredChannel = await bot.channels.fetch(channelId);
+    if (
+      !configuredChannel ||
+      configuredChannel.type !== ChannelType.GuildAnnouncement
+    ) {
+      return null;
+    }
+    announcementChannel = configuredChannel as unknown as TextChannel;
+  }
+  const pingRole = guildConfig?.serverEventsRole ?? "Not set";
+  const announcementMessage = await announcementChannel.send({
+    content: getAnnouncementString(pingRole, eventDoc),
+    embeds: [getEventAnnouncementEmbed(eventDoc, interaction)],
+    components: [getButtonActionRow(eventDoc._id, "ea")],
+  });
+  await createEventMessageDoc(
+    bot,
+    guildId,
+    eventDoc._id,
+    announcementMessage,
+    "Announcement",
+  );
+  try {
+    await bot.api.events.eventsControllerUpdate({
+      id: eventDoc._id,
+      updateEventDto: { status: EventDtoStatusEnum.Announced },
+    });
+  } catch (_error) {
+    // Status update failed but message is already posted; surface to caller via return only.
+  }
+  await addAnnouncementLinkInThread(
+    bot,
+    eventDoc,
+    announcementMessage,
+    guildConfig.logWebhookUrl,
+  );
+  return announcementMessage;
+}
+
+const ANNOUNCE_MODAL_ID = "eventAnnounceModal";
+const ANNOUNCE_CHANNEL_FIELD_ID = "channel";
+const ANNOUNCE_MODAL_TIMEOUT_MS = 5 * 60 * 1000;
+
+function buildAnnounceModal(
+  customId: string,
+  eventDoc: EventDocument,
+  defaultChannelId: string | null,
+) {
+  const channelSelect = new ChannelSelectMenuBuilder()
+    .setCustomId(ANNOUNCE_CHANNEL_FIELD_ID)
+    .setChannelTypes(ChannelType.GuildAnnouncement)
+    .setMinValues(1)
+    .setMaxValues(1);
+  if (defaultChannelId) {
+    channelSelect.setDefaultChannels(defaultChannelId);
+  }
+
+  return new ModalBuilder()
+    .setCustomId(customId)
+    .setTitle("Announce Event")
+    .addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(`**Event ID:** \`${eventDoc._id}\``),
+    )
+    .addLabelComponents(
+      new LabelBuilder()
+        .setLabel("Announcement channel")
+        .setChannelSelectMenuComponent(channelSelect),
+    );
+}
+
+/**
+ * Opens the announce confirmation modal pre-filled with the configured
+ * announcement channel, then calls `announceEventForGuild` on submit.
+ * Caller is responsible for the staff role check, `Approved` status check,
+ * and ensuring the event has at least one thread.
+ *
+ * @param bot The bot instance.
+ * @param interaction The button interaction that triggered the modal.
+ * @param eventDoc The event.
+ * @param guildConfig The guild config.
+ */
+async function showAnnounceModalAndPost(
+  bot: Bot,
+  interaction: ButtonInteraction,
+  eventDoc: EventDocument,
+  guildConfig: GuildsConfig,
+) {
+  const defaultChannelId = guildConfig.eventAnnouncementChannel ?? null;
+
+  const salt = Math.floor(Math.random() * 1e6);
+  const modalCustomId = ANNOUNCE_MODAL_ID + salt;
+  await interaction.showModal(
+    buildAnnounceModal(modalCustomId, eventDoc, defaultChannelId),
+  );
+
+  const filter = (i: ModalSubmitInteraction) => i.customId === modalCustomId;
+  let submit: ModalSubmitInteraction;
+  try {
+    submit = await interaction.awaitModalSubmit({
+      filter,
+      time: ANNOUNCE_MODAL_TIMEOUT_MS,
+    });
+  } catch (err) {
+    if (err instanceof DiscordjsError) return;
+    throw err;
+  }
+
+  await submit.deferReply({ flags: MessageFlags.Ephemeral });
+
+  const selectedChannel = submit.fields
+    .getSelectedChannels(ANNOUNCE_CHANNEL_FIELD_ID, false)
+    ?.first();
+  if (
+    !selectedChannel ||
+    selectedChannel.type !== ChannelType.GuildAnnouncement
+  ) {
+    await submit.editReply(
+      "Selected channel is not a valid announcement channel.",
+    );
+    return;
+  }
+  if (!interaction.guildId) {
+    await submit.editReply(errors.GuildOnlyActionError);
+    return;
+  }
+
+  const message = await announceEventForGuild(
+    bot,
+    eventDoc,
+    guildConfig,
+    interaction.guildId,
+    interaction,
+    selectedChannel as unknown as TextChannel,
+  );
+  if (!message) {
+    await submit.editReply("Could not post in the selected channel :(");
+    return;
+  }
+  await submit.editReply(
+    `Announcement posted: ${message.url}. Event status updated to **Announced**.`,
+  );
+}
+
+export { handleAnnounce, announceEventForGuild, showAnnounceModalAndPost };

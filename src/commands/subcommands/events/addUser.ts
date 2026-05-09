@@ -1,5 +1,7 @@
 import { EventDocument, UpdateEventDto } from "@orgbookclub/ows-client";
 import {
+  ButtonInteraction,
+  ChatInputCommandInteraction,
   DiscordjsError,
   GuildMember,
   LabelBuilder,
@@ -18,9 +20,12 @@ import {
   EventParticipantOptions,
   isParticipantType,
 } from "../../../config/EventParticipantOptions";
-import { CommandHandler } from "../../../models";
+import { Bot, CommandHandler } from "../../../models";
 import { errorHandler } from "../../../utils/errorHandler";
-import { getEventInfoEmbed } from "../../../utils/eventUtils";
+import {
+  getEventInfoEmbed,
+  getEventInfoStaffActionRow,
+} from "../../../utils/eventUtils";
 import {
   hasRole,
   participantToDto,
@@ -45,7 +50,6 @@ const MODAL_TIMEOUT_MS = 14 * 60 * 1000;
  * @param guildConfig The guild config.
  */
 const handleAddUser: CommandHandler = async (bot, interaction, guildConfig) => {
-  let modalSubmit: ModalSubmitInteraction | undefined;
   try {
     if (
       guildConfig &&
@@ -58,11 +62,39 @@ const handleAddUser: CommandHandler = async (bot, interaction, guildConfig) => {
       });
       return;
     }
-
     const id = interaction.options.getString("id", true);
+    await runAddUserFlow(bot, interaction, id);
+  } catch (err) {
+    await errorHandler(
+      bot,
+      "commands > events > addUser",
+      err,
+      interaction.guild?.name,
+      undefined,
+      interaction,
+    );
+  }
+};
+
+/**
+ * Shows the addUser modal pre-populated for the given event id and processes
+ * the submission. Shared between the slash command and the Add Points button
+ * on the event info card. Caller is responsible for the staff role check.
+ *
+ * @param bot The bot instance.
+ * @param interaction The interaction (slash command or button).
+ * @param eventId The event id.
+ */
+async function runAddUserFlow(
+  bot: Bot,
+  interaction: ChatInputCommandInteraction | ButtonInteraction,
+  eventId: string,
+) {
+  let modalSubmit: ModalSubmitInteraction | undefined;
+  try {
     const salt = Math.random() * 100;
     const modalCustomId = EVENT_ADDUSER_MODAL_ID + salt;
-    await interaction.showModal(getAddUserModal(modalCustomId, id));
+    await interaction.showModal(getAddUserModal(modalCustomId, eventId));
 
     const filter = (msInteraction: ModalSubmitInteraction) =>
       msInteraction.customId === modalCustomId;
@@ -74,7 +106,9 @@ const handleAddUser: CommandHandler = async (bot, interaction, guildConfig) => {
 
     let eventDoc: EventDocument;
     try {
-      const response = await bot.api.events.eventsControllerFindOne({ id });
+      const response = await bot.api.events.eventsControllerFindOne({
+        id: eventId,
+      });
       eventDoc = response.data;
     } catch (_error) {
       await modalSubmit.editReply(errors.InvalidEventIdError);
@@ -118,60 +152,61 @@ const handleAddUser: CommandHandler = async (bot, interaction, guildConfig) => {
     ];
 
     const updateResponse = await bot.api.events.eventsControllerUpdate({
-      id,
+      id: eventId,
       updateEventDto: updateEventDto,
     });
 
     const usernames = selectedUsers.map((user) => user.username).join(", ");
+    const row = getEventInfoStaffActionRow(updateResponse.data);
     await modalSubmit.editReply({
-      content: `Added ${selectedUsers.size} user(s) to event ${updateResponse.data._id} as ${participantType} (${points} pts): ${usernames}`,
+      content: `Added ${selectedUsers.size} user(s) to event \`${updateResponse.data._id}\` as ${participantType} (${points} pts): ${usernames}`,
       embeds: [getEventInfoEmbed(updateResponse.data, interaction)],
+      components: row ? [row] : [],
     });
   } catch (err) {
-    if (err instanceof DiscordjsError) {
-      if (modalSubmit) {
-        if (modalSubmit.deferred || modalSubmit.replied) {
-          await modalSubmit.editReply(
-            "Your request timed out! Please try again and submit the form within 14 minutes.",
-          );
-        } else {
-          await modalSubmit.reply({
-            content:
-              "Your request timed out! Please try again and submit the form within 14 minutes.",
-            flags: MessageFlags.Ephemeral,
-          });
-        }
-      } else {
-        await interaction.followUp({
-          content:
-            "Your request timed out! Please try again and submit the form within 14 minutes.",
-          flags: MessageFlags.Ephemeral,
-        });
-      }
-      return;
-    }
+    await respondToAddUserError(err, interaction, modalSubmit);
+    throw err;
+  }
+}
+
+async function respondToAddUserError(
+  err: unknown,
+  interaction: ChatInputCommandInteraction | ButtonInteraction,
+  modalSubmit: ModalSubmitInteraction | undefined,
+) {
+  const timeoutMsg =
+    "Your request timed out! Please try again and submit the form within 14 minutes.";
+  if (err instanceof DiscordjsError) {
     if (modalSubmit) {
       if (modalSubmit.deferred || modalSubmit.replied) {
-        await modalSubmit.editReply(errors.SomethingWentWrongError);
+        await modalSubmit.editReply(timeoutMsg);
       } else {
         await modalSubmit.reply({
-          content: errors.SomethingWentWrongError,
+          content: timeoutMsg,
           flags: MessageFlags.Ephemeral,
         });
       }
     } else {
-      await interaction.followUp(errors.SomethingWentWrongError);
+      await interaction.followUp({
+        content: timeoutMsg,
+        flags: MessageFlags.Ephemeral,
+      });
     }
-    await errorHandler(
-      bot,
-      "commands > events > addUser",
-      err,
-      interaction.guild?.name,
-      undefined,
-      interaction,
-    );
+    return;
   }
-};
+  if (modalSubmit) {
+    if (modalSubmit.deferred || modalSubmit.replied) {
+      await modalSubmit.editReply(errors.SomethingWentWrongError);
+    } else {
+      await modalSubmit.reply({
+        content: errors.SomethingWentWrongError,
+        flags: MessageFlags.Ephemeral,
+      });
+    }
+  } else {
+    await interaction.followUp(errors.SomethingWentWrongError);
+  }
+}
 
 function parsePoints(raw: string): number | null {
   const trimmed = raw.trim();
@@ -228,4 +263,4 @@ function getAddUserModal(customId: string, eventId: string) {
     );
 }
 
-export { handleAddUser };
+export { handleAddUser, runAddUserFlow };
