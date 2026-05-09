@@ -205,7 +205,7 @@ async function showQotdPostModalAndPost(
 
     await submit.editReply(`QOTD posted: ${message.url}${noteSuffix}`);
   } catch (err) {
-    await submit.editReply("Something went wrong! Please try again later");
+    await submit.editReply("Something went wrong! Please try again later.");
     await errorHandler(
       bot,
       "commands > qotd > post > modal",

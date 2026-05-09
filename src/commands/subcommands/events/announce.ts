@@ -95,7 +95,7 @@ const handleAnnounce: CommandHandler = async (
     }
     const statusMessage = announcementResult.statusUpdated
       ? "and event status changed to 'Announced'"
-      : "but event status could not be changed to 'Announced'";
+      : "(status update to 'Announced' failed)";
     await interaction.editReply({
       content: `Announcement posted for event ${eventDoc._id}: ${announcementResult.message.url} ${statusMessage}`,
     });
@@ -335,7 +335,7 @@ async function showAnnounceModalAndPost(
   }
   const statusMessage = announcementResult.statusUpdated
     ? "Event status updated to **Announced**."
-    : "Announcement posted, but the event status could not be updated to **Announced**.";
+    : "However, the event status could not be updated to **Announced**.";
   await submit.editReply(
     `Announcement posted: ${announcementResult.message.url}. ${statusMessage}`,
   );
