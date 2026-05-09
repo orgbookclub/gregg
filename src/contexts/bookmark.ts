@@ -8,6 +8,7 @@ import {
   ContextMenuCommandInteraction,
   EmbedBuilder,
   Message,
+  MessageFlags,
   time,
 } from "discord.js";
 
@@ -21,7 +22,7 @@ const bookmark: Context = {
     .setType(ApplicationCommandType.Message),
   run: async (bot: Bot, interaction: ContextMenuCommandInteraction) => {
     try {
-      await interaction.deferReply({ ephemeral: true });
+      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
       if (!interaction.isMessageContextMenuCommand()) {
         await interaction.editReply("Something went wrong!");

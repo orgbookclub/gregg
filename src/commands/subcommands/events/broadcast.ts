@@ -10,6 +10,7 @@ import {
   GuildMember,
   EmbedBuilder,
   Colors,
+  MessageFlags,
   userMention,
   DiscordjsError,
   channelMention,
@@ -46,7 +47,7 @@ const handleBroadcast: CommandHandler = async (
     ) {
       await interaction.reply({
         content: errors.BRLeaderRestrictionError,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }
@@ -69,7 +70,7 @@ const handleBroadcast: CommandHandler = async (
       filter,
       time: 5 * 60 * 1000,
     });
-    await modalSubmitInteraction.deferReply({ ephemeral: true });
+    await modalSubmitInteraction.deferReply({ flags: MessageFlags.Ephemeral });
     const messageContent =
       modalSubmitInteraction.fields.getTextInputValue(MESSAGE_FIELD_ID);
 
@@ -154,14 +155,14 @@ const handleBroadcast: CommandHandler = async (
           );
         } else {
           await modalSubmitInteraction.reply({
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
             content:
               "Your request timed out! Please try again and submit the form within 5 minutes",
           });
         }
       } else {
         await interaction.followUp({
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
           content:
             "Your request timed out! Please try again and submit the form within 5 minutes",
         });
@@ -175,7 +176,7 @@ const handleBroadcast: CommandHandler = async (
         } else {
           await modalSubmitInteraction.reply({
             content: errors.SomethingWentWrongError,
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
           });
         }
       } else {

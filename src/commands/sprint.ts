@@ -1,4 +1,8 @@
-import { SlashCommandBuilder, SlashCommandSubcommandBuilder } from "discord.js";
+import {
+  InteractionContextType,
+  SlashCommandBuilder,
+  SlashCommandSubcommandBuilder,
+} from "discord.js";
 
 import { CommandHandler, Command } from "../models";
 import { errorHandler } from "../utils/errorHandler";
@@ -88,7 +92,7 @@ export const sprint: Command = {
     .addSubcommand(sprintStatusSubcommand)
     .addSubcommand(sprintCancelSubcommand)
     .addSubcommand(sprintLeaveSubcommand)
-    .setDMPermission(false),
+    .setContexts(InteractionContextType.Guild),
   run: async (bot, interaction) => {
     try {
       const subCommand = interaction.options.getSubcommand();

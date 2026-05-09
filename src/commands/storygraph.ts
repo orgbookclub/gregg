@@ -1,4 +1,8 @@
-import { SlashCommandBuilder, SlashCommandSubcommandBuilder } from "discord.js";
+import {
+  InteractionContextType,
+  SlashCommandBuilder,
+  SlashCommandSubcommandBuilder,
+} from "discord.js";
 
 import { CommandHandler, Command } from "../models";
 import { errorHandler } from "../utils/errorHandler";
@@ -105,7 +109,7 @@ export const storygraph: Command = {
     .addSubcommand(storygraphLinkSubcommand)
     .addSubcommand(storygraphBookSubcommand)
     .addSubcommand(storygraphCoverSubcommand)
-    .setDMPermission(false),
+    .setContexts(InteractionContextType.Guild),
   run: async (bot, interaction) => {
     try {
       const subCommand = interaction.options.getSubcommand();

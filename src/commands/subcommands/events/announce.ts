@@ -5,6 +5,7 @@ import {
   EmbedBuilder,
   GuildMember,
   Message,
+  MessageFlags,
   TextChannel,
   channelMention,
   roleMention,
@@ -39,7 +40,7 @@ const handleAnnounce: CommandHandler = async (
     ) {
       await interaction.reply({
         content: errors.StaffRestrictionError,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }

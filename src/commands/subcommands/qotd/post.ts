@@ -2,6 +2,7 @@ import { qotds } from "@prisma/client";
 import {
   ChannelType,
   GuildMember,
+  MessageFlags,
   TextChannel,
   ThreadAutoArchiveDuration,
   roleMention,
@@ -30,7 +31,7 @@ const handlePost: CommandHandler = async (bot, interaction, guildConfig) => {
     ) {
       await interaction.reply({
         content: "Sorry, this command is restricted for staff use only!",
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }

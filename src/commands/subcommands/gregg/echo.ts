@@ -2,6 +2,7 @@ import {
   ChannelType,
   Colors,
   EmbedBuilder,
+  MessageFlags,
   channelMention,
   userMention,
 } from "discord.js";
@@ -33,7 +34,10 @@ export const handleEcho: CommandHandler = async (
       return;
     }
     await channel.send({ content: message });
-    await interaction.reply({ content: "Echo successful!", ephemeral: true });
+    await interaction.reply({
+      content: "Echo successful!",
+      flags: MessageFlags.Ephemeral,
+    });
     if (guildConfig) {
       const embed = new EmbedBuilder()
         .setColor(Colors.Blue)

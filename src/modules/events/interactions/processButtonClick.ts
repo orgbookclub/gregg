@@ -1,4 +1,4 @@
-import { ButtonInteraction } from "discord.js";
+import { ButtonInteraction, MessageFlags } from "discord.js";
 
 import { Bot } from "../../../models";
 import { QotdSuggestionStatus } from "../../../models/commands/qotd/QotdSuggestionStatus";
@@ -72,7 +72,7 @@ async function handleQotdSuggestionActions(
 }
 
 async function handleEventActions(interaction: ButtonInteraction, bot: Bot) {
-  await interaction.deferReply({ ephemeral: true });
+  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
   const [embedType, eventId, action] = interaction.customId.split("-");
 
   const userDoc = await upsertUser(

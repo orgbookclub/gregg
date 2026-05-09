@@ -1,4 +1,9 @@
-import { ChatInputCommandInteraction, TimestampStyles, time } from "discord.js";
+import {
+  ChatInputCommandInteraction,
+  MessageFlags,
+  TimestampStyles,
+  time,
+} from "discord.js";
 
 import { Bot } from "../../../models";
 import { getGuildConfigFromDb } from "../../../utils/dbUtils";
@@ -40,14 +45,14 @@ async function processChatInputCommand(
       const expirationTime = timestamps[interaction.user.id] + cooldownAmount;
       if (now < expirationTime) {
         const expiredTimestamp = Math.round(expirationTime / 1000);
-        interaction.reply({
+        await interaction.reply({
           content: `Please wait, you are on a cooldown for \`${
             command.data.name
           }\`. You can use it again ${time(
             expiredTimestamp,
             TimestampStyles.RelativeTime,
           )}.`,
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
         return;
       }
