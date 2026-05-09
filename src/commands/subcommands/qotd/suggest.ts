@@ -4,6 +4,7 @@ import {
   ButtonStyle,
   Colors,
   EmbedBuilder,
+  MessageFlags,
   User,
 } from "discord.js";
 
@@ -21,7 +22,7 @@ import { errorHandler } from "../../../utils/errorHandler";
  */
 const handleSuggest: CommandHandler = async (bot, interaction, guildConfig) => {
   try {
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
     const question = interaction.options.getString("question", true);
 
     if (!interaction.guild) return;

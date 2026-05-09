@@ -1,4 +1,8 @@
-import { SlashCommandBuilder, SlashCommandSubcommandBuilder } from "discord.js";
+import {
+  InteractionContextType,
+  SlashCommandBuilder,
+  SlashCommandSubcommandBuilder,
+} from "discord.js";
 
 import { EventTypeOptions, EventStatusOptions } from "../config";
 import { CommandHandler, Command } from "../models";
@@ -55,7 +59,7 @@ export const user: Command = {
     .addSubcommand(userEventsSubcommand)
     .addSubcommand(userInfoSubcommand)
     .addSubcommand(userReaderboardSubcommand)
-    .setDMPermission(false),
+    .setContexts(InteractionContextType.Guild),
   run: async (bot, interaction) => {
     try {
       const subCommand = interaction.options.getSubcommand();

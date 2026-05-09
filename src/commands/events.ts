@@ -1,5 +1,6 @@
 import {
   ChannelType,
+  InteractionContextType,
   SlashCommandBuilder,
   SlashCommandSubcommandBuilder,
 } from "discord.js";
@@ -9,7 +10,6 @@ import {
   EventStatusOptions,
   EventTypeOptions,
 } from "../config";
-import { EventParticipantOptions } from "../config/EventParticipantOptions";
 import { EventSortOptions } from "../config/EventSortOptions";
 import { Command, CommandHandler } from "../models";
 import { errorHandler } from "../utils/errorHandler";
@@ -175,50 +175,16 @@ const search = new SlashCommandSubcommandBuilder()
 
 const addUser = new SlashCommandSubcommandBuilder()
   .setName("adduser")
-  .setDescription("Adds a user as participant to the event")
+  .setDescription("Opens a form to add up to 25 users as participants")
   .addStringOption((option) =>
     option.setName("id").setDescription("Event ID").setRequired(true),
-  )
-  .addUserOption((option) =>
-    option
-      .setName("user")
-      .setDescription("The user to add as a participant")
-      .setRequired(true),
-  )
-  .addStringOption((option) =>
-    option
-      .setName("type")
-      .setDescription("The type of participant to add the user as")
-      .addChoices(...EventParticipantOptions)
-      .setRequired(true),
-  )
-  .addIntegerOption((option) =>
-    option
-      .setName("points")
-      .setDescription("The number of points to assign. Defaults to 5")
-      .setRequired(false)
-      .setMinValue(0)
-      .setMaxValue(100),
   );
 
 const removeUser = new SlashCommandSubcommandBuilder()
   .setName("removeuser")
-  .setDescription("Removes a user as participant from the event")
+  .setDescription("Opens a form to remove up to 25 users as participants")
   .addStringOption((option) =>
     option.setName("id").setDescription("Event ID").setRequired(true),
-  )
-  .addUserOption((option) =>
-    option
-      .setName("user")
-      .setDescription("The user to remove as a participant")
-      .setRequired(true),
-  )
-  .addStringOption((option) =>
-    option
-      .setName("type")
-      .setDescription("The type of participant")
-      .addChoices(...EventParticipantOptions)
-      .setRequired(true),
   );
 
 const stats = new SlashCommandSubcommandBuilder()
@@ -243,7 +209,7 @@ export const events: Command = {
     .addSubcommand(announce)
     .addSubcommand(addUser)
     .addSubcommand(removeUser)
-    .setDMPermission(false),
+    .setContexts(InteractionContextType.Guild),
   run: async (bot, interaction, guildConfig) => {
     try {
       const subCommand = interaction.options.getSubcommand();

@@ -1,3 +1,5 @@
+import { MessageFlags } from "discord.js";
+
 import { CommandHandler } from "../../../models";
 import { SprintStatus } from "../../../models/commands/sprint/SprintStatus";
 import { errorHandler } from "../../../utils/errorHandler";
@@ -10,7 +12,7 @@ import { errorHandler } from "../../../utils/errorHandler";
  */
 export const handleFinish: CommandHandler = async (bot, interaction) => {
   try {
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     const count = interaction.options.getInteger("count", true);
 

@@ -1,4 +1,8 @@
-import { SlashCommandBuilder, SlashCommandSubcommandBuilder } from "discord.js";
+import {
+  InteractionContextType,
+  SlashCommandBuilder,
+  SlashCommandSubcommandBuilder,
+} from "discord.js";
 
 import { CommandHandler, Command } from "../models";
 import { errorHandler } from "../utils/errorHandler";
@@ -33,7 +37,7 @@ export const config: Command = {
     .setDescription("For guild config management")
     .addSubcommand(setReaderRole)
     .addSubcommand(get)
-    .setDMPermission(false),
+    .setContexts(InteractionContextType.Guild),
   run: async (bot, interaction, guildConfig) => {
     try {
       const subCommand = interaction.options.getSubcommand();

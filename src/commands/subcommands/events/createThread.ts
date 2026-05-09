@@ -9,6 +9,7 @@ import {
   ChannelType,
   GuildMember,
   hideLinkEmbed,
+  MessageFlags,
   time,
   TimestampStyles,
 } from "discord.js";
@@ -44,7 +45,7 @@ const handleCreateThread: CommandHandler = async (
     ) {
       await interaction.reply({
         content: errors.StaffRestrictionError,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }

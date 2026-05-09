@@ -1,0 +1,44 @@
+# Copilot Instructions for Gregg
+
+Gregg is a TypeScript Discord bot (discord.js v14) for the Organized Book Club server. It uses Prisma over MongoDB, Sentry for error reporting, pino for logging, and an internal backend (`@orgbookclub/ows-client`) hosted on Azure.
+
+## Build, lint, run
+
+- Install: `yarn install --frozen-lockfile` (Node 20.x). `@orgbookclub/*` packages come from `npm.pkg.github.com`; CI sets `NODE_AUTH_TOKEN`. `postinstall` runs `prisma generate` against `prisma/schema.prisma`.
+- Build: `yarn build` (`tsc` → `./dist`). `yarn prebuild` cleans `./dist`.
+- Lint: `yarn lint` (ESLint with `--max-warnings 0`, then Prettier `--check`). Auto-fix: `yarn lint:fix`. CI runs `yarn lint` then `yarn build`; both must pass.
+- Run dev: `yarn start:dev` (rebuilds, then `node -r dotenv/config ./dist/index.js`). Run prod: `yarn start`. Required env vars are listed in `sample.env` and validated in `src/validateEnv.ts` (the process exits if any are missing).
+- There is no test suite. Do not add a new linter/test framework unless the task requires it.
+- Two ESLint configs exist (`eslint.config.mjs` flat config and a legacy `.eslintrc.json`). ESLint 9 picks up the flat config — keep both in sync if you change a rule.
+
+## Architecture
+
+The entry point `src/index.ts` constructs a `Client` and casts it to the `Bot` interface (`src/models/Bot.ts`), which augments it with `commands`, `contexts`, `configs`, `db` (PrismaClient), `api` (OWSClient), `sprintManager`, `jobManager`, `cooldowns`, and `debugHook`. Everything downstream receives this `Bot` instance — there is no DI container; `Bot` is the dependency bag.
+
+**Dynamic loading by filename convention.** `src/utils/loadCommands.ts` and `loadEventListeners.ts` glob compiled JS under `./dist/{commands,contexts,jobs,events}` and `import(file)`, then read the export whose name equals the file's basename:
+
+```ts
+const name = file.split("/").at(-1)?.split(".")[0] ?? "";
+commands.push(mod[name] as T);
+```
+
+So `src/commands/sprint.ts` **must** export `export const sprint: Command = {...}`. Same for `Context` (in `src/contexts/`), `Job` (`src/jobs/`), and `Event` (`src/events/<area>/<eventName>.ts`). A new file is auto-registered just by being placed in the right folder with the matching export name — no manifest to update. (`registerCommands` in dev mode pushes commands to `HOME_GUILD_ID`; in prod it registers globally.)
+
+**Command shape.** Top-level slash commands in `src/commands/*.ts` each build a `SlashCommandBuilder` with subcommands and dispatch via a `handlers: Record<string, CommandHandler>` map to per-subcommand modules in `src/commands/subcommands/<command>/*.ts` (re-exported from that folder's `index.ts`). The top-level `run` wraps the dispatch in `try/catch` and calls `errorHandler(bot, "commands > <name>", err, ..., interaction)`. Each subcommand handler typically `deferReply()`s first and replies via `editReply`. `Command.cooldown` (seconds) is enforced in `src/modules/events/interactions/processChatInputCommand.ts`, which also fetches `GuildsConfig` via `getGuildConfigFromDb` and passes it as the third arg to `command.run` for guild interactions.
+
+**Interaction routing.** `src/events/interactionEvents/interactionCreate.ts` is the single Discord interaction listener; it forwards to `src/modules/events/interactions/process{ChatInputCommand,ContextMenuCommand,ButtonClick,StringSelectMenu,ModalSubmit}.ts`. Buttons/selects/modals are routed by parsing `customId` prefixes (e.g. `bookmark-delete`, `er-<eventId>-interested`, `qs-<qotdId>-approve`). Keep that prefix-`-` split scheme when adding new components.
+
+**Jobs.** `src/jobs/*.ts` export `Job { name, cronTime, callBack }`. `JobManager` (`src/models/jobs/JobManager.ts`) creates a `CronJob` per file at startup and starts it immediately. The hourly `refreshClientToken` job re-initializes the OWS API client; if you add long-running periodic work, mirror this pattern and wrap the body in `errorHandler`.
+
+**Database.** Prisma uses the `mongodb` provider; `GuildsConfig` and `GuildsReaderRoles` are embedded composite types on the `guilds` model (not separate collections). DB access lives in `src/utils/dbUtils.ts` and per-feature modules; do not call `bot.db` directly from a top-level command if a helper already exists. `commandUsages` is upserted automatically for every chat-input command.
+
+**Sprints are in-memory.** `bot.sprintManager` (`src/models/commands/sprint/SprintManager.ts`) holds active sprint state by `threadId` — sprints are not persisted between bot restarts.
+
+## Conventions
+
+- **Error handling:** every `try/catch` in a command/handler/job/event ends with `await errorHandler(bot, "<area> > <command> > <subcommand>", err, interaction.guild?.name, message?, interaction?)`. The `>`-separated context string is the breadcrumb that shows up in Sentry and the debug webhook embed. Match the existing format when adding new files.
+- **Imports:** ESLint enforces grouped + alphabetized imports (`builtin`, `external`, `internal`, `parent`, `sibling`, `index`, `object`, `type`, `unknown`) with blank lines between groups. Run `yarn lint:fix` rather than hand-ordering.
+- **Style:** double quotes, trailing commas everywhere, semicolons required, `eqeqeq`, `require-await`, no inline comments, `camelcase` enforced. Prisma's `command_subcommand` compound key needs an `// eslint-disable-next-line camelcase` (see `processChatInputCommand.ts`).
+- **JSDoc:** `jsdoc/require-jsdoc` is on with `publicOnly: true` and `require-description-complete-sentence`. Every exported function/class/method needs a JSDoc with a sentence-ending description; `@param` types are off (TS provides them).
+- **Logging:** use `logger` from `src/utils/logHandler.ts` (pino multistream to `logs/<iso>_*.txt` + pretty stdout). Don't `console.log` — `no-console` is off but the project standard is the pino logger.
+- **Env:** add new env vars to both `sample.env` and `validateEnv.ts` (the process must exit on missing required vars).

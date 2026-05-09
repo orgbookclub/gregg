@@ -1,5 +1,6 @@
 import {
   ChannelType,
+  InteractionContextType,
   SlashCommandBuilder,
   SlashCommandSubcommandBuilder,
 } from "discord.js";
@@ -46,7 +47,7 @@ export const gregg: Command = {
     .addSubcommand(greggPingSubcommand)
     .addSubcommand(greggInfoSubcommand)
     .addSubcommand(greggEchoSubcommand)
-    .setDMPermission(false),
+    .setContexts(InteractionContextType.Guild),
   run: async (bot, interaction, guildConfig) => {
     try {
       const subCommand = interaction.options.getSubcommand();
