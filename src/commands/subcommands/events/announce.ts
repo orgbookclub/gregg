@@ -93,9 +93,10 @@ const handleAnnounce: CommandHandler = async (
       );
       return;
     }
-    const statusMessage = announcementResult.statusUpdated
-      ? "and event status changed to 'Announced'"
-      : "(status update to 'Announced' failed)";
+    const statusMessage = getAnnounceStatusMessage(
+      announcementResult.statusUpdated,
+      "slash",
+    );
     await interaction.editReply({
       content: `Announcement posted for event ${eventDoc._id}: ${announcementResult.message.url} ${statusMessage}`,
     });
@@ -167,6 +168,20 @@ function getAnnouncementString(
       .map((x) => channelMention(x))
       .join(", ")}`
   );
+}
+
+function getAnnounceStatusMessage(
+  statusUpdated: boolean,
+  context: "slash" | "modal",
+) {
+  if (context === "slash") {
+    return statusUpdated
+      ? "and event status changed to 'Announced'"
+      : "but event status could not be updated to 'Announced'";
+  }
+  return statusUpdated
+    ? "Event status updated to **Announced**."
+    : "However, the event status could not be updated to **Announced**.";
 }
 
 /**
@@ -337,9 +352,10 @@ async function showAnnounceModalAndPost(
     await submit.editReply("Could not post in the selected channel :(");
     return;
   }
-  const statusMessage = announcementResult.statusUpdated
-    ? "Event status updated to **Announced**."
-    : "However, the event status could not be updated to **Announced**.";
+  const statusMessage = getAnnounceStatusMessage(
+    announcementResult.statusUpdated,
+    "modal",
+  );
   await submit.editReply(
     `Announcement posted: ${announcementResult.message.url}. ${statusMessage}`,
   );
