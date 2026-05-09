@@ -222,8 +222,12 @@ async function announceEventForGuild(
       id: eventDoc._id,
       updateEventDto: { status: EventDtoStatusEnum.Announced },
     });
-  } catch (_error) {
+  } catch (error) {
     statusUpdated = false;
+    logger.warn(
+      error,
+      `Failed to update event status to Announced for event ${eventDoc._id}`,
+    );
   }
   await addAnnouncementLinkInThread(
     bot,
