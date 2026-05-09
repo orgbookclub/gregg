@@ -68,6 +68,7 @@ const handleBroadcast: CommandHandler = async (
       filter,
       time: 5 * 60 * 1000,
     });
+    await modalSubmitInteraction.deferReply({ ephemeral: true });
     const messageContent =
       modalSubmitInteraction.fields.getTextInputValue(MESSAGE_FIELD_ID);
 
@@ -79,17 +80,14 @@ const handleBroadcast: CommandHandler = async (
       });
       eventDoc = response.data;
     } catch (_error) {
-      await modalSubmitInteraction.reply({
-        content: errors.InvalidEventIdError,
-        ephemeral: true,
-      });
+      await modalSubmitInteraction.editReply(errors.InvalidEventIdError);
       return;
     }
 
     let threadToPost;
     if (!channel) {
       if (eventDoc.threads === undefined || eventDoc.threads.length === 0) {
-        await interaction.followUp(
+        await modalSubmitInteraction.editReply(
           "Sorry, this event doesn't have any threads listed. Please try manually giving the channel as input",
         );
         return;
@@ -97,7 +95,7 @@ const handleBroadcast: CommandHandler = async (
       const threadId = eventDoc.threads[0];
       const eventThreadChannel = await bot.channels.fetch(threadId);
       if (!eventThreadChannel?.isTextBased()) {
-        await interaction.followUp(
+        await modalSubmitInteraction.editReply(
           "Configured channel in event is not a valid text channel! Please try manually giving the channel as input",
         );
         return;
@@ -130,10 +128,9 @@ const handleBroadcast: CommandHandler = async (
       await message.pin();
     }
 
-    await modalSubmitInteraction.reply({
-      content: `Your message has been broadcasted!`,
-      ephemeral: true,
-    });
+    await modalSubmitInteraction.editReply(
+      "Your message has been broadcasted!",
+    );
 
     if (guildConfig) {
       const embed = new EmbedBuilder()
