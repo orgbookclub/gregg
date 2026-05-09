@@ -148,10 +148,7 @@ const handleBroadcast: CommandHandler = async (
   } catch (err) {
     if (err instanceof DiscordjsError) {
       if (modalSubmitInteraction) {
-        if (
-          modalSubmitInteraction.deferred ||
-          modalSubmitInteraction.replied
-        ) {
+        if (modalSubmitInteraction.deferred || modalSubmitInteraction.replied) {
           await modalSubmitInteraction.editReply(
             "Your request timed out! Please try again and submit the form within 5 minutes",
           );
@@ -171,11 +168,10 @@ const handleBroadcast: CommandHandler = async (
       }
     } else {
       if (modalSubmitInteraction) {
-        if (
-          modalSubmitInteraction.deferred ||
-          modalSubmitInteraction.replied
-        ) {
-          await modalSubmitInteraction.editReply(errors.SomethingWentWrongError);
+        if (modalSubmitInteraction.deferred || modalSubmitInteraction.replied) {
+          await modalSubmitInteraction.editReply(
+            errors.SomethingWentWrongError,
+          );
         } else {
           await modalSubmitInteraction.reply({
             content: errors.SomethingWentWrongError,
