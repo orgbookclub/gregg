@@ -87,16 +87,20 @@ function getErrorEmbed(
           1000,
         ),
       },
-      {
-        name: "Interaction Options",
-        value: customSubstring(
-          interaction.options.data[0].options
-            ?.map((o) => `\`${o.name}\`: ${o.value}`)
-            .join(", ") || "no options",
-          1000,
-        ),
-      },
     ]);
+    if (interaction.isChatInputCommand()) {
+      errorEmbed.addFields([
+        {
+          name: "Interaction Options",
+          value: customSubstring(
+            interaction.options.data[0]?.options
+              ?.map((o) => `\`${o.name}\`: ${o.value}`)
+              .join(", ") || "no options",
+            1000,
+          ),
+        },
+      ]);
+    }
   }
   return errorEmbed;
 }
