@@ -440,7 +440,8 @@ export function calculateReaderboardScores(eventDocs: EventDocument[]) {
 
   for (const event of eventDocs) {
     for (const participant of event.readers.concat(event.leaders)) {
-      const userId = participant.user.userId;
+      const userId = participant.user?.userId;
+      if (!userId) continue;
       scoreMap.set(
         userId,
         (scoreMap.get(userId) ?? 0) + (participant.points ?? 0),

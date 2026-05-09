@@ -1,12 +1,13 @@
 import { EventDocument, EventDtoStatusEnum } from "@orgbookclub/ows-client";
 import {
+  ButtonInteraction,
   ChatInputCommandInteraction,
   Colors,
   EmbedBuilder,
   User,
 } from "discord.js";
 
-import { CommandHandler } from "../../../models";
+import { Bot, CommandHandler } from "../../../models";
 import { Stats } from "../../../models/commands/events/Stats";
 import { UserEventStats } from "../../../models/commands/events/UserEventStats";
 import { errorHandler } from "../../../utils/errorHandler";
@@ -22,29 +23,12 @@ const handleStats: CommandHandler = async (bot, interaction) => {
     await interaction.deferReply();
     const user = interaction.options.getUser("user", false) ?? interaction.user;
 
-    const userResponse = await bot.api.users.usersControllerFindOneByUserId({
-      userid: user.id,
-    });
-    if (!userResponse) {
-      await interaction.editReply(
-        `No user found! Please check if the user ID ${user.id} is registered with the bot`,
-      );
+    const result = await buildUserEventStatsEmbed(bot, user, interaction);
+    if (typeof result === "string") {
+      await interaction.editReply(result);
       return;
     }
-
-    const userId = userResponse.data._id;
-    const userEventsResponse = await bot.api.events.eventsControllerFind({
-      participantIds: [userId],
-    });
-    if (!userEventsResponse || userEventsResponse.data.length === 0) {
-      await interaction.editReply("No events found for given user");
-      return;
-    }
-
-    const userEventDocs = userEventsResponse.data;
-    const stats = calculateUserEventStats(userId, userEventDocs);
-    const embed = getUserEventStatsEmbed(stats, userId, user, interaction);
-    await interaction.editReply({ embeds: [embed] });
+    await interaction.editReply({ embeds: [result] });
   } catch (err) {
     await interaction.editReply("Something went wrong! Please try again later");
     await errorHandler(
@@ -107,7 +91,7 @@ function getUserEventStatsEmbed(
   userEventStats: UserEventStats,
   id: string,
   user: User,
-  interaction: ChatInputCommandInteraction,
+  interaction: ChatInputCommandInteraction | ButtonInteraction,
 ) {
   const embed = new EmbedBuilder()
     .setTitle(`${user.username} | Event Stats`)
@@ -139,4 +123,36 @@ function getUserEventStatsEmbed(
   }
 }
 
-export { handleStats };
+/**
+ * Builds the user event stats embed for the given Discord user, or returns an
+ * error string if no user/events found. Shared by the slash command and the
+ * Stats button on `/user readerboard`.
+ *
+ * @param bot The bot instance.
+ * @param user The Discord user.
+ * @param interaction The interaction (used for guild metadata in the embed).
+ * @returns The stats embed, or a user-facing error message.
+ */
+async function buildUserEventStatsEmbed(
+  bot: Bot,
+  user: User,
+  interaction: ChatInputCommandInteraction | ButtonInteraction,
+): Promise<EmbedBuilder | string> {
+  const userResponse = await bot.api.users.usersControllerFindOneByUserId({
+    userid: user.id,
+  });
+  if (!userResponse) {
+    return `No user found! Please check if the user ID ${user.id} is registered with the bot`;
+  }
+  const userId = userResponse.data._id;
+  const userEventsResponse = await bot.api.events.eventsControllerFind({
+    participantIds: [userId],
+  });
+  if (!userEventsResponse || userEventsResponse.data.length === 0) {
+    return "No events found for given user";
+  }
+  const stats = calculateUserEventStats(userId, userEventsResponse.data);
+  return getUserEventStatsEmbed(stats, userId, user, interaction);
+}
+
+export { handleStats, buildUserEventStatsEmbed };

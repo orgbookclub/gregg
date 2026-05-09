@@ -1,15 +1,29 @@
 import { EventDtoStatusEnum } from "@orgbookclub/ows-client";
 import {
+  ButtonBuilder,
+  ButtonStyle,
   ChatInputCommandInteraction,
   Colors,
-  EmbedBuilder,
+  ContainerBuilder,
+  SectionBuilder,
+  SeparatorBuilder,
+  SeparatorSpacingSize,
+  TextDisplayBuilder,
   userMention,
 } from "discord.js";
 
 import { CommandHandler } from "../../../models";
 import { errorHandler } from "../../../utils/errorHandler";
 import { calculateReaderboardScores } from "../../../utils/eventUtils";
-import { PaginationManager } from "../../../utils/paginationManager";
+import { PaginationManagerV2 } from "../../../utils/paginationManagerV2";
+
+type ReaderboardRow = [string, [number, number]];
+
+const MEDAL_BY_POSITION: Record<number, string> = {
+  1: "🥇",
+  2: "🥈",
+  3: "🥉",
+};
 
 /**
  * Gets the server reading leaderboard.
@@ -33,9 +47,13 @@ const handleReaderboard: CommandHandler = async (bot, interaction) => {
     const scores = calculateReaderboardScores(eventDocs);
 
     const pageSize = 10;
-    const pagedContentManager = new PaginationManager<
-      [string, [number, number]]
-    >(pageSize, scores, bot, getReaderboardEmbed, `Server Readerboard`);
+    const pagedContentManager = new PaginationManagerV2<ReaderboardRow>(
+      pageSize,
+      scores,
+      bot,
+      getReaderboardContainer,
+      `Server Readerboard`,
+    );
     const message = await interaction.editReply(
       pagedContentManager.createMessagePayloadForPage(interaction),
     );
@@ -53,26 +71,56 @@ const handleReaderboard: CommandHandler = async (bot, interaction) => {
   }
 };
 
-function getReaderboardEmbed(
+function getReaderboardContainer(
   title: string,
-  data: [string, [number, number]][],
+  data: ReaderboardRow[],
   interaction: ChatInputCommandInteraction,
+  pageInfo: { current: number; total: number },
 ) {
-  const embed = new EmbedBuilder().setTitle(title).setColor(Colors.DarkGold);
-  if (interaction.inGuild()) {
-    embed.setAuthor({
-      name: interaction.guild?.name ?? "Unknown Guild",
-      iconURL: interaction.guild?.iconURL() ?? undefined,
-    });
-  }
-  let descriptionString = "";
-  data.forEach((score) => {
-    descriptionString += `\`${score[1][0]}\` ${userMention(score[0])} --> **${
-      score[1][1]
-    }**\n`;
+  const container = new ContainerBuilder().setAccentColor(Colors.DarkGold);
+
+  container.addTextDisplayComponents(
+    new TextDisplayBuilder().setContent(`# ${title}`),
+  );
+  container.addSeparatorComponents(
+    new SeparatorBuilder()
+      .setDivider(true)
+      .setSpacing(SeparatorSpacingSize.Small),
+  );
+
+  data.forEach(([discordId, [position, points]]) => {
+    const medal = MEDAL_BY_POSITION[position] ?? `\`#${position}\``;
+    const line = `${medal} ${userMention(discordId)} — **${points}** pts`;
+
+    const section = new SectionBuilder()
+      .addTextDisplayComponents(new TextDisplayBuilder().setContent(line))
+      .setButtonAccessory(
+        new ButtonBuilder()
+          .setCustomId(`usr-stats-${discordId}`)
+          .setLabel("Stats")
+          .setEmoji({ name: "📊" })
+          .setStyle(ButtonStyle.Secondary),
+      );
+
+    container.addSectionComponents(section);
   });
-  embed.setDescription(descriptionString);
-  return embed;
+
+  const guildName = interaction.inGuild()
+    ? (interaction.guild?.name ?? "Unknown Guild")
+    : "";
+  const pageStr = `Page ${pageInfo.current} of ${pageInfo.total}`;
+  const footerParts = [guildName, pageStr].filter((s) => s.length > 0);
+  container
+    .addSeparatorComponents(
+      new SeparatorBuilder()
+        .setDivider(true)
+        .setSpacing(SeparatorSpacingSize.Small),
+    )
+    .addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(`-# ${footerParts.join(" · ")}`),
+    );
+
+  return container;
 }
 
 export { handleReaderboard };

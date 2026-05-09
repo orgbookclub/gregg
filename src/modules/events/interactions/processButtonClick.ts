@@ -1,5 +1,6 @@
 import { ButtonInteraction, GuildMember, MessageFlags } from "discord.js";
 
+import { buildUserEventStatsEmbed } from "../../../commands/subcommands/events/stats";
 import { showQotdPostModalAndPost } from "../../../commands/subcommands/qotd/post";
 import { Bot } from "../../../models";
 import { QotdSuggestionStatus } from "../../../models/commands/qotd/QotdSuggestionStatus";
@@ -39,6 +40,8 @@ const processButtonClick = async (bot: Bot, interaction: ButtonInteraction) => {
       await handleEventListJoin(interaction, bot);
     } else if (interaction.customId.startsWith("qotd-post-")) {
       await handleQotdPost(interaction, bot);
+    } else if (interaction.customId.startsWith("usr-stats-")) {
+      await handleUserStats(interaction, bot);
     }
   } catch (error) {
     await errorHandler(
@@ -279,6 +282,22 @@ async function handleQotdPost(interaction: ButtonInteraction, bot: Bot) {
     qotd,
     null,
   );
+}
+
+async function handleUserStats(interaction: ButtonInteraction, bot: Bot) {
+  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+  const discordId = interaction.customId.slice("usr-stats-".length);
+  try {
+    const user = await bot.users.fetch(discordId);
+    const result = await buildUserEventStatsEmbed(bot, user, interaction);
+    if (typeof result === "string") {
+      await interaction.editReply(result);
+      return;
+    }
+    await interaction.editReply({ embeds: [result] });
+  } catch {
+    await interaction.editReply("Could not fetch stats for that user.");
+  }
 }
 
 export { processButtonClick };
