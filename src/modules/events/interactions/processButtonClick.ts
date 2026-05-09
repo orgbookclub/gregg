@@ -5,6 +5,7 @@ import { QotdSuggestionStatus } from "../../../models/commands/qotd/QotdSuggesti
 import { errorHandler } from "../../../utils/errorHandler";
 import {
   getEventAnnouncementEmbed,
+  getEventInfoEmbed,
   getEventRequestEmbed,
 } from "../../../utils/eventUtils";
 import { participantToDto, upsertUser } from "../../../utils/userUtils";
@@ -26,6 +27,10 @@ const processButtonClick = async (bot: Bot, interaction: ButtonInteraction) => {
       await handleEventActions(interaction, bot);
     } else if (interaction.customId.startsWith("qs-")) {
       await handleQotdSuggestionActions(interaction, bot);
+    } else if (interaction.customId.startsWith("evt-info-")) {
+      await handleEventInfo(interaction, bot);
+    } else if (interaction.customId.startsWith("evt-join-")) {
+      await handleEventListJoin(interaction, bot);
     }
   } catch (error) {
     await errorHandler(
@@ -152,6 +157,66 @@ async function handleEventActions(interaction: ButtonInteraction, bot: Bot) {
 
 async function handleBookmarkDelete(interaction: ButtonInteraction) {
   await interaction.message.delete();
+}
+
+async function handleEventInfo(interaction: ButtonInteraction, bot: Bot) {
+  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+  const eventId = interaction.customId.slice("evt-info-".length);
+  try {
+    const eventResponse = await bot.api.events.eventsControllerFindOne({
+      id: eventId,
+    });
+    if (!eventResponse) {
+      await interaction.editReply("Event not found.");
+      return;
+    }
+    const embed = getEventInfoEmbed(eventResponse.data, interaction);
+    await interaction.editReply({ embeds: [embed] });
+  } catch {
+    await interaction.editReply("Could not fetch event info.");
+  }
+}
+
+async function handleEventListJoin(interaction: ButtonInteraction, bot: Bot) {
+  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+  const eventId = interaction.customId.slice("evt-join-".length);
+
+  const eventResponse = await bot.api.events.eventsControllerFindOne({
+    id: eventId,
+  });
+  if (!eventResponse) {
+    await interaction.editReply("Event not found.");
+    return;
+  }
+  const eventDoc = eventResponse.data;
+
+  const alreadyInterested = eventDoc.interested.some(
+    (x) => x.user.userId === interaction.user.id,
+  );
+  if (alreadyInterested) {
+    await interaction.editReply(
+      "You are already marked as an interested participant of this event!",
+    );
+    return;
+  }
+
+  const userDoc = await upsertUser(
+    bot.api,
+    interaction.user.id,
+    interaction.user.username,
+  );
+  await bot.api.events.eventsControllerUpdate({
+    id: eventId,
+    updateEventDto: {
+      interested: [
+        ...eventDoc.interested.map((x) => participantToDto(x)),
+        { user: userDoc._id, points: 0 },
+      ],
+    },
+  });
+  await interaction.editReply(
+    `You have been marked as an interested participant of event withid \`${eventDoc._id}\` of \`${eventDoc.book.title}\`!`,
+  );
 }
 
 export { processButtonClick };

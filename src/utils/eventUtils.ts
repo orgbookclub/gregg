@@ -4,11 +4,20 @@ import {
   EventDtoStatusEnum,
 } from "@orgbookclub/ows-client";
 import {
+  ActionRowBuilder,
+  ButtonBuilder,
   ButtonInteraction,
+  ButtonStyle,
   ChatInputCommandInteraction,
   Colors,
+  ContainerBuilder,
   EmbedBuilder,
   ModalSubmitInteraction,
+  SectionBuilder,
+  SeparatorBuilder,
+  SeparatorSpacingSize,
+  TextDisplayBuilder,
+  ThumbnailBuilder,
   TimestampStyles,
   channelMention,
   time,
@@ -23,52 +32,154 @@ import { deleteBRRequest } from "./messageUtils";
 import { customSubstring } from "./stringUtils";
 import { getUserMentionString } from "./userUtils";
 
+const EVENT_TYPE_EMOJI: Record<string, string> = {
+  BuddyRead: "👥",
+  MonthlyRead: "🗓️",
+  ShortStoryRead: "📖",
+  PoetryRead: "🪶",
+  Other: "📚",
+};
+
+const EVENT_STATUS_EMOJI: Record<string, string> = {
+  Requested: "📨",
+  Approved: "✅",
+  Announced: "📢",
+  Ongoing: "🟢",
+  Completed: "🏁",
+  Rejected: "❌",
+  Cancelled: "🚫",
+};
+
 /**
- * Creates an embed to display a list of events.
+ * Creates a Components V2 Container to display a list of events. Each event
+ * renders as its own Section with the cover as a thumbnail accessory.
  *
- * @param title The title to display in the embed.
+ * Pass `showTypeAndStatus` when the list mixes event types/statuses (e.g.
+ * `/events search`); omit it when the list is already filtered to a single
+ * type+status (e.g. `/events list`, `/user events`) so those fields don't
+ * repeat on every row.
+ *
+ * @param title The page heading (rendered as `# {title}`).
  * @param eventList Array of events.
  * @param interaction The interaction instance.
- * @returns The embed.
+ * @param showTypeAndStatus Whether to show per-row type & status lines.
+ * @param subtitle Optional small grey subtitle under the heading.
+ * @param pageInfo Optional `{ current, total }` to render as part of the footer.
+ * @returns The container.
  */
-export function getEventsListEmbed(
+export function getEventsListContainer(
   title: string,
   eventList: EventDocument[],
   interaction: ChatInputCommandInteraction,
+  showTypeAndStatus = false,
+  subtitle?: string,
+  pageInfo?: { current: number; total: number },
 ) {
-  const embed = new EmbedBuilder().setTitle(title).setColor(Colors.Red);
-  if (interaction.inGuild()) {
-    embed.setAuthor({
-      name: interaction.guild?.name ?? "Unknown Guild",
-      iconURL: interaction.guild?.iconURL() ?? undefined,
-    });
-  }
-  eventList.forEach((event: EventDocument) => {
-    embed.addFields(getEventItemField(event));
-  });
-  return embed;
+  const container = new ContainerBuilder().setAccentColor(Colors.Red);
 
-  function getEventItemField(event: EventDocument) {
-    return {
-      name: `📕 ${getBookTitleWithAuthors(event.book)}`,
-      value:
-        `> [Link](${event.book.url}) | __ID__: \`${event._id}\`` +
-        `\n> __Type__: ${event.type} | __Status__: ${event.status}` +
-        (event.dates.startDate !== undefined
-          ? `\n> __Start__: ${time(
-              new Date(event.dates.startDate),
-              TimestampStyles.LongDate,
-            )}`
-          : "") +
-        (event.dates.endDate !== undefined
-          ? ` | __End__: ${time(
-              new Date(event.dates.endDate),
-              TimestampStyles.LongDate,
-            )}`
-          : ""),
-      inline: false,
-    };
+  container.addTextDisplayComponents(
+    new TextDisplayBuilder().setContent(`# ${title}`),
+  );
+  if (subtitle) {
+    container.addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(`## ${subtitle}`),
+    );
   }
+  container.addSeparatorComponents(
+    new SeparatorBuilder()
+      .setDivider(true)
+      .setSpacing(SeparatorSpacingSize.Small),
+  );
+
+  eventList.forEach((event) => {
+    const start =
+      event.dates.startDate !== undefined
+        ? `__Start__: ${time(
+            new Date(event.dates.startDate),
+            TimestampStyles.LongDate,
+          )}`
+        : "";
+    const end =
+      event.dates.endDate !== undefined
+        ? `__End__: ${time(
+            new Date(event.dates.endDate),
+            TimestampStyles.LongDate,
+          )}`
+        : "";
+    const datesLine = start && end ? `${start} • ${end}` : start || end || "";
+
+    const authorString = getAuthorString(event.book.authors);
+    const typeIcon = EVENT_TYPE_EMOJI[event.type] ?? "";
+    const statusIcon = EVENT_STATUS_EMOJI[event.status] ?? "";
+
+    const lines: string[] = [`### [${event.book.title}](${event.book.url})`];
+    lines.push(`-# by ${authorString}`);
+    if (showTypeAndStatus) {
+      lines.push(
+        `> ${typeIcon} ${event.type}  •  ${statusIcon} ${event.status}`,
+      );
+    }
+    if (datesLine) lines.push(`> ${datesLine}`);
+    lines.push(`> ID: \`${event._id}\``);
+
+    const section = new SectionBuilder().addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(lines.join("\n")),
+    );
+
+    if (event.book.coverUrl) {
+      section.setThumbnailAccessory(
+        new ThumbnailBuilder().setURL(event.book.coverUrl),
+      );
+    }
+
+    container.addSectionComponents(section);
+
+    const buttons: ButtonBuilder[] = [
+      new ButtonBuilder()
+        .setCustomId(`evt-info-${event._id}`)
+        .setLabel("Details")
+        .setEmoji({ name: "ℹ️" })
+        .setStyle(ButtonStyle.Secondary),
+    ];
+    const joinable: string[] = [
+      EventDtoStatusEnum.Approved,
+      EventDtoStatusEnum.Announced,
+      EventDtoStatusEnum.Ongoing,
+    ];
+    if (event.type === "BuddyRead" && joinable.includes(event.status)) {
+      buttons.push(
+        new ButtonBuilder()
+          .setCustomId(`evt-join-${event._id}`)
+          .setLabel("Join")
+          .setEmoji({ name: "✅" })
+          .setStyle(ButtonStyle.Success),
+      );
+    }
+    container.addActionRowComponents(
+      new ActionRowBuilder<ButtonBuilder>().addComponents(buttons),
+    );
+  });
+
+  const guildName = interaction.inGuild()
+    ? (interaction.guild?.name ?? "Unknown Guild")
+    : "";
+  const pageStr = pageInfo
+    ? `Page ${pageInfo.current} of ${pageInfo.total}`
+    : "";
+  const footerParts = [guildName, pageStr].filter((s) => s.length > 0);
+  if (footerParts.length > 0) {
+    container
+      .addSeparatorComponents(
+        new SeparatorBuilder()
+          .setDivider(true)
+          .setSpacing(SeparatorSpacingSize.Small),
+      )
+      .addTextDisplayComponents(
+        new TextDisplayBuilder().setContent(`-# ${footerParts.join(" · ")}`),
+      );
+  }
+
+  return container;
 }
 
 /**
