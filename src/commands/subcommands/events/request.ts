@@ -7,6 +7,7 @@ import {
   ActionRowBuilder,
   DiscordjsError,
   GuildMember,
+  MessageFlags,
   ModalActionRowComponentBuilder,
   ModalBuilder,
   ModalSubmitInteraction,
@@ -58,7 +59,7 @@ const handleRequest: CommandHandler = async (bot, interaction, guildConfig) => {
       filter,
       time: 5 * 60 * 1000,
     });
-    await modalSubmitInteraction.deferReply({ ephemeral: true });
+    await modalSubmitInteraction.deferReply({ flags: MessageFlags.Ephemeral });
 
     const submission: EventRequestSubmission = getEventRequestSubmission(
       modalSubmitInteraction,
@@ -136,7 +137,7 @@ const handleRequest: CommandHandler = async (bot, interaction, guildConfig) => {
     const error = err as Error;
     if (error instanceof DiscordjsError) {
       await interaction.followUp({
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
         content:
           "Your request timed out! Please try again and submit the form within 5 minutes",
       });

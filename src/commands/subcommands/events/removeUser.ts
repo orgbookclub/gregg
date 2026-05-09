@@ -3,6 +3,7 @@ import {
   DiscordjsError,
   GuildMember,
   LabelBuilder,
+  MessageFlags,
   ModalBuilder,
   ModalSubmitInteraction,
   StringSelectMenuBuilder,
@@ -48,7 +49,7 @@ const handleRemoveUser: CommandHandler = async (
     ) {
       await interaction.reply({
         content: errors.StaffRestrictionError,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }
@@ -134,14 +135,14 @@ const handleRemoveUser: CommandHandler = async (
           await modalSubmit.reply({
             content:
               "Your request timed out! Please try again and submit the form within 14 minutes.",
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
           });
         }
       } else {
         await interaction.followUp({
           content:
             "Your request timed out! Please try again and submit the form within 14 minutes.",
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
       return;
@@ -152,7 +153,7 @@ const handleRemoveUser: CommandHandler = async (
       } else {
         await modalSubmit.reply({
           content: errors.SomethingWentWrongError,
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
     } else {

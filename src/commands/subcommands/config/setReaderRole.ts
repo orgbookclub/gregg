@@ -1,4 +1,4 @@
-import { GuildMember } from "discord.js";
+import { GuildMember, MessageFlags } from "discord.js";
 
 import { errors } from "../../../config/constants";
 import { CommandHandler } from "../../../models";
@@ -25,7 +25,7 @@ const handleSetReaderRole: CommandHandler = async (
     ) {
       await interaction.reply({
         content: errors.StaffRestrictionError,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }

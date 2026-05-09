@@ -4,7 +4,7 @@ import {
   EventDtoTypeEnum,
   UpdateEventDto,
 } from "@orgbookclub/ows-client";
-import { GuildMember } from "discord.js";
+import { GuildMember, MessageFlags } from "discord.js";
 
 import { errors } from "../../../config/constants";
 import { CommandHandler } from "../../../models";
@@ -28,7 +28,7 @@ const handleEdit: CommandHandler = async (bot, interaction, guildConfig) => {
     ) {
       await interaction.reply({
         content: errors.StaffRestrictionError,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }

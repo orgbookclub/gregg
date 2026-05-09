@@ -1,4 +1,9 @@
-import { ChatInputCommandInteraction, TimestampStyles, time } from "discord.js";
+import {
+  ChatInputCommandInteraction,
+  MessageFlags,
+  TimestampStyles,
+  time,
+} from "discord.js";
 
 import { Bot } from "../../../models";
 import { getGuildConfigFromDb } from "../../../utils/dbUtils";
@@ -47,7 +52,7 @@ async function processChatInputCommand(
             expiredTimestamp,
             TimestampStyles.RelativeTime,
           )}.`,
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
         return;
       }

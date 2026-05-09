@@ -4,6 +4,7 @@ import {
   Colors,
   EmbedBuilder,
   GuildMember,
+  MessageFlags,
   time,
   userMention,
 } from "discord.js";
@@ -30,7 +31,7 @@ const handleList: CommandHandler = async (bot, interaction, guildConfig) => {
     ) {
       await interaction.reply({
         content: "Sorry, this command is restricted for staff use only!",
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }
