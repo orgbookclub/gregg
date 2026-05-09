@@ -36,6 +36,7 @@ const handleBroadcast: CommandHandler = async (
   interaction,
   guildConfig,
 ) => {
+  let modalSubmitInteraction: ModalSubmitInteraction | undefined;
   try {
     if (
       guildConfig &&
@@ -64,7 +65,7 @@ const handleBroadcast: CommandHandler = async (
 
     const filter = (msInteraction: ModalSubmitInteraction) =>
       msInteraction.customId === EVENT_BROADCAST_MODAL_ID + salt;
-    const modalSubmitInteraction = await interaction.awaitModalSubmit({
+    modalSubmitInteraction = await interaction.awaitModalSubmit({
       filter,
       time: 5 * 60 * 1000,
     });
@@ -146,13 +147,44 @@ const handleBroadcast: CommandHandler = async (
     }
   } catch (err) {
     if (err instanceof DiscordjsError) {
-      await interaction.followUp({
-        ephemeral: true,
-        content:
-          "Your request timed out! Please try again and submit the form within 5 minutes",
-      });
+      if (modalSubmitInteraction) {
+        if (
+          modalSubmitInteraction.deferred ||
+          modalSubmitInteraction.replied
+        ) {
+          await modalSubmitInteraction.editReply(
+            "Your request timed out! Please try again and submit the form within 5 minutes",
+          );
+        } else {
+          await modalSubmitInteraction.reply({
+            ephemeral: true,
+            content:
+              "Your request timed out! Please try again and submit the form within 5 minutes",
+          });
+        }
+      } else {
+        await interaction.followUp({
+          ephemeral: true,
+          content:
+            "Your request timed out! Please try again and submit the form within 5 minutes",
+        });
+      }
     } else {
-      await interaction.followUp(errors.SomethingWentWrongError);
+      if (modalSubmitInteraction) {
+        if (
+          modalSubmitInteraction.deferred ||
+          modalSubmitInteraction.replied
+        ) {
+          await modalSubmitInteraction.editReply(errors.SomethingWentWrongError);
+        } else {
+          await modalSubmitInteraction.reply({
+            content: errors.SomethingWentWrongError,
+            ephemeral: true,
+          });
+        }
+      } else {
+        await interaction.followUp(errors.SomethingWentWrongError);
+      }
       await errorHandler(
         bot,
         "commands > events > broadcast",

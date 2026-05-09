@@ -39,6 +39,7 @@ const handleRemoveUser: CommandHandler = async (
   interaction,
   guildConfig,
 ) => {
+  let modalSubmit: ModalSubmitInteraction | undefined;
   try {
     if (
       guildConfig &&
@@ -59,7 +60,7 @@ const handleRemoveUser: CommandHandler = async (
 
     const filter = (msInteraction: ModalSubmitInteraction) =>
       msInteraction.customId === modalCustomId;
-    const modalSubmit = await interaction.awaitModalSubmit({
+    modalSubmit = await interaction.awaitModalSubmit({
       filter,
       time: MODAL_TIMEOUT_MS,
     });
@@ -124,14 +125,39 @@ const handleRemoveUser: CommandHandler = async (
     });
   } catch (err) {
     if (err instanceof DiscordjsError) {
-      await interaction.followUp({
-        content:
-          "Your request timed out! Please try again and submit the form within 14 minutes.",
-        ephemeral: true,
-      });
+      if (modalSubmit) {
+        if (modalSubmit.deferred || modalSubmit.replied) {
+          await modalSubmit.editReply(
+            "Your request timed out! Please try again and submit the form within 14 minutes.",
+          );
+        } else {
+          await modalSubmit.reply({
+            content:
+              "Your request timed out! Please try again and submit the form within 14 minutes.",
+            ephemeral: true,
+          });
+        }
+      } else {
+        await interaction.followUp({
+          content:
+            "Your request timed out! Please try again and submit the form within 14 minutes.",
+          ephemeral: true,
+        });
+      }
       return;
     }
-    await interaction.followUp(errors.SomethingWentWrongError);
+    if (modalSubmit) {
+      if (modalSubmit.deferred || modalSubmit.replied) {
+        await modalSubmit.editReply(errors.SomethingWentWrongError);
+      } else {
+        await modalSubmit.reply({
+          content: errors.SomethingWentWrongError,
+          ephemeral: true,
+        });
+      }
+    } else {
+      await interaction.followUp(errors.SomethingWentWrongError);
+    }
     await errorHandler(
       bot,
       "commands > events > removeUser",
