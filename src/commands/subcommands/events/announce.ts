@@ -170,6 +170,13 @@ function getAnnouncementString(
   );
 }
 
+/**
+ * Returns the status-update text for announce responses.
+ *
+ * @param statusUpdated Whether status update to Announced succeeded.
+ * @param context Whether the message is for slash command or modal flow.
+ * @returns The formatted status message segment.
+ */
 function getAnnounceStatusMessage(
   statusUpdated: boolean,
   context: "slash" | "modal",
