@@ -300,7 +300,9 @@ async function resolveExistingThreadIds(
  * Opens the event edit modal pre-filled with the event's current values
  * (status, start/end dates, threads), then applies all changes
  * in a single update on submit. Used by the Edit button on the event info
- * card. Caller is responsible for the staff role check.
+ * card. Description is intentionally excluded from this modal; use
+ * `/events edit field:description` for description-only changes.
+ * Caller is responsible for the staff role check.
  *
  * @param bot The bot instance.
  * @param interaction The interaction that triggered the modal.
