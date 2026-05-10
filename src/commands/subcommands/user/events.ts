@@ -4,10 +4,11 @@ import {
   EventDtoTypeEnum,
 } from "@orgbookclub/ows-client";
 
+import { errors } from "../../../config/constants";
 import { CommandHandler } from "../../../models";
 import { errorHandler } from "../../../utils/errorHandler";
-import { getEventsListEmbed } from "../../../utils/eventUtils";
-import { PaginationManager } from "../../../utils/paginationManager";
+import { getEventsListContainer } from "../../../utils/eventUtils";
+import { PaginationManagerV2 } from "../../../utils/paginationManagerV2";
 
 /**
  * Gets the server event list for a user.
@@ -51,20 +52,28 @@ export const handleEvents: CommandHandler = async (bot, interaction) => {
       return;
     }
     const userEvents = userEventsResponse.data;
-    const pageSize = 5;
-    const pagedContentManager = new PaginationManager<EventDocument>(
+    const pageSize = 4;
+    const pagedContentManager = new PaginationManagerV2<EventDocument>(
       pageSize,
       userEvents,
       bot,
-      getEventsListEmbed,
-      `${user.username}'s Events | ${eventType} | ${eventStatus}`,
+      (title, values, ix, pageInfo) =>
+        getEventsListContainer(
+          title,
+          values,
+          ix,
+          false,
+          `${eventType} · ${eventStatus}`,
+          pageInfo,
+        ),
+      `${user.username}'s Events`,
     );
     const message = await interaction.editReply(
       pagedContentManager.createMessagePayloadForPage(interaction),
     );
     pagedContentManager.createCollectors(message, interaction, 5 * 60 * 1000);
   } catch (err) {
-    await interaction.editReply("Something went wrong! Please try again later");
+    await interaction.editReply(errors.SomethingWentWrongError);
     await errorHandler(
       bot,
       "commands > user > events",

@@ -1,3 +1,4 @@
+import { errors, messages } from "../../../config/constants";
 import { CommandHandler } from "../../../models";
 import { errorHandler } from "../../../utils/errorHandler";
 
@@ -9,9 +10,9 @@ import { errorHandler } from "../../../utils/errorHandler";
  */
 export const handlePing: CommandHandler = async (bot, interaction) => {
   try {
-    await interaction.reply("Pong!");
+    await interaction.reply(messages.Pong);
   } catch (err) {
-    await interaction.reply("Something went wrong! Please try again later.");
+    await interaction.reply(errors.SomethingWentWrongError);
     await errorHandler(
       bot,
       "commands > gregg > ping",

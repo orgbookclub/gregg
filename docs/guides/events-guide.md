@@ -94,3 +94,15 @@ In the ideal, normal workflow, the only action required from staff will be to
 - Add points once the event is completed using `/events adduser`
 
 However, in case you need to take any more actions or edit the event, you can use the `/events edit` command, which will allow you to edit any of the field values (status, dates etc. ) for an event.
+
+## Staff Action Buttons
+
+Event info embeds (returned by `/events info`, and shown after most staff event commands) now include inline buttons for staff. The buttons shown depend on the event's current status:
+
+- **Edit** — opens a modal to edit status, start/end dates, and linked threads in one form.
+- **Approve** / **Reject** — only on _Requested_ events; sets the status accordingly.
+- **Create Thread** — on _Approved_ events; equivalent to `/events createthread`.
+- **Announce** — on _Approved_ events that already have a thread; equivalent to `/events announce`.
+- **Add Points** / **Remove Points** — on _Completed_ events; opens the same forms as `/events adduser` and `/events removeuser`.
+
+Event lists and search results also include a **Details** button per event (and a **Join** button on _Requested_ events) so users can pull up the full info card or register interest without re-running a command.

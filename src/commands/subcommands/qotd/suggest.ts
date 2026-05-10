@@ -8,6 +8,7 @@ import {
   User,
 } from "discord.js";
 
+import { errors, labels, messages, titles } from "../../../config/constants";
 import { CommandHandler } from "../../../models";
 import { QotdSuggestion } from "../../../models/commands/qotd/QotdSuggestion";
 import { QotdSuggestionStatus } from "../../../models/commands/qotd/QotdSuggestionStatus";
@@ -31,9 +32,7 @@ const handleSuggest: CommandHandler = async (bot, interaction, guildConfig) => {
     const channel = await bot.channels.fetch(channelId);
 
     if (!channel?.isTextBased() || channel.isDMBased()) {
-      await interaction.editReply(
-        "Something went wrong while trying to log the question in the channel. Please contact staff",
-      );
+      await interaction.editReply(errors.QotdChannelNotFoundError);
       throw new Error(`Unable to find qotd text channel/thread`);
     }
     if (!interaction.guild) return;
@@ -60,10 +59,10 @@ const handleSuggest: CommandHandler = async (bot, interaction, guildConfig) => {
       components: [buttonActionRow],
     });
     await interaction.editReply({
-      content: "Your suggestion has been submitted!",
+      content: messages.QotdSuggestionSubmitted,
     });
   } catch (err) {
-    await interaction.editReply("Something went wrong! Please try again later");
+    await interaction.editReply(errors.SomethingWentWrongError);
     await errorHandler(
       bot,
       "commands > qotd > suggest",
@@ -77,12 +76,12 @@ const handleSuggest: CommandHandler = async (bot, interaction, guildConfig) => {
 
 function getButtonActionRow(approveId: string, rejectId: string) {
   const approveButton = new ButtonBuilder()
-    .setLabel("Approve")
+    .setLabel(labels.Approve)
     .setEmoji({ name: "✅" })
     .setStyle(ButtonStyle.Success)
     .setCustomId(approveId);
   const rejectButton = new ButtonBuilder()
-    .setLabel("Reject")
+    .setLabel(labels.Reject)
     .setEmoji({ name: "❌" })
     .setStyle(ButtonStyle.Danger)
     .setCustomId(rejectId);
@@ -96,7 +95,7 @@ function getButtonActionRow(approveId: string, rejectId: string) {
 function getQotdSuggestionEmbed(question: string, author: User) {
   const embed = new EmbedBuilder();
   embed
-    .setTitle("QOTD Suggestion")
+    .setTitle(titles.QotdSuggestion)
     .setAuthor({
       name: author.username,
       iconURL: author.displayAvatarURL(),

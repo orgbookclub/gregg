@@ -1,6 +1,6 @@
 import { GuildMember, MessageFlags } from "discord.js";
 
-import { errors } from "../../../config/constants";
+import { errors, messages } from "../../../config/constants";
 import { CommandHandler } from "../../../models";
 import { errorHandler } from "../../../utils/errorHandler";
 import { hasRole } from "../../../utils/userUtils";
@@ -75,7 +75,7 @@ const handleSetReaderRole: CommandHandler = async (
         },
       },
     });
-    await interaction.editReply("Guild Config Updated!");
+    await interaction.editReply(messages.GuildConfigUpdated);
   } catch (err) {
     await interaction.editReply(errors.SomethingWentWrongError);
     await errorHandler(

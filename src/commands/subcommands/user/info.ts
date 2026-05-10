@@ -6,6 +6,7 @@ import {
   User,
 } from "discord.js";
 
+import { errors, templates } from "../../../config/constants";
 import { CommandHandler } from "../../../models";
 import { errorHandler } from "../../../utils/errorHandler";
 
@@ -23,16 +24,14 @@ const handleInfo: CommandHandler = async (bot, interaction) => {
       userid: user.id,
     });
     if (!response) {
-      await interaction.editReply(
-        `No user found! Please check if the user ID ${user.id} is registered with the bot`,
-      );
+      await interaction.editReply(templates.noRegisteredUser(user.id));
       return;
     }
     const userDoc = response.data;
     const embed = getUserInfoEmbed(userDoc, user, interaction);
     await interaction.editReply({ embeds: [embed] });
   } catch (err) {
-    await interaction.editReply("Something went wrong! Please try again later");
+    await interaction.editReply(errors.SomethingWentWrongError);
     await errorHandler(
       bot,
       "commands > user > info",

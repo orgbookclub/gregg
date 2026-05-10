@@ -7,8 +7,8 @@ import {
 import { errors } from "../../../config/constants";
 import { CommandHandler } from "../../../models";
 import { errorHandler } from "../../../utils/errorHandler";
-import { getEventsListEmbed } from "../../../utils/eventUtils";
-import { PaginationManager } from "../../../utils/paginationManager";
+import { getEventsListContainer } from "../../../utils/eventUtils";
+import { PaginationManagerV2 } from "../../../utils/paginationManagerV2";
 
 /**
  * Returns a list of events.
@@ -44,12 +44,21 @@ export const handleList: CommandHandler = async (bot, interaction) => {
       );
       return;
     }
-    const pageSize = 5;
-    const pagedContentManager = new PaginationManager<EventDocument>(
+    const pageSize = 4;
+    const pagedContentManager = new PaginationManagerV2<EventDocument>(
       pageSize,
       eventList,
       bot,
-      getEventsListEmbed,
+      (title, values, ix, pageInfo) =>
+        getEventsListContainer(
+          title,
+          values,
+          ix,
+          false,
+          `${eventType} · ${eventStatus}`,
+          pageInfo,
+        ),
+      "Events",
     );
     const message = await interaction.editReply(
       pagedContentManager.createMessagePayloadForPage(interaction),

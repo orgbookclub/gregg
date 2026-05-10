@@ -1,5 +1,4 @@
-import { userMention } from "discord.js";
-
+import { errors, templates } from "../../../config/constants";
 import { CommandHandler } from "../../../models";
 import { SprintStatus } from "../../../models/commands/sprint/SprintStatus";
 import { errorHandler } from "../../../utils/errorHandler";
@@ -21,17 +20,17 @@ export const handleCancel: CommandHandler = async (bot, interaction) => {
       !bot.sprintManager.isSprintPresent(threadId, SprintStatus.Ongoing)
     ) {
       await interaction.editReply({
-        content: "There are no active sprints to cancel in this thread!",
+        content: errors.NoSprintToCancelError,
       });
       return;
     }
 
     await bot.sprintManager.cancelSprint(threadId, bot);
     await interaction.editReply({
-      content: `Sprint cancelled by ${userMention(user.id)}`,
+      content: templates.sprintCancelled(user.id),
     });
   } catch (err) {
-    await interaction.editReply("Something went wrong! Please try again later");
+    await interaction.editReply(errors.SomethingWentWrongError);
     await errorHandler(
       bot,
       "commands > sprint > cancel",

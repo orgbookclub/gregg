@@ -1,5 +1,4 @@
-import { userMention } from "discord.js";
-
+import { errors, templates } from "../../../config/constants";
 import { CommandHandler } from "../../../models";
 import { SprintStatus } from "../../../models/commands/sprint/SprintStatus";
 import { errorHandler } from "../../../utils/errorHandler";
@@ -21,19 +20,16 @@ export const handleJoin: CommandHandler = async (bot, interaction) => {
 
     if (!bot.sprintManager.isSprintPresent(threadId, SprintStatus.Ongoing)) {
       await interaction.editReply({
-        content:
-          "There are no ongoing sprints to join in this thread!\nPlease start a sprint first to join it",
+        content: errors.NoSprintToJoinError,
       });
       return;
     }
     bot.sprintManager.logStartCount(threadId, user.id, startCount);
     await interaction.editReply({
-      content: `${userMention(
-        user.id,
-      )} has successfully joined sprint with starting count of ${startCount}!`,
+      content: templates.sprintJoined(user.id, startCount),
     });
   } catch (err) {
-    await interaction.editReply("Something went wrong! Please try again later");
+    await interaction.editReply(errors.SomethingWentWrongError);
     await errorHandler(
       bot,
       "commands > sprint > join",

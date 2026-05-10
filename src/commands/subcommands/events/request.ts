@@ -15,7 +15,7 @@ import {
   TextInputStyle,
 } from "discord.js";
 
-import { errors } from "../../../config/constants";
+import { errors, placeholders, templates } from "../../../config/constants";
 import { Bot, CommandHandler } from "../../../models";
 import { EventRequestSubmission } from "../../../models/commands/events/EventRequestSubmission";
 import { createEventMessageDoc } from "../../../utils/dbUtils";
@@ -43,7 +43,7 @@ const REQUEST_REASON_FIELD_ID = "reason";
 const handleRequest: CommandHandler = async (bot, interaction, guildConfig) => {
   try {
     if (!guildConfig || !interaction.member) {
-      await interaction.reply("You shouldn't be here! :o");
+      await interaction.reply(errors.EventRequestStrayError);
       return;
     }
     const eventType = interaction.options.getString(
@@ -74,7 +74,7 @@ const handleRequest: CommandHandler = async (bot, interaction, guildConfig) => {
     );
     if (!validationResponse.isValid) {
       await modalSubmitInteraction.editReply(
-        `Invalid submission: ${validationResponse.message}`,
+        templates.invalidSubmission(validationResponse.message),
       );
       return;
     }
@@ -87,9 +87,7 @@ const handleRequest: CommandHandler = async (bot, interaction, guildConfig) => {
 
     const response = await createEvent(eventType, submission, user._id, bot);
     if (!response) {
-      await modalSubmitInteraction.editReply(
-        "Something went wrong while trying to create the event :(",
-      );
+      await modalSubmitInteraction.editReply(errors.EventCreateError);
       return;
     }
 
@@ -97,9 +95,7 @@ const handleRequest: CommandHandler = async (bot, interaction, guildConfig) => {
       id: response.data._id,
     });
     if (!eventResponse) {
-      await modalSubmitInteraction.editReply(
-        "Something went wrong while trying fetch the event :(",
-      );
+      await modalSubmitInteraction.editReply(errors.EventFetchError);
       return;
     }
 
@@ -109,9 +105,7 @@ const handleRequest: CommandHandler = async (bot, interaction, guildConfig) => {
       const channelId = guildConfig?.brRequestChannel ?? "Not set";
       const channel = await bot.channels.fetch(channelId);
       if (!channel?.isTextBased() || channel.isDMBased()) {
-        await modalSubmitInteraction.editReply(
-          "Unable to post event request in the configured channel. Please contact staff!",
-        );
+        await modalSubmitInteraction.editReply(errors.EventRequestPostError);
         return;
       }
       const embed = getEventRequestEmbed(eventDoc, modalSubmitInteraction);
@@ -131,15 +125,14 @@ const handleRequest: CommandHandler = async (bot, interaction, guildConfig) => {
     }
 
     await modalSubmitInteraction.editReply({
-      content: `Event request for ${eventDoc.book.title} successful!\n Event ID: ${eventDoc._id}`,
+      content: templates.eventRequestSuccess(eventDoc.book.title, eventDoc._id),
     });
   } catch (err) {
     const error = err as Error;
     if (error instanceof DiscordjsError) {
       await interaction.followUp({
         flags: MessageFlags.Ephemeral,
-        content:
-          "Your request timed out! Please try again and submit the form within 5 minutes",
+        content: templates.modalTimeout(5),
       });
     } else if (
       error.name === "AxiosError" &&
@@ -190,9 +183,9 @@ function getEventRequestModal(eventType: string, salt: number) {
     .setTitle(`${eventType} Request`);
   const linkInput = new TextInputBuilder()
     .setCustomId(BOOK_LINK_FIELD_ID)
-    .setLabel("What's the GR or SG link to the book?")
+    .setLabel(placeholders.BookLinkPrompt)
     .setRequired(true)
-    .setPlaceholder("https://www.goodreads.com/book/show/xxxxyyy-zzzz")
+    .setPlaceholder(placeholders.BookLinkExample)
     .setStyle(TextInputStyle.Short);
   const linkActionRow =
     new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
@@ -203,9 +196,9 @@ function getEventRequestModal(eventType: string, salt: number) {
   if (eventType !== EventDtoTypeEnum.MonthlyRead) {
     const startDateInput = new TextInputBuilder()
       .setCustomId(START_DATE_FIELD_ID)
-      .setLabel("When do you want the event to start?")
+      .setLabel(placeholders.EventStartPrompt)
       .setRequired(true)
-      .setPlaceholder("YYYY-MM-DD")
+      .setPlaceholder(placeholders.DatePlaceholder)
       .setStyle(TextInputStyle.Short)
       .setMaxLength(10)
       .setMinLength(10);
@@ -218,9 +211,9 @@ function getEventRequestModal(eventType: string, salt: number) {
 
     const endDateInput = new TextInputBuilder()
       .setCustomId(END_DATE_FIELD_ID)
-      .setLabel("When do you want the event to end?")
+      .setLabel(placeholders.EventEndPrompt)
       .setRequired(true)
-      .setPlaceholder("YYYY-MM-DD")
+      .setPlaceholder(placeholders.DatePlaceholder)
       .setStyle(TextInputStyle.Short)
       .setMaxLength(10)
       .setMinLength(10);
@@ -233,10 +226,8 @@ function getEventRequestModal(eventType: string, salt: number) {
   }
   const reasonInput = new TextInputBuilder()
     .setCustomId(REQUEST_REASON_FIELD_ID)
-    .setLabel("Why are you requesting this book?")
-    .setPlaceholder(
-      "A short description of why other folks should join your event",
-    )
+    .setLabel(placeholders.RequestReasonPrompt)
+    .setPlaceholder(placeholders.RequestReasonExample)
     .setRequired(true)
     .setStyle(TextInputStyle.Paragraph);
   const reasonActionRow =

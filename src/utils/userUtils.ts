@@ -67,11 +67,13 @@ export const getUserMentionString = (
       if (typeof participant === "string") {
         return userMention(participant);
       }
-      const userId = participant.user.userId.toString();
+      const userId = participant.user?.userId?.toString();
+      if (!userId) return "";
       return includePoints
         ? `${userMention(userId)}(${participant.points})`
         : userMention(userId);
     })
+    .filter((s) => s.length > 0)
     .join(",");
 };
 

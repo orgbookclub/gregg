@@ -4,17 +4,27 @@ import {
   EventDtoStatusEnum,
 } from "@orgbookclub/ows-client";
 import {
+  ActionRowBuilder,
+  ButtonBuilder,
   ButtonInteraction,
+  ButtonStyle,
   ChatInputCommandInteraction,
   Colors,
+  ContainerBuilder,
   EmbedBuilder,
   ModalSubmitInteraction,
+  SectionBuilder,
+  SeparatorBuilder,
+  SeparatorSpacingSize,
+  TextDisplayBuilder,
+  ThumbnailBuilder,
   TimestampStyles,
   channelMention,
   time,
   userMention,
 } from "discord.js";
 
+import { labels } from "../config/constants";
 import { Bot } from "../models";
 
 import { getAuthorString } from "./bookUtils";
@@ -23,52 +33,222 @@ import { deleteBRRequest } from "./messageUtils";
 import { customSubstring } from "./stringUtils";
 import { getUserMentionString } from "./userUtils";
 
+const EVENT_TYPE_EMOJI: Record<string, string> = {
+  BuddyRead: "👥",
+  MonthlyRead: "🗓️",
+  ShortStoryRead: "📖",
+  PoetryRead: "🪶",
+  Other: "📚",
+};
+
+const EVENT_STATUS_EMOJI: Record<string, string> = {
+  Requested: "📨",
+  Approved: "✅",
+  Announced: "📢",
+  Ongoing: "🟢",
+  Completed: "🏁",
+  Rejected: "❌",
+  Cancelled: "🚫",
+};
+
+const EDIT_BUTTON = (eventId: string) =>
+  new ButtonBuilder()
+    .setCustomId(`evt-edit-${eventId}`)
+    .setLabel(labels.Edit)
+    .setEmoji({ name: "✏️" })
+    .setStyle(ButtonStyle.Secondary);
+
 /**
- * Creates an embed to display a list of events.
+ * Builds the state-aware list of staff action buttons for an event card.
+ * Empty array if the status has no staff actions beyond Edit (which is always
+ * appended last).
  *
- * @param title The title to display in the embed.
+ * @param event The event document.
+ * @returns Array of buttons for the action row.
+ */
+function buildStaffActionButtons(event: EventDocument): ButtonBuilder[] {
+  const buttons: ButtonBuilder[] = [];
+  const id = event._id;
+
+  if (event.status === EventDtoStatusEnum.Requested) {
+    buttons.push(
+      new ButtonBuilder()
+        .setCustomId(`evt-approve-${id}`)
+        .setLabel(labels.Approve)
+        .setEmoji({ name: "✅" })
+        .setStyle(ButtonStyle.Success),
+      new ButtonBuilder()
+        .setCustomId(`evt-reject-${id}`)
+        .setLabel(labels.Reject)
+        .setEmoji({ name: "❌" })
+        .setStyle(ButtonStyle.Danger),
+    );
+  } else if (event.status === EventDtoStatusEnum.Approved) {
+    buttons.push(
+      new ButtonBuilder()
+        .setCustomId(`evt-thread-${id}`)
+        .setLabel(labels.CreateThread)
+        .setEmoji({ name: "🧵" })
+        .setStyle(ButtonStyle.Primary),
+    );
+    if (event.threads && event.threads.length > 0) {
+      buttons.push(
+        new ButtonBuilder()
+          .setCustomId(`evt-announce-${id}`)
+          .setLabel(labels.Announce)
+          .setEmoji({ name: "📢" })
+          .setStyle(ButtonStyle.Primary),
+      );
+    }
+  } else if (event.status === EventDtoStatusEnum.Completed) {
+    buttons.push(
+      new ButtonBuilder()
+        .setCustomId(`evt-addpts-${id}`)
+        .setLabel(labels.AddPoints)
+        .setEmoji({ name: "➕" })
+        .setStyle(ButtonStyle.Success),
+      new ButtonBuilder()
+        .setCustomId(`evt-rmpts-${id}`)
+        .setLabel(labels.RemovePoints)
+        .setEmoji({ name: "➖" })
+        .setStyle(ButtonStyle.Danger),
+    );
+  }
+
+  buttons.push(EDIT_BUTTON(id));
+  return buttons;
+}
+
+/**
+ * Creates a Components V2 Container to display a list of events. Each event
+ * renders as its own Section with the cover as a thumbnail accessory.
+ *
+ * Pass `showTypeAndStatus` when the list mixes event types/statuses (e.g.
+ * `/events search`); omit it when the list is already filtered to a single
+ * type+status (e.g. `/events list`, `/user events`) so those fields don't
+ * repeat on every row.
+ *
+ * @param title The page heading (rendered as `# {title}`).
  * @param eventList Array of events.
  * @param interaction The interaction instance.
- * @returns The embed.
+ * @param showTypeAndStatus Whether to show per-row type & status lines.
+ * @param subtitle Optional small grey subtitle under the heading.
+ * @param pageInfo Optional `{ current, total }` to render as part of the footer.
+ * @returns The container.
  */
-export function getEventsListEmbed(
+export function getEventsListContainer(
   title: string,
   eventList: EventDocument[],
   interaction: ChatInputCommandInteraction,
+  showTypeAndStatus = false,
+  subtitle?: string,
+  pageInfo?: { current: number; total: number },
 ) {
-  const embed = new EmbedBuilder().setTitle(title).setColor(Colors.Red);
-  if (interaction.inGuild()) {
-    embed.setAuthor({
-      name: interaction.guild?.name ?? "Unknown Guild",
-      iconURL: interaction.guild?.iconURL() ?? undefined,
-    });
-  }
-  eventList.forEach((event: EventDocument) => {
-    embed.addFields(getEventItemField(event));
-  });
-  return embed;
+  const container = new ContainerBuilder().setAccentColor(Colors.Red);
 
-  function getEventItemField(event: EventDocument) {
-    return {
-      name: `📕 ${getBookTitleWithAuthors(event.book)}`,
-      value:
-        `> [Link](${event.book.url}) | __ID__: \`${event._id}\`` +
-        `\n> __Type__: ${event.type} | __Status__: ${event.status}` +
-        (event.dates.startDate !== undefined
-          ? `\n> __Start__: ${time(
-              new Date(event.dates.startDate),
-              TimestampStyles.LongDate,
-            )}`
-          : "") +
-        (event.dates.endDate !== undefined
-          ? ` | __End__: ${time(
-              new Date(event.dates.endDate),
-              TimestampStyles.LongDate,
-            )}`
-          : ""),
-      inline: false,
-    };
+  container.addTextDisplayComponents(
+    new TextDisplayBuilder().setContent(`# ${title}`),
+  );
+  if (subtitle) {
+    container.addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(`## ${subtitle}`),
+    );
   }
+  container.addSeparatorComponents(
+    new SeparatorBuilder()
+      .setDivider(true)
+      .setSpacing(SeparatorSpacingSize.Small),
+  );
+
+  eventList.forEach((event) => {
+    const start =
+      event.dates.startDate !== undefined
+        ? `__Start__: ${time(
+            new Date(event.dates.startDate),
+            TimestampStyles.LongDate,
+          )}`
+        : "";
+    const end =
+      event.dates.endDate !== undefined
+        ? `__End__: ${time(
+            new Date(event.dates.endDate),
+            TimestampStyles.LongDate,
+          )}`
+        : "";
+    const datesLine = start && end ? `${start} • ${end}` : start || end || "";
+
+    const authorString = getAuthorString(event.book.authors);
+    const typeIcon = EVENT_TYPE_EMOJI[event.type] ?? "";
+    const statusIcon = EVENT_STATUS_EMOJI[event.status] ?? "";
+
+    const lines: string[] = [`### [${event.book.title}](${event.book.url})`];
+    lines.push(`-# by ${authorString}`);
+    if (showTypeAndStatus) {
+      lines.push(
+        `> ${typeIcon} ${event.type}  •  ${statusIcon} ${event.status}`,
+      );
+    }
+    if (datesLine) lines.push(`> ${datesLine}`);
+    lines.push(`> ID: \`${event._id}\``);
+
+    const section = new SectionBuilder().addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(lines.join("\n")),
+    );
+
+    if (event.book.coverUrl) {
+      section.setThumbnailAccessory(
+        new ThumbnailBuilder().setURL(event.book.coverUrl),
+      );
+    }
+
+    container.addSectionComponents(section);
+
+    const buttons: ButtonBuilder[] = [
+      new ButtonBuilder()
+        .setCustomId(`evt-info-${event._id}`)
+        .setLabel("Details")
+        .setEmoji({ name: "ℹ️" })
+        .setStyle(ButtonStyle.Secondary),
+    ];
+    const joinable: string[] = [
+      EventDtoStatusEnum.Approved,
+      EventDtoStatusEnum.Announced,
+      EventDtoStatusEnum.Ongoing,
+    ];
+    if (event.type === "BuddyRead" && joinable.includes(event.status)) {
+      buttons.push(
+        new ButtonBuilder()
+          .setCustomId(`evt-join-${event._id}`)
+          .setLabel("Join")
+          .setEmoji({ name: "✅" })
+          .setStyle(ButtonStyle.Success),
+      );
+    }
+    container.addActionRowComponents(
+      new ActionRowBuilder<ButtonBuilder>().addComponents(buttons),
+    );
+  });
+
+  const guildName = interaction.inGuild()
+    ? (interaction.guild?.name ?? "Unknown Guild")
+    : "";
+  const pageStr = pageInfo
+    ? `Page ${pageInfo.current} of ${pageInfo.total}`
+    : "";
+  const footerParts = [guildName, pageStr].filter((s) => s.length > 0);
+  if (footerParts.length > 0) {
+    container
+      .addSeparatorComponents(
+        new SeparatorBuilder()
+          .setDivider(true)
+          .setSpacing(SeparatorSpacingSize.Small),
+      )
+      .addTextDisplayComponents(
+        new TextDisplayBuilder().setContent(`-# ${footerParts.join(" · ")}`),
+      );
+  }
+
+  return container;
 }
 
 /**
@@ -118,11 +298,13 @@ export function getEventInfoEmbed(
       inline: true,
     });
   }
-  embed.addFields({
-    name: "Requested By",
-    value: `${userMention(event.requestedBy.user.userId)}`,
-    inline: false,
-  });
+  if (event.requestedBy?.user?.userId) {
+    embed.addFields({
+      name: "Requested By",
+      value: `${userMention(event.requestedBy.user.userId)}`,
+      inline: false,
+    });
+  }
   if (event.leaders && event.leaders.length > 0) {
     embed.addFields({
       name: "Leader(s)",
@@ -145,6 +327,20 @@ export function getEventInfoEmbed(
     });
   }
   return embed;
+}
+
+/**
+ * Returns an ActionRow with state-aware staff action buttons for an event,
+ * or null if there are no buttons to render. Caller decides whether to
+ * include it (typically based on whether the viewer has the staff role).
+ *
+ * @param event The event document.
+ * @returns An ActionRow with buttons, or null.
+ */
+export function getEventInfoStaffActionRow(event: EventDocument) {
+  const buttons = buildStaffActionButtons(event);
+  if (buttons.length === 0) return null;
+  return new ActionRowBuilder<ButtonBuilder>().addComponents(buttons);
 }
 
 /**
@@ -329,7 +525,8 @@ export function calculateReaderboardScores(eventDocs: EventDocument[]) {
 
   for (const event of eventDocs) {
     for (const participant of event.readers.concat(event.leaders)) {
-      const userId = participant.user.userId;
+      const userId = participant.user?.userId;
+      if (!userId) continue;
       scoreMap.set(
         userId,
         (scoreMap.get(userId) ?? 0) + (participant.points ?? 0),

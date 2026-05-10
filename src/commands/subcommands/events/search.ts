@@ -3,12 +3,13 @@ import {
   EventDtoStatusEnum,
   EventDtoTypeEnum,
 } from "@orgbookclub/ows-client";
+import { ChatInputCommandInteraction } from "discord.js";
 
-import { errors } from "../../../config/constants";
+import { errors, templates } from "../../../config/constants";
 import { CommandHandler } from "../../../models";
 import { errorHandler } from "../../../utils/errorHandler";
-import { getEventsListEmbed } from "../../../utils/eventUtils";
-import { PaginationManager } from "../../../utils/paginationManager";
+import { getEventsListContainer } from "../../../utils/eventUtils";
+import { PaginationManagerV2 } from "../../../utils/paginationManagerV2";
 
 /**
  * Returns a list of events for the given query string.
@@ -32,12 +33,23 @@ export const handleSearch: CommandHandler = async (bot, interaction) => {
         ? (eventType as keyof typeof EventDtoTypeEnum)
         : undefined,
     });
-    const pageSize = 5;
-    const pagedContentManager = new PaginationManager<EventDocument>(
+    if (response.data.length === 0) {
+      await interaction.editReply(templates.noEventsForQuery(query));
+      return;
+    }
+    const pageSize = 4;
+    const pagedContentManager = new PaginationManagerV2<EventDocument>(
       pageSize,
       response.data,
       bot,
-      getEventsListEmbed,
+      (
+        title: string,
+        values: EventDocument[],
+        ix: ChatInputCommandInteraction,
+        pageInfo: { current: number; total: number },
+      ) =>
+        getEventsListContainer(title, values, ix, true, `"${query}"`, pageInfo),
+      `Event Search`,
     );
     const message = await interaction.editReply(
       pagedContentManager.createMessagePayloadForPage(interaction),

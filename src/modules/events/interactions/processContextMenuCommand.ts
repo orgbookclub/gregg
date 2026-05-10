@@ -1,7 +1,9 @@
 import { ContextMenuCommandInteraction, MessageFlags } from "discord.js";
 
+import { templates } from "../../../config/constants";
 import { Bot } from "../../../models";
 import { errorHandler } from "../../../utils/errorHandler";
+import { upsertInteractionUsage } from "../../../utils/interactionUsageUtils";
 
 /**
  * Handles all context commands.
@@ -21,7 +23,7 @@ export async function processContextMenuCommand(
 
     if (!command) {
       await interaction.reply({
-        content: `Something went wrong while trying to run context command ${interaction.commandName}`,
+        content: templates.contextCommandRunError(interaction.commandName),
       });
       return;
     }
@@ -40,7 +42,10 @@ export async function processContextMenuCommand(
       if (now < expirationTime) {
         const expiredTimestamp = Math.round(expirationTime / 1000);
         await interaction.reply({
-          content: `Please wait, you are on a cooldown for \`${command.data.name}\`. You can use it again <t:${expiredTimestamp}:R>.`,
+          content: templates.cooldownWait(
+            command.data.name,
+            `<t:${expiredTimestamp}:R>`,
+          ),
           flags: MessageFlags.Ephemeral,
         });
         return;
@@ -52,7 +57,7 @@ export async function processContextMenuCommand(
     // TODO: Type guards
     // TODO: Can also get guild-specific config settings from here.
     await command.run(bot, interaction);
-    // TODO: Usage logging
+    await upsertInteractionUsage(bot, "contextMenu", interaction.commandName);
   } catch (error) {
     await errorHandler(
       bot,

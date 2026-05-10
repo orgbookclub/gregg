@@ -1,5 +1,7 @@
 import { EventDocument, UpdateEventDto } from "@orgbookclub/ows-client";
 import {
+  ButtonInteraction,
+  ChatInputCommandInteraction,
   DiscordjsError,
   GuildMember,
   LabelBuilder,
@@ -11,14 +13,17 @@ import {
   UserSelectMenuBuilder,
 } from "discord.js";
 
-import { errors } from "../../../config/constants";
+import { errors, templates } from "../../../config/constants";
 import {
   EventParticipantOptions,
   isParticipantType,
 } from "../../../config/EventParticipantOptions";
-import { CommandHandler } from "../../../models";
+import { Bot, CommandHandler } from "../../../models";
 import { errorHandler } from "../../../utils/errorHandler";
-import { getEventInfoEmbed } from "../../../utils/eventUtils";
+import {
+  getEventInfoEmbed,
+  getEventInfoStaffActionRow,
+} from "../../../utils/eventUtils";
 import { hasRole, participantToDto } from "../../../utils/userUtils";
 
 const EVENT_REMOVEUSER_MODAL_ID = "eventRemoveUserModal";
@@ -40,7 +45,6 @@ const handleRemoveUser: CommandHandler = async (
   interaction,
   guildConfig,
 ) => {
-  let modalSubmit: ModalSubmitInteraction | undefined;
   try {
     if (
       guildConfig &&
@@ -53,11 +57,40 @@ const handleRemoveUser: CommandHandler = async (
       });
       return;
     }
-
     const id = interaction.options.getString("id", true);
+    await runRemoveUserFlow(bot, interaction, id);
+  } catch (err) {
+    await errorHandler(
+      bot,
+      "commands > events > removeUser",
+      err,
+      interaction.guild?.name,
+      undefined,
+      interaction,
+    );
+  }
+};
+
+/**
+ * Shows the removeUser modal pre-populated for the given event id and
+ * processes the submission. Shared between the slash command and the Remove
+ * Points button on the event info card. Caller is responsible for the staff
+ * role check.
+ *
+ * @param bot The bot instance.
+ * @param interaction The interaction (slash command or button).
+ * @param eventId The event id.
+ */
+async function runRemoveUserFlow(
+  bot: Bot,
+  interaction: ChatInputCommandInteraction | ButtonInteraction,
+  eventId: string,
+) {
+  let modalSubmit: ModalSubmitInteraction | undefined;
+  try {
     const salt = Math.random() * 100;
     const modalCustomId = EVENT_REMOVEUSER_MODAL_ID + salt;
-    await interaction.showModal(getRemoveUserModal(modalCustomId, id));
+    await interaction.showModal(getRemoveUserModal(modalCustomId, eventId));
 
     const filter = (msInteraction: ModalSubmitInteraction) =>
       msInteraction.customId === modalCustomId;
@@ -69,7 +102,9 @@ const handleRemoveUser: CommandHandler = async (
 
     let eventDoc: EventDocument;
     try {
-      const response = await bot.api.events.eventsControllerFindOne({ id });
+      const response = await bot.api.events.eventsControllerFindOne({
+        id: eventId,
+      });
       eventDoc = response.data;
     } catch (_error) {
       await modalSubmit.editReply(errors.InvalidEventIdError);
@@ -79,7 +114,7 @@ const handleRemoveUser: CommandHandler = async (
     const [participantType] =
       modalSubmit.fields.getStringSelectValues(TYPE_FIELD_ID);
     if (!isParticipantType(participantType)) {
-      await modalSubmit.editReply("Invalid participant type.");
+      await modalSubmit.editReply(errors.InvalidParticipantTypeError);
       return;
     }
 
@@ -106,7 +141,7 @@ const handleRemoveUser: CommandHandler = async (
     updateEventDto[participantType] = remaining.map((x) => participantToDto(x));
 
     const updateResponse = await bot.api.events.eventsControllerUpdate({
-      id,
+      id: eventId,
       updateEventDto: updateEventDto,
     });
 
@@ -117,31 +152,36 @@ const handleRemoveUser: CommandHandler = async (
     const notListedCount = selectedUsers.size - removedCount;
     const notListedSuffix =
       notListedCount > 0
-        ? ` (${notListedCount} selected user(s) were not on the list)`
+        ? templates.participantsNotListedSuffix(notListedCount)
         : "";
 
+    const row = getEventInfoStaffActionRow(updateResponse.data);
     await modalSubmit.editReply({
-      content: `Removed ${removedCount} user(s) from event ${updateResponse.data._id} as ${participantType}: ${removedUsernames}${notListedSuffix}`,
+      content: templates.participantsRemoved(
+        removedCount,
+        updateResponse.data._id,
+        participantType,
+        removedUsernames,
+        notListedSuffix,
+      ),
       embeds: [getEventInfoEmbed(updateResponse.data, interaction)],
+      components: row ? [row] : [],
     });
   } catch (err) {
+    const timeoutMsg = templates.modalTimeout(14);
     if (err instanceof DiscordjsError) {
       if (modalSubmit) {
         if (modalSubmit.deferred || modalSubmit.replied) {
-          await modalSubmit.editReply(
-            "Your request timed out! Please try again and submit the form within 14 minutes.",
-          );
+          await modalSubmit.editReply(timeoutMsg);
         } else {
           await modalSubmit.reply({
-            content:
-              "Your request timed out! Please try again and submit the form within 14 minutes.",
+            content: timeoutMsg,
             flags: MessageFlags.Ephemeral,
           });
         }
       } else {
         await interaction.followUp({
-          content:
-            "Your request timed out! Please try again and submit the form within 14 minutes.",
+          content: timeoutMsg,
           flags: MessageFlags.Ephemeral,
         });
       }
@@ -159,16 +199,9 @@ const handleRemoveUser: CommandHandler = async (
     } else {
       await interaction.followUp(errors.SomethingWentWrongError);
     }
-    await errorHandler(
-      bot,
-      "commands > events > removeUser",
-      err,
-      interaction.guild?.name,
-      undefined,
-      interaction,
-    );
+    throw err;
   }
-};
+}
 
 function getRemoveUserModal(customId: string, eventId: string) {
   const usersSelect = new UserSelectMenuBuilder()
@@ -205,4 +238,4 @@ function getRemoveUserModal(customId: string, eventId: string) {
     );
 }
 
-export { handleRemoveUser };
+export { handleRemoveUser, runRemoveUserFlow };
