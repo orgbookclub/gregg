@@ -1,5 +1,4 @@
-import { userMention } from "discord.js";
-
+import { errors, templates } from "../../../config/constants";
 import { CommandHandler } from "../../../models";
 import { SprintStatus } from "../../../models/commands/sprint/SprintStatus";
 import { errorHandler } from "../../../utils/errorHandler";
@@ -18,16 +17,16 @@ export const handleLeave: CommandHandler = async (bot, interaction) => {
     const user = interaction.user;
     if (!bot.sprintManager.isSprintPresent(threadId, SprintStatus.Ongoing)) {
       await interaction.editReply({
-        content: "There are no ongoing sprints to leave in this thread!",
+        content: errors.NoSprintToLeaveError,
       });
       return;
     }
     bot.sprintManager.removeUserFromSprint(threadId, user.id);
     await interaction.editReply({
-      content: `${userMention(user.id)} has left the sprint`,
+      content: templates.sprintLeft(user.id),
     });
   } catch (err) {
-    await interaction.editReply("Something went wrong! Please try again later");
+    await interaction.editReply(errors.SomethingWentWrongError);
     await errorHandler(
       bot,
       "commands > sprint > leave",

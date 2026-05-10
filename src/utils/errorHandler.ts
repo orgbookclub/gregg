@@ -5,6 +5,7 @@ import {
   ContextMenuCommandInteraction,
   EmbedBuilder,
   Message,
+  ModalSubmitInteraction,
 } from "discord.js";
 
 import { Bot } from "../models";
@@ -30,7 +31,10 @@ const errorHandler = async (
   err: unknown,
   guild?: string,
   message?: Message,
-  interaction?: CommandInteraction | ContextMenuCommandInteraction,
+  interaction?:
+    | CommandInteraction
+    | ContextMenuCommandInteraction
+    | ModalSubmitInteraction,
 ) => {
   const error = err as Error;
   logger.error(error, `Error in ${context}`);
@@ -45,7 +49,10 @@ function getErrorEmbed(
   context: string,
   error: Error,
   guild?: string,
-  interaction?: CommandInteraction | ContextMenuCommandInteraction,
+  interaction?:
+    | CommandInteraction
+    | ContextMenuCommandInteraction
+    | ModalSubmitInteraction,
   message?: Message,
 ) {
   const errorEmbed = new EmbedBuilder()
@@ -75,11 +82,15 @@ function getErrorEmbed(
   }
 
   if (interaction) {
+    const commandName =
+      "commandName" in interaction
+        ? interaction.commandName
+        : interaction.customId;
     errorEmbed.addFields([
       {
         name: "Interaction Details",
         value: customSubstring(
-          `${interaction.commandName} ${
+          `${commandName} ${
             interaction.isChatInputCommand()
               ? interaction.options.getSubcommand() || ""
               : ""

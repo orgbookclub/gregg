@@ -4,6 +4,7 @@ import {
   EventDtoTypeEnum,
 } from "@orgbookclub/ows-client";
 
+import { errors } from "../../../config/constants";
 import { CommandHandler } from "../../../models";
 import { errorHandler } from "../../../utils/errorHandler";
 import { getEventsListContainer } from "../../../utils/eventUtils";
@@ -72,7 +73,7 @@ export const handleEvents: CommandHandler = async (bot, interaction) => {
     );
     pagedContentManager.createCollectors(message, interaction, 5 * 60 * 1000);
   } catch (err) {
-    await interaction.editReply("Something went wrong! Please try again later");
+    await interaction.editReply(errors.SomethingWentWrongError);
     await errorHandler(
       bot,
       "commands > user > events",

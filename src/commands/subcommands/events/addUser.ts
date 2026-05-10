@@ -15,7 +15,7 @@ import {
   UserSelectMenuBuilder,
 } from "discord.js";
 
-import { errors } from "../../../config/constants";
+import { errors, templates, titles } from "../../../config/constants";
 import {
   EventParticipantOptions,
   isParticipantType,
@@ -118,7 +118,7 @@ async function runAddUserFlow(
     const [participantType] =
       modalSubmit.fields.getStringSelectValues(TYPE_FIELD_ID);
     if (!isParticipantType(participantType)) {
-      await modalSubmit.editReply("Invalid participant type.");
+      await modalSubmit.editReply(errors.InvalidParticipantTypeError);
       return;
     }
 
@@ -126,9 +126,7 @@ async function runAddUserFlow(
       modalSubmit.fields.getTextInputValue(POINTS_FIELD_ID),
     );
     if (points === null) {
-      await modalSubmit.editReply(
-        `Invalid points value. Please enter an integer between 0 and ${MAX_POINTS}.`,
-      );
+      await modalSubmit.editReply(templates.invalidPoints(MAX_POINTS));
       return;
     }
 
@@ -159,7 +157,13 @@ async function runAddUserFlow(
     const usernames = selectedUsers.map((user) => user.username).join(", ");
     const row = getEventInfoStaffActionRow(updateResponse.data);
     await modalSubmit.editReply({
-      content: `Added ${selectedUsers.size} user(s) to event \`${updateResponse.data._id}\` as ${participantType} (${points} pts): ${usernames}`,
+      content: templates.participantsAdded(
+        selectedUsers.size,
+        updateResponse.data._id,
+        participantType,
+        points,
+        usernames,
+      ),
       embeds: [getEventInfoEmbed(updateResponse.data, interaction)],
       components: row ? [row] : [],
     });
@@ -174,8 +178,7 @@ async function respondToAddUserError(
   interaction: ChatInputCommandInteraction | ButtonInteraction,
   modalSubmit: ModalSubmitInteraction | undefined,
 ) {
-  const timeoutMsg =
-    "Your request timed out! Please try again and submit the form within 14 minutes.";
+  const timeoutMsg = templates.modalTimeout(14);
   if (err instanceof DiscordjsError) {
     if (modalSubmit) {
       if (modalSubmit.deferred || modalSubmit.replied) {
@@ -246,7 +249,7 @@ function getAddUserModal(customId: string, eventId: string) {
 
   return new ModalBuilder()
     .setCustomId(customId)
-    .setTitle("Add participants")
+    .setTitle(titles.AddParticipants)
     .addTextDisplayComponents(
       new TextDisplayBuilder().setContent(`**Event ID:** \`${eventId}\``),
     )

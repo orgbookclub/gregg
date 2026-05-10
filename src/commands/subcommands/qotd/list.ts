@@ -15,6 +15,7 @@ import {
   userMention,
 } from "discord.js";
 
+import { errors } from "../../../config/constants";
 import { CommandHandler } from "../../../models";
 import { QotdSuggestionStatus } from "../../../models/commands/qotd/QotdSuggestionStatus";
 import { errorHandler } from "../../../utils/errorHandler";
@@ -36,7 +37,7 @@ const handleList: CommandHandler = async (bot, interaction, guildConfig) => {
       !hasRole(interaction.member as GuildMember, guildConfig.staffRole)
     ) {
       await interaction.reply({
-        content: "Sorry, this command is restricted for staff use only!",
+        content: errors.StaffRestrictionError,
         flags: MessageFlags.Ephemeral,
       });
       return;
@@ -49,7 +50,7 @@ const handleList: CommandHandler = async (bot, interaction, guildConfig) => {
       },
     });
     if (approvedQotdList.length === 0) {
-      await interaction.editReply("There are no available Qotds");
+      await interaction.editReply(errors.NoQotdsAvailableError);
       return;
     }
     const pageSize = 7;
@@ -65,7 +66,7 @@ const handleList: CommandHandler = async (bot, interaction, guildConfig) => {
     );
     pagedContentManager.createCollectors(message, interaction, 5 * 60 * 1000);
   } catch (err) {
-    await interaction.editReply("Something went wrong! Please try again later");
+    await interaction.editReply(errors.SomethingWentWrongError);
     await errorHandler(
       bot,
       "commands > qotd > list",

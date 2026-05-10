@@ -20,7 +20,7 @@ import {
   roleMention,
 } from "discord.js";
 
-import { errors } from "../../../config/constants";
+import { errors, templates, titles } from "../../../config/constants";
 import { Bot, CommandHandler } from "../../../models";
 import { createEventMessageDoc } from "../../../utils/dbUtils";
 import { errorHandler } from "../../../utils/errorHandler";
@@ -55,7 +55,7 @@ const handleAnnounce: CommandHandler = async (
       return;
     }
     if (!interaction.guild) {
-      await interaction.reply("You can't use this outside a guild!");
+      await interaction.reply(errors.GuildOnlyCommandError);
       return;
     }
 
@@ -73,9 +73,7 @@ const handleAnnounce: CommandHandler = async (
       return;
     }
     if (eventDoc.status !== EventDtoStatusEnum.Approved) {
-      await interaction.editReply(
-        "Event must be in 'Approved' state! Announcements can only be created for Approved events",
-      );
+      await interaction.editReply(errors.AnnounceMustBeApprovedError);
       return;
     }
 
@@ -88,9 +86,7 @@ const handleAnnounce: CommandHandler = async (
       channel as TextChannel | null,
     );
     if (!announcementResult) {
-      await interaction.editReply(
-        "Configured announcement channel is not valid :(",
-      );
+      await interaction.editReply(errors.AnnounceConfiguredChannelInvalidError);
       return;
     }
     const statusMessage = getAnnounceStatusMessage(
@@ -98,7 +94,11 @@ const handleAnnounce: CommandHandler = async (
       "slash",
     );
     await interaction.editReply({
-      content: `Announcement posted for event ${eventDoc._id}: ${announcementResult.message.url} ${statusMessage}`,
+      content: templates.announcementPostedSlash(
+        eventDoc._id,
+        announcementResult.message.url,
+        statusMessage,
+      ),
     });
   } catch (err) {
     await interaction.reply(errors.SomethingWentWrongError);
@@ -280,7 +280,7 @@ function buildAnnounceModal(
 
   return new ModalBuilder()
     .setCustomId(customId)
-    .setTitle("Announce Event")
+    .setTitle(titles.AnnounceEvent)
     .addTextDisplayComponents(
       new TextDisplayBuilder().setContent(`**Event ID:** \`${eventDoc._id}\``),
     )
@@ -337,9 +337,7 @@ async function showAnnounceModalAndPost(
     !selectedChannel ||
     selectedChannel.type !== ChannelType.GuildAnnouncement
   ) {
-    await submit.editReply(
-      "Selected channel is not a valid announcement channel.",
-    );
+    await submit.editReply(errors.AnnouncementChannelInvalidError);
     return;
   }
   if (!interaction.guildId) {
@@ -356,7 +354,7 @@ async function showAnnounceModalAndPost(
     selectedChannel as unknown as TextChannel,
   );
   if (!announcementResult) {
-    await submit.editReply("Could not post in the selected channel :(");
+    await submit.editReply(errors.AnnouncePostError);
     return;
   }
   const statusMessage = getAnnounceStatusMessage(
@@ -364,7 +362,10 @@ async function showAnnounceModalAndPost(
     "modal",
   );
   await submit.editReply(
-    `Announcement posted: ${announcementResult.message.url}. ${statusMessage}`,
+    templates.announcementPostedModal(
+      announcementResult.message.url,
+      statusMessage,
+    ),
   );
 }
 

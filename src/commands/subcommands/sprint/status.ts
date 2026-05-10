@@ -1,3 +1,4 @@
+import { errors } from "../../../config/constants";
 import { CommandHandler } from "../../../models/commands/CommandHandler";
 import { SprintStatus } from "../../../models/commands/sprint/SprintStatus";
 import { errorHandler } from "../../../utils/errorHandler";
@@ -19,7 +20,7 @@ export const handleStatus: CommandHandler = async (bot, interaction) => {
       !bot.sprintManager.isSprintPresent(threadId, SprintStatus.Finished)
     ) {
       await interaction.editReply({
-        content: "There are no ongoing sprints in this thread!",
+        content: errors.NoOngoingSprintsError,
       });
       return;
     }
@@ -27,7 +28,7 @@ export const handleStatus: CommandHandler = async (bot, interaction) => {
       content: bot.sprintManager.getSprintStatus(threadId),
     });
   } catch (err) {
-    await interaction.editReply("Something went wrong! Please try again later");
+    await interaction.editReply(errors.SomethingWentWrongError);
     await errorHandler(
       bot,
       "commands > sprint > status",

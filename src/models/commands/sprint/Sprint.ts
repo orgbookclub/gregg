@@ -1,5 +1,6 @@
 import { userMention } from "discord.js";
 
+import { templates } from "../../../config/constants";
 import { getUserMentionString } from "../../../utils/userUtils";
 
 import { SprintParticipant } from "./SprintParticipant";
@@ -133,11 +134,7 @@ export class Sprint {
    * @returns The string representing the start announcement.
    */
   getStartMessage() {
-    return (
-      `📚📚📚 **Sprint started!**  | Duration: ${this.duration} minutes 📚📚📚` +
-      "\n" +
-      "Please use the `/sprint join` command to join the sprint"
-    );
+    return templates.sprintStartAnnouncement(this.duration);
   }
 
   /**
@@ -147,11 +144,9 @@ export class Sprint {
    * @returns The string representing the finish announcement.
    */
   getFinishMessage(minutesToWait: number) {
-    return (
-      // `${getUserMentionString(Array.from(this.participants.keys()))}` +
-      `${getUserMentionString(Object.keys(this.participants))}` +
-      "\n" +
-      `Sprint Finished! Please log your end count within the next ${minutesToWait} minutes using \`/sprint finish\``
+    return templates.sprintFinishAnnouncement(
+      getUserMentionString(Object.keys(this.participants)),
+      minutesToWait,
     );
   }
 
@@ -195,12 +190,6 @@ export class Sprint {
         )} --> **${count}** *(${readingSpeed} per minute)*` + "\n"
       );
     });
-    return (
-      "Congratulations Sprinters!" +
-      "\n" +
-      "**SPRINT STATS**" +
-      "\n" +
-      `${scoreStrings.join()}`
-    );
+    return templates.sprintEndHeading() + "\n" + `${scoreStrings.join()}`;
   }
 }

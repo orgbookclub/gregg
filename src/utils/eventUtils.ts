@@ -24,6 +24,7 @@ import {
   userMention,
 } from "discord.js";
 
+import { labels } from "../config/constants";
 import { Bot } from "../models";
 
 import { getAuthorString } from "./bookUtils";
@@ -53,7 +54,7 @@ const EVENT_STATUS_EMOJI: Record<string, string> = {
 const EDIT_BUTTON = (eventId: string) =>
   new ButtonBuilder()
     .setCustomId(`evt-edit-${eventId}`)
-    .setLabel("Edit")
+    .setLabel(labels.Edit)
     .setEmoji({ name: "✏️" })
     .setStyle(ButtonStyle.Secondary);
 
@@ -73,12 +74,12 @@ function buildStaffActionButtons(event: EventDocument): ButtonBuilder[] {
     buttons.push(
       new ButtonBuilder()
         .setCustomId(`evt-approve-${id}`)
-        .setLabel("Approve")
+        .setLabel(labels.Approve)
         .setEmoji({ name: "✅" })
         .setStyle(ButtonStyle.Success),
       new ButtonBuilder()
         .setCustomId(`evt-reject-${id}`)
-        .setLabel("Reject")
+        .setLabel(labels.Reject)
         .setEmoji({ name: "❌" })
         .setStyle(ButtonStyle.Danger),
     );
@@ -86,7 +87,7 @@ function buildStaffActionButtons(event: EventDocument): ButtonBuilder[] {
     buttons.push(
       new ButtonBuilder()
         .setCustomId(`evt-thread-${id}`)
-        .setLabel("Create Thread")
+        .setLabel(labels.CreateThread)
         .setEmoji({ name: "🧵" })
         .setStyle(ButtonStyle.Primary),
     );
@@ -94,7 +95,7 @@ function buildStaffActionButtons(event: EventDocument): ButtonBuilder[] {
       buttons.push(
         new ButtonBuilder()
           .setCustomId(`evt-announce-${id}`)
-          .setLabel("Announce")
+          .setLabel(labels.Announce)
           .setEmoji({ name: "📢" })
           .setStyle(ButtonStyle.Primary),
       );
@@ -103,12 +104,12 @@ function buildStaffActionButtons(event: EventDocument): ButtonBuilder[] {
     buttons.push(
       new ButtonBuilder()
         .setCustomId(`evt-addpts-${id}`)
-        .setLabel("Add Points")
+        .setLabel(labels.AddPoints)
         .setEmoji({ name: "➕" })
         .setStyle(ButtonStyle.Success),
       new ButtonBuilder()
         .setCustomId(`evt-rmpts-${id}`)
-        .setLabel("Remove Points")
+        .setLabel(labels.RemovePoints)
         .setEmoji({ name: "➖" })
         .setStyle(ButtonStyle.Danger),
     );

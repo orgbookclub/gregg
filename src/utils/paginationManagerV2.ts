@@ -10,6 +10,7 @@ import {
   StringSelectMenuBuilder,
 } from "discord.js";
 
+import { errors, labels } from "../config/constants";
 import { Bot } from "../models";
 
 /**
@@ -79,13 +80,13 @@ export class PaginationManagerV2<T> {
 
   private buildNavRows(disableComponents: boolean) {
     const backButton = new ButtonBuilder()
-      .setLabel("Previous")
+      .setLabel(labels.Previous)
       .setEmoji({ name: "◀️" })
       .setStyle(ButtonStyle.Secondary)
       .setCustomId(this.backId)
       .setDisabled(disableComponents || this.currPageNum === 1);
     const forwardButton = new ButtonBuilder()
-      .setLabel("Next")
+      .setLabel(labels.Next)
       .setEmoji({ name: "▶️" })
       .setStyle(ButtonStyle.Secondary)
       .setCustomId(this.forwardId)
@@ -153,7 +154,7 @@ export class PaginationManagerV2<T> {
     buttonCollector.on("collect", async (i) => {
       if (i.user.id !== interaction.user.id) {
         await i.reply({
-          content: `These buttons aren't for you!`,
+          content: errors.ButtonsNotForYouError,
           flags: MessageFlags.Ephemeral,
         });
         return;
@@ -185,7 +186,7 @@ export class PaginationManagerV2<T> {
     selectCollector.on("collect", async (i) => {
       if (i.user.id !== interaction.user.id) {
         await i.reply({
-          content: `This menu isn't for you!`,
+          content: errors.MenuNotForYouError,
           flags: MessageFlags.Ephemeral,
         });
         return;

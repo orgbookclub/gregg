@@ -8,6 +8,7 @@ import {
   TextChannel,
 } from "discord.js";
 
+import { labels, titles } from "../config/constants";
 import { Bot } from "../models";
 
 import { logToWebhook, logger } from "./logHandler";
@@ -26,13 +27,13 @@ export function getButtonActionRow(
   disabled = false,
 ) {
   const interestedButton = new ButtonBuilder()
-    .setLabel("Join")
+    .setLabel(labels.Join)
     .setEmoji({ name: "✅" })
     .setStyle(ButtonStyle.Success)
     .setCustomId(`${messageType}-${eventId}-interested`)
     .setDisabled(disabled);
   const notInterestedButton = new ButtonBuilder()
-    .setLabel("Leave")
+    .setLabel(labels.Leave)
     .setEmoji({ name: "⛔" })
     .setStyle(ButtonStyle.Danger)
     .setDisabled(disabled)
@@ -64,7 +65,7 @@ export async function deleteBRRequest(
   });
   const messageDeleteEmbed = new EmbedBuilder()
     .setColor(Colors.Red)
-    .setTitle("Message Delete")
+    .setTitle(titles.MessageDelete)
     .setDescription(`Deleted BR Request Message for ${eventDoc._id}`)
     .setTimestamp();
   for (const doc of requestMessages) {

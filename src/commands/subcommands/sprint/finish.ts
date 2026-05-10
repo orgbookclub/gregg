@@ -1,5 +1,6 @@
 import { MessageFlags } from "discord.js";
 
+import { errors, templates } from "../../../config/constants";
 import { CommandHandler } from "../../../models";
 import { SprintStatus } from "../../../models/commands/sprint/SprintStatus";
 import { errorHandler } from "../../../utils/errorHandler";
@@ -20,8 +21,7 @@ export const handleFinish: CommandHandler = async (bot, interaction) => {
     const user = interaction.user;
     if (!bot.sprintManager.isSprintPresent(threadId, SprintStatus.Finished)) {
       await interaction.editReply({
-        content:
-          "There are no finished sprints to log end counts in this thread!",
+        content: errors.NoFinishedSprintError,
       });
       return;
     }
@@ -30,16 +30,16 @@ export const handleFinish: CommandHandler = async (bot, interaction) => {
     const participants = bot.sprintManager.getSprintParticipants(threadId);
     if (!participants[user.id]) {
       await interaction.editReply({
-        content: "You were not a participant of this sprint!",
+        content: errors.NotASprintParticipantError,
       });
       return;
     }
     bot.sprintManager.logEndCount(threadId, user.id, count);
     await interaction.editReply({
-      content: `Successfully logged your end count as ${count}!`,
+      content: templates.sprintFinishLogged(count),
     });
   } catch (err) {
-    await interaction.editReply("Something went wrong! Please try again later");
+    await interaction.editReply(errors.SomethingWentWrongError);
     await errorHandler(
       bot,
       "commands > sprint > finish",

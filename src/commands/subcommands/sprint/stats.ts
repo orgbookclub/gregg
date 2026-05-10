@@ -6,6 +6,7 @@ import {
   User,
 } from "discord.js";
 
+import { errors } from "../../../config/constants";
 import { CommandHandler } from "../../../models/commands/CommandHandler";
 import { SprintStats } from "../../../models/commands/sprint/SprintStats";
 import { errorHandler } from "../../../utils/errorHandler";
@@ -35,7 +36,7 @@ const handleStats: CommandHandler = async (bot, interaction) => {
     const embed = getSprintStatsEmbed(user, interaction, stats);
     await interaction.editReply({ embeds: [embed] });
   } catch (err) {
-    await interaction.editReply("Something went wrong! Please try again later");
+    await interaction.editReply(errors.SomethingWentWrongError);
     await errorHandler(
       bot,
       "commands > sprint > stats",

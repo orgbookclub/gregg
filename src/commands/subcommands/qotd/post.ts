@@ -19,6 +19,7 @@ import {
   roleMention,
 } from "discord.js";
 
+import { errors, templates } from "../../../config/constants";
 import { Bot, CommandHandler } from "../../../models";
 import { QotdSuggestionStatus } from "../../../models/commands/qotd/QotdSuggestionStatus";
 import { errorHandler } from "../../../utils/errorHandler";
@@ -198,16 +199,17 @@ async function showQotdPostModalAndPost(
     );
 
     const questionEdited = editedQuestion.trim() !== qotd.question.trim();
-    const channelChanged = !!guildConfig.qotdChannel &&
+    const channelChanged =
+      !!guildConfig.qotdChannel &&
       selectedChannelId !== guildConfig.qotdChannel;
     const notes: string[] = [];
     if (questionEdited) notes.push("question was edited");
     if (channelChanged) notes.push("channel differs from default");
     const noteSuffix = notes.length > 0 ? ` *(${notes.join("; ")})*` : "";
 
-    await submit.editReply(`QOTD posted: ${message.url}${noteSuffix}`);
+    await submit.editReply(templates.qotdPosted(message.url, noteSuffix));
   } catch (err) {
-    await submit.editReply("Something went wrong! Please try again later.");
+    await submit.editReply(errors.SomethingWentWrongError);
     await errorHandler(
       bot,
       "commands > qotd > post > modal",
@@ -237,7 +239,7 @@ const handlePost: CommandHandler = async (bot, interaction, guildConfig) => {
       !hasRole(interaction.member as GuildMember, guildConfig.staffRole)
     ) {
       await interaction.reply({
-        content: "Sorry, this command is restricted for staff use only!",
+        content: errors.StaffRestrictionError,
         flags: MessageFlags.Ephemeral,
       });
       return;
@@ -251,9 +253,7 @@ const handlePost: CommandHandler = async (bot, interaction, guildConfig) => {
     const qotd = await resolveQotd(bot, id);
     if (!qotd) {
       await interaction.reply({
-        content: id
-          ? "No QOTD available with given ID!"
-          : "There are no available QOTDs to post!",
+        content: id ? errors.NoQotdForIdError : errors.NoQotdToPostError,
         flags: MessageFlags.Ephemeral,
       });
       return;
@@ -270,12 +270,12 @@ const handlePost: CommandHandler = async (bot, interaction, guildConfig) => {
   } catch (err) {
     if (interaction.replied || interaction.deferred) {
       await interaction.followUp({
-        content: "Something went wrong! Please try again later",
+        content: errors.SomethingWentWrongError,
         flags: MessageFlags.Ephemeral,
       });
     } else {
       await interaction.reply({
-        content: "Something went wrong! Please try again later",
+        content: errors.SomethingWentWrongError,
         flags: MessageFlags.Ephemeral,
       });
     }

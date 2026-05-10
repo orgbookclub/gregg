@@ -1,5 +1,6 @@
 import { Colors, EmbedBuilder } from "discord.js";
 
+import { errors } from "../../../config/constants";
 import { CommandHandler } from "../../../models";
 import { errorHandler } from "../../../utils/errorHandler";
 
@@ -21,7 +22,7 @@ export const handleAbout: CommandHandler = async (bot, interaction) => {
       .setThumbnail(bot.user?.displayAvatarURL() ?? null);
     await interaction.reply({ embeds: [aboutEmbed] });
   } catch (err) {
-    await interaction.reply("Something went wrong! Please try again later.");
+    await interaction.reply(errors.SomethingWentWrongError);
     await errorHandler(
       bot,
       "commands > gregg > about",

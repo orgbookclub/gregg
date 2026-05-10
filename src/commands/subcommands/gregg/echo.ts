@@ -7,6 +7,7 @@ import {
   userMention,
 } from "discord.js";
 
+import { errors, messages } from "../../../config/constants";
 import { CommandHandler } from "../../../models";
 import { errorHandler } from "../../../utils/errorHandler";
 import { logToWebhook } from "../../../utils/logHandler";
@@ -30,12 +31,12 @@ export const handleEcho: CommandHandler = async (
       interaction.channel;
 
     if (!channel?.isTextBased() || channel.isDMBased()) {
-      await interaction.reply("Something went wrong!");
+      await interaction.reply(errors.SomethingWentWrongShortError);
       return;
     }
     await channel.send({ content: message });
     await interaction.reply({
-      content: "Echo successful!",
+      content: messages.EchoSuccess,
       flags: MessageFlags.Ephemeral,
     });
     if (guildConfig) {
@@ -53,7 +54,7 @@ export const handleEcho: CommandHandler = async (
       await logToWebhook({ embeds: [embed] }, guildConfig.logWebhookUrl);
     }
   } catch (err) {
-    await interaction.reply("Something went wrong! Please try again later.");
+    await interaction.reply(errors.SomethingWentWrongError);
     await errorHandler(
       bot,
       "commands > gregg > echo",

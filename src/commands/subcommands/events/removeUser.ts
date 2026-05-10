@@ -13,7 +13,7 @@ import {
   UserSelectMenuBuilder,
 } from "discord.js";
 
-import { errors } from "../../../config/constants";
+import { errors, templates } from "../../../config/constants";
 import {
   EventParticipantOptions,
   isParticipantType,
@@ -114,7 +114,7 @@ async function runRemoveUserFlow(
     const [participantType] =
       modalSubmit.fields.getStringSelectValues(TYPE_FIELD_ID);
     if (!isParticipantType(participantType)) {
-      await modalSubmit.editReply("Invalid participant type.");
+      await modalSubmit.editReply(errors.InvalidParticipantTypeError);
       return;
     }
 
@@ -152,18 +152,23 @@ async function runRemoveUserFlow(
     const notListedCount = selectedUsers.size - removedCount;
     const notListedSuffix =
       notListedCount > 0
-        ? ` (${notListedCount} selected user(s) were not on the list)`
+        ? templates.participantsNotListedSuffix(notListedCount)
         : "";
 
     const row = getEventInfoStaffActionRow(updateResponse.data);
     await modalSubmit.editReply({
-      content: `Removed ${removedCount} user(s) from event \`${updateResponse.data._id}\` as ${participantType}: ${removedUsernames}${notListedSuffix}`,
+      content: templates.participantsRemoved(
+        removedCount,
+        updateResponse.data._id,
+        participantType,
+        removedUsernames,
+        notListedSuffix,
+      ),
       embeds: [getEventInfoEmbed(updateResponse.data, interaction)],
       components: row ? [row] : [],
     });
   } catch (err) {
-    const timeoutMsg =
-      "Your request timed out! Please try again and submit the form within 14 minutes.";
+    const timeoutMsg = templates.modalTimeout(14);
     if (err instanceof DiscordjsError) {
       if (modalSubmit) {
         if (modalSubmit.deferred || modalSubmit.replied) {

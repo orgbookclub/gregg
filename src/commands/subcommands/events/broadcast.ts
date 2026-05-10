@@ -16,7 +16,7 @@ import {
   channelMention,
 } from "discord.js";
 
-import { errors } from "../../../config/constants";
+import { errors, templates, titles } from "../../../config/constants";
 import { CommandHandler } from "../../../models";
 import { errorHandler } from "../../../utils/errorHandler";
 import { logToWebhook } from "../../../utils/logHandler";
@@ -55,7 +55,7 @@ const handleBroadcast: CommandHandler = async (
     const channel =
       interaction.options.getChannel<ChannelType.GuildText>("channel");
     if (channel && !channel.isTextBased()) {
-      await interaction.reply("Invalid channel!");
+      await interaction.reply(errors.InvalidChannelError);
       return;
     }
 
@@ -138,7 +138,7 @@ const handleBroadcast: CommandHandler = async (
       const embed = new EmbedBuilder()
         .setColor(Colors.Green)
         .setTimestamp()
-        .setTitle("Event Broadcast")
+        .setTitle(titles.EventBroadcast)
         .setDescription(
           `${userMention(interaction.user.id)} broadcasted message for event ${
             eventDoc._id
@@ -148,23 +148,20 @@ const handleBroadcast: CommandHandler = async (
     }
   } catch (err) {
     if (err instanceof DiscordjsError) {
+      const timeoutMsg = templates.modalTimeout(5);
       if (modalSubmitInteraction) {
         if (modalSubmitInteraction.deferred || modalSubmitInteraction.replied) {
-          await modalSubmitInteraction.editReply(
-            "Your request timed out! Please try again and submit the form within 5 minutes",
-          );
+          await modalSubmitInteraction.editReply(timeoutMsg);
         } else {
           await modalSubmitInteraction.reply({
             flags: MessageFlags.Ephemeral,
-            content:
-              "Your request timed out! Please try again and submit the form within 5 minutes",
+            content: timeoutMsg,
           });
         }
       } else {
         await interaction.followUp({
           flags: MessageFlags.Ephemeral,
-          content:
-            "Your request timed out! Please try again and submit the form within 5 minutes",
+          content: timeoutMsg,
         });
       }
     } else {

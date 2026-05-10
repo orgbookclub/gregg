@@ -5,7 +5,7 @@ import {
 } from "@orgbookclub/ows-client";
 import { ChatInputCommandInteraction } from "discord.js";
 
-import { errors } from "../../../config/constants";
+import { errors, templates } from "../../../config/constants";
 import { CommandHandler } from "../../../models";
 import { errorHandler } from "../../../utils/errorHandler";
 import { getEventsListContainer } from "../../../utils/eventUtils";
@@ -34,7 +34,7 @@ export const handleSearch: CommandHandler = async (bot, interaction) => {
         : undefined,
     });
     if (response.data.length === 0) {
-      await interaction.editReply(`No events found for "${query}".`);
+      await interaction.editReply(templates.noEventsForQuery(query));
       return;
     }
     const pageSize = 4;

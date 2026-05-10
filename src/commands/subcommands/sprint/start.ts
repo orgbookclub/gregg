@@ -1,3 +1,4 @@
+import { errors, templates } from "../../../config/constants";
 import { CommandHandler } from "../../../models";
 import { SprintStatus } from "../../../models/commands/sprint/SprintStatus";
 import { errorHandler } from "../../../utils/errorHandler";
@@ -22,13 +23,12 @@ export const handleStart: CommandHandler = async (bot, interaction) => {
       bot.sprintManager.isSprintPresent(threadId, SprintStatus.Finished)
     ) {
       await interaction.editReply({
-        content:
-          "There is already an active or scheduled sprint in this thread!",
+        content: errors.SprintAlreadyActiveError,
       });
       return;
     }
     if (!interaction.guild) {
-      await interaction.editReply("You are not in a guild!");
+      await interaction.editReply(errors.NotInGuildError);
       return;
     }
     const sprintId = bot.sprintManager.createSprint(
@@ -41,16 +41,14 @@ export const handleStart: CommandHandler = async (bot, interaction) => {
     if (delay > 0) {
       bot.sprintManager.scheduleSprint(sprintId, bot, delay);
       await interaction.editReply({
-        content: `A Sprint of ${duration} minutes will start in ${delay} minute(s)!`,
+        content: templates.sprintScheduled(duration, delay),
       });
     } else {
       await bot.sprintManager.startSprint(sprintId, bot);
-      await interaction.editReply(
-        `Sprint started! ${duration} minutes to go ⏳`,
-      );
+      await interaction.editReply(templates.sprintStarted(duration));
     }
   } catch (err) {
-    await interaction.editReply("Something went wrong! Please try again later");
+    await interaction.editReply(errors.SomethingWentWrongError);
     await errorHandler(
       bot,
       "commands > sprint > start",

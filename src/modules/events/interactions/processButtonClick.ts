@@ -8,7 +8,7 @@ import { showEventEditModal } from "../../../commands/subcommands/events/edit";
 import { runRemoveUserFlow } from "../../../commands/subcommands/events/removeUser";
 import { buildUserEventStatsEmbed } from "../../../commands/subcommands/events/stats";
 import { showQotdPostModalAndPost } from "../../../commands/subcommands/qotd/post";
-import { errors } from "../../../config/constants";
+import { errors, messages, templates } from "../../../config/constants";
 import { Bot } from "../../../models";
 import { QotdSuggestionStatus } from "../../../models/commands/qotd/QotdSuggestionStatus";
 import { getGuildConfigFromDb } from "../../../utils/dbUtils";
@@ -108,22 +108,22 @@ async function handleQotdSuggestionActions(
       data: { status: QotdSuggestionStatus.Approved, updatedOn: new Date() },
     });
     await interaction.message.edit({
-      content: "Approved",
+      content: messages.QotdApproved,
       embeds: interaction.message.embeds,
       components: [],
     });
-    await interaction.editReply(`Approved QOTD \`${qotdId}\``);
+    await interaction.editReply(templates.qotdActionAck("Approved", qotdId));
   } else if (action === "reject") {
     await bot.db.qotds.update({
       where: { id: qotdId },
       data: { status: QotdSuggestionStatus.Rejected, updatedOn: new Date() },
     });
     await interaction.message.edit({
-      content: "Rejected",
+      content: messages.QotdRejected,
       embeds: interaction.message.embeds,
       components: [],
     });
-    await interaction.editReply(`Rejected QOTD \`${qotdId}\``);
+    await interaction.editReply(templates.qotdActionAck("Rejected", qotdId));
   }
 }
 
@@ -142,7 +142,7 @@ async function handleEventActions(interaction: ButtonInteraction, bot: Bot) {
   });
   if (!eventResponse) {
     await interaction.editReply({
-      content: "Invalid event ID! Please try again with a valid event ID.",
+      content: errors.InvalidEventIdError,
     });
     return;
   }
@@ -153,14 +153,12 @@ async function handleEventActions(interaction: ButtonInteraction, bot: Bot) {
   );
   if (action === "interested" && isUserInterestedInEvent) {
     await interaction.editReply({
-      content:
-        "You are already marked as an interested participant of this event!",
+      content: errors.AlreadyInterestedError,
     });
     return;
   } else if (action === "notInterested" && !isUserInterestedInEvent) {
     await interaction.editReply({
-      content:
-        "You were never marked as an interested participant of this event!",
+      content: errors.NeverInterestedError,
     });
     return;
   }
@@ -192,17 +190,15 @@ async function handleEventActions(interaction: ButtonInteraction, bot: Bot) {
     updatedEmbed = getEventAnnouncementEmbed(updatedEventDoc, interaction);
   }
   if (!updatedEmbed) {
-    await interaction.editReply(
-      "Something went wrong while updating the embed",
-    );
+    await interaction.editReply(errors.EmbedUpdateError);
     return;
   }
   await interaction.message.edit({ embeds: [updatedEmbed] });
   await interaction.editReply({
     content:
       action === "interested"
-        ? "You have been marked as an interested participant for this event!"
-        : "You are no longer a participant of this event",
+        ? messages.ParticipantJoined
+        : messages.ParticipantLeft,
   });
 }
 
@@ -218,13 +214,13 @@ async function handleEventInfo(interaction: ButtonInteraction, bot: Bot) {
       id: eventId,
     });
     if (!eventResponse) {
-      await interaction.editReply("Event not found.");
+      await interaction.editReply(errors.EventNotFoundError);
       return;
     }
     const embed = getEventInfoEmbed(eventResponse.data, interaction);
     await interaction.editReply({ embeds: [embed] });
   } catch {
-    await interaction.editReply("Could not fetch event info.");
+    await interaction.editReply(errors.EventInfoFetchError);
   }
 }
 
@@ -236,7 +232,7 @@ async function handleEventListJoin(interaction: ButtonInteraction, bot: Bot) {
     id: eventId,
   });
   if (!eventResponse) {
-    await interaction.editReply("Event not found.");
+    await interaction.editReply(errors.EventNotFoundError);
     return;
   }
   const eventDoc = eventResponse.data;
@@ -245,9 +241,7 @@ async function handleEventListJoin(interaction: ButtonInteraction, bot: Bot) {
     (x) => x.user?.userId === interaction.user.id,
   );
   if (alreadyInterested) {
-    await interaction.editReply(
-      "You are already marked as an interested participant of this event!",
-    );
+    await interaction.editReply(errors.AlreadyInterestedError);
     return;
   }
 
@@ -266,14 +260,14 @@ async function handleEventListJoin(interaction: ButtonInteraction, bot: Bot) {
     },
   });
   await interaction.editReply(
-    `You have been marked as an interested participant of event with id \`${eventDoc._id}\` of \`${eventDoc.book.title}\`!`,
+    templates.eventListJoined(eventDoc._id, eventDoc.book.title),
   );
 }
 
 async function handleQotdPost(interaction: ButtonInteraction, bot: Bot) {
   if (!interaction.guild || !interaction.guildId) {
     await interaction.reply({
-      content: "This action only works inside a server.",
+      content: errors.GuildOnlyActionError,
       flags: MessageFlags.Ephemeral,
     });
     return;
@@ -281,7 +275,7 @@ async function handleQotdPost(interaction: ButtonInteraction, bot: Bot) {
   const guildConfig = await getGuildConfigFromDb(bot, interaction.guildId);
   if (!guildConfig) {
     await interaction.reply({
-      content: "This server is not configured.",
+      content: errors.GuildNotConfiguredError,
       flags: MessageFlags.Ephemeral,
     });
     return;
@@ -291,7 +285,7 @@ async function handleQotdPost(interaction: ButtonInteraction, bot: Bot) {
     !hasRole(interaction.member as GuildMember, guildConfig.staffRole)
   ) {
     await interaction.reply({
-      content: "Sorry, this action is restricted for staff use only!",
+      content: errors.StaffRestrictionActionError,
       flags: MessageFlags.Ephemeral,
     });
     return;
@@ -301,14 +295,14 @@ async function handleQotdPost(interaction: ButtonInteraction, bot: Bot) {
   const qotd = await bot.db.qotds.findUnique({ where: { id: qotdId } });
   if (!qotd) {
     await interaction.reply({
-      content: "QOTD not found.",
+      content: errors.QotdNotFoundError,
       flags: MessageFlags.Ephemeral,
     });
     return;
   }
   if (qotd.status !== QotdSuggestionStatus.Approved) {
     await interaction.reply({
-      content: "This QOTD is no longer available to post.",
+      content: errors.QotdUnavailableError,
       flags: MessageFlags.Ephemeral,
     });
     return;
@@ -336,7 +330,7 @@ async function handleUserStats(interaction: ButtonInteraction, bot: Bot) {
     }
     await interaction.editReply({ embeds: [result] });
   } catch {
-    await interaction.editReply("Could not fetch stats for that user.");
+    await interaction.editReply(errors.UserStatsFetchError);
   }
 }
 
@@ -412,7 +406,10 @@ async function handleEventStatusChange(
   if (!ctx) return;
   if (ctx.eventDoc.status !== EventDtoStatusEnum.Requested) {
     await interaction.reply({
-      content: `Event must be in 'Requested' state to be ${newStatus.toLowerCase()}.`,
+      content: templates.mustBeInState(
+        "Requested",
+        `be ${newStatus.toLowerCase()}`,
+      ),
       flags: MessageFlags.Ephemeral,
     });
     return;
@@ -423,7 +420,7 @@ async function handleEventStatusChange(
     updateEventDto: { status: newStatus },
   });
   await interaction.editReply(
-    `Event \`${ctx.eventDoc._id}\` marked as **${newStatus}**.`,
+    templates.eventStatusChanged(ctx.eventDoc._id, newStatus),
   );
 }
 
@@ -432,7 +429,7 @@ async function handleEventThread(interaction: ButtonInteraction, bot: Bot) {
   if (!ctx) return;
   if (ctx.eventDoc.status !== EventDtoStatusEnum.Approved) {
     await interaction.reply({
-      content: "Event must be in 'Approved' state to create a thread.",
+      content: templates.mustBeInState("Approved", "create a thread"),
       flags: MessageFlags.Ephemeral,
     });
     return;
@@ -451,14 +448,14 @@ async function handleEventAnnounce(interaction: ButtonInteraction, bot: Bot) {
   if (!ctx) return;
   if (ctx.eventDoc.status !== EventDtoStatusEnum.Approved) {
     await interaction.reply({
-      content: "Event must be in 'Approved' state to be announced.",
+      content: templates.mustBeInState("Approved", "be announced"),
       flags: MessageFlags.Ephemeral,
     });
     return;
   }
   if (!ctx.eventDoc.threads || ctx.eventDoc.threads.length === 0) {
     await interaction.reply({
-      content: "Create a thread first before announcing.",
+      content: templates.createThreadFirst(),
       flags: MessageFlags.Ephemeral,
     });
     return;

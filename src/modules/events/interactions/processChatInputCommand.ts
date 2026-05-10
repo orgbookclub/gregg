@@ -5,6 +5,7 @@ import {
   time,
 } from "discord.js";
 
+import { templates } from "../../../config/constants";
 import { Bot } from "../../../models";
 import { getGuildConfigFromDb } from "../../../utils/dbUtils";
 import { errorHandler } from "../../../utils/errorHandler";
@@ -27,7 +28,7 @@ async function processChatInputCommand(
 
     if (!command) {
       await interaction.reply({
-        content: `Something went wrong while trying to run command ${interaction.commandName}`,
+        content: templates.commandRunError(interaction.commandName),
       });
       return;
     }
@@ -46,12 +47,10 @@ async function processChatInputCommand(
       if (now < expirationTime) {
         const expiredTimestamp = Math.round(expirationTime / 1000);
         await interaction.reply({
-          content: `Please wait, you are on a cooldown for \`${
-            command.data.name
-          }\`. You can use it again ${time(
-            expiredTimestamp,
-            TimestampStyles.RelativeTime,
-          )}.`,
+          content: templates.cooldownWait(
+            command.data.name,
+            time(expiredTimestamp, TimestampStyles.RelativeTime),
+          ),
           flags: MessageFlags.Ephemeral,
         });
         return;

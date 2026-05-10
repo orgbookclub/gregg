@@ -11,6 +11,7 @@ import {
   userMention,
 } from "discord.js";
 
+import { titles } from "../config/constants";
 import { Job } from "../models";
 import { OWSClient } from "../providers/owsClient";
 import { getAllGuildConfigs } from "../utils/dbUtils";
@@ -53,7 +54,7 @@ async function updateMemberRole(
 
   const embed = new EmbedBuilder()
     .setColor(Colors.Gold)
-    .setTitle("Reader Role Update")
+    .setTitle(titles.ReaderRoleUpdate)
     .setTimestamp();
 
   if (hasRole(member, requiredRole.id) && points < requiredPoints) {

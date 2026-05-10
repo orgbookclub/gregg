@@ -12,6 +12,7 @@ import {
   userMention,
 } from "discord.js";
 
+import { errors } from "../../../config/constants";
 import { CommandHandler } from "../../../models";
 import { errorHandler } from "../../../utils/errorHandler";
 import { calculateReaderboardScores } from "../../../utils/eventUtils";
@@ -41,7 +42,7 @@ const handleReaderboard: CommandHandler = async (bot, interaction) => {
 
     const eventDocs = response.data;
     if (eventDocs.length === 0) {
-      await interaction.editReply("No events found, something went wrong! :(");
+      await interaction.editReply(errors.NoEventsForUserError);
       return;
     }
     const scores = calculateReaderboardScores(eventDocs);
@@ -59,7 +60,7 @@ const handleReaderboard: CommandHandler = async (bot, interaction) => {
     );
     pagedContentManager.createCollectors(message, interaction, 5 * 60 * 1000);
   } catch (err) {
-    await interaction.editReply("Something went wrong! Please try again later");
+    await interaction.editReply(errors.SomethingWentWrongError);
     await errorHandler(
       bot,
       "commands > user > readerboard",

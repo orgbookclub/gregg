@@ -24,7 +24,7 @@ import {
   TimestampStyles,
 } from "discord.js";
 
-import { errors } from "../../../config/constants";
+import { errors, templates } from "../../../config/constants";
 import { Bot, CommandHandler } from "../../../models";
 import { createEventMessageDoc } from "../../../utils/dbUtils";
 import { errorHandler } from "../../../utils/errorHandler";
@@ -328,7 +328,7 @@ async function showCreateThreadModalAndCreate(
       ?.first();
     const title = submit.fields.getTextInputValue(TITLE_FIELD_ID).trim();
     if (!forumChannel || forumChannel.type !== ChannelType.GuildForum) {
-      await submit.editReply("Selected channel is not a forum channel.");
+      await submit.editReply(errors.ChannelNotForumError);
       return;
     }
     if (!interaction.guildId) {
@@ -345,12 +345,10 @@ async function showCreateThreadModalAndCreate(
       title,
     );
     if (!threadId) {
-      await submit.editReply("Could not create the thread.");
+      await submit.editReply(errors.ThreadCreateError);
       return;
     }
-    await submit.editReply(
-      `Created ${channelMention(threadId)} for event \`${eventDoc._id}\`.`,
-    );
+    await submit.editReply(templates.threadCreated(threadId, eventDoc._id));
   } catch (err) {
     await submit.editReply(errors.SomethingWentWrongError);
     await errorHandler(

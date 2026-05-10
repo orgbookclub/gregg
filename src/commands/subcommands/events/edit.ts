@@ -20,7 +20,7 @@ import {
   TextInputStyle,
 } from "discord.js";
 
-import { errors } from "../../../config/constants";
+import { errors, templates, titles } from "../../../config/constants";
 import { Bot, CommandHandler } from "../../../models";
 import { errorHandler } from "../../../utils/errorHandler";
 import {
@@ -97,7 +97,7 @@ const handleEdit: CommandHandler = async (bot, interaction, guildConfig) => {
     }
     if (field === "dates.startDate") {
       if (isNaN(Date.parse(value))) {
-        await interaction.editReply({ content: "Invalid date format!" });
+        await interaction.editReply({ content: errors.InvalidDateFormatError });
         return;
       }
       const startDate = new Date(value);
@@ -106,7 +106,7 @@ const handleEdit: CommandHandler = async (bot, interaction, guildConfig) => {
     }
     if (field === "dates.endDate") {
       if (isNaN(Date.parse(value))) {
-        await interaction.editReply({ content: "Invalid date format!" });
+        await interaction.editReply({ content: errors.InvalidDateFormatError });
         return;
       }
       const endDate = new Date(value);
@@ -115,7 +115,7 @@ const handleEdit: CommandHandler = async (bot, interaction, guildConfig) => {
     }
     if (field === "book") {
       await interaction.editReply({
-        content: "Sorry, editing this field is currently not supported :(",
+        content: errors.EditFieldUnsupportedError,
       });
       return;
     }
@@ -126,7 +126,7 @@ const handleEdit: CommandHandler = async (bot, interaction, guildConfig) => {
     if (field === "requestedBy") {
       const userDoc = await getUserByDiscordId(bot.api, value);
       if (!userDoc) {
-        await interaction.editReply(`No user found with user Id: ${value}`);
+        await interaction.editReply(templates.noUserForDiscordId(value));
         return;
       }
       updateEventDto.requestedBy = {
@@ -136,19 +136,19 @@ const handleEdit: CommandHandler = async (bot, interaction, guildConfig) => {
     }
     if (field === "interested") {
       await interaction.editReply({
-        content: "Sorry, editing this field is currently not supported :(",
+        content: errors.EditFieldUnsupportedError,
       });
       return;
     }
     if (field === "readers") {
       await interaction.editReply({
-        content: "Sorry, editing this field is currently not supported :(",
+        content: errors.EditFieldUnsupportedError,
       });
       return;
     }
     if (field === "leaders") {
       await interaction.editReply({
-        content: "Sorry, editing this field is currently not supported :(",
+        content: errors.EditFieldUnsupportedError,
       });
       return;
     }
@@ -163,7 +163,7 @@ const handleEdit: CommandHandler = async (bot, interaction, guildConfig) => {
       updateEventDto: updateEventDto,
     });
     await interaction.editReply({
-      content: `Event \`${editResponse.data._id}\` updated`,
+      content: templates.eventUpdated(editResponse.data._id),
       embeds: [getEventInfoEmbed(editResponse.data, interaction)],
       components: actionRowOrEmpty(
         getEventInfoStaffActionRow(editResponse.data),
@@ -254,7 +254,9 @@ function buildEventEditModal(
         `If this happens often, use \`/events edit field:threads\` instead.`
       : null;
 
-  const modal = new ModalBuilder().setCustomId(customId).setTitle("Edit Event");
+  const modal = new ModalBuilder()
+    .setCustomId(customId)
+    .setTitle(titles.EditEvent);
   if (warning) {
     modal.addTextDisplayComponents(
       new TextDisplayBuilder().setContent(warning),
@@ -351,11 +353,11 @@ async function showEventEditModal(
     const startTs = Date.parse(startRaw);
     const endTs = Date.parse(endRaw);
     if (isNaN(startTs) || isNaN(endTs)) {
-      await submit.editReply("Invalid date format. Use YYYY-MM-DD.");
+      await submit.editReply(errors.InvalidDateFormatError);
       return;
     }
     if (endTs < startTs) {
-      await submit.editReply("End date cannot be before start date.");
+      await submit.editReply(errors.EndDateBeforeStartError);
       return;
     }
     if (
@@ -363,7 +365,7 @@ async function showEventEditModal(
         status as keyof typeof EventDtoStatusEnum,
       )
     ) {
-      await submit.editReply("Invalid status.");
+      await submit.editReply(errors.InvalidStatusError);
       return;
     }
 
@@ -381,7 +383,7 @@ async function showEventEditModal(
       updateEventDto,
     });
     await submit.editReply({
-      content: `Event \`${editResponse.data._id}\` updated`,
+      content: templates.eventUpdated(editResponse.data._id),
       embeds: [getEventInfoEmbed(editResponse.data, interaction)],
       components: actionRowOrEmpty(
         getEventInfoStaffActionRow(editResponse.data),

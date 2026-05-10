@@ -12,6 +12,7 @@ import {
   time,
 } from "discord.js";
 
+import { errors, messages, templates } from "../config/constants";
 import { Context, Bot } from "../models";
 import { errorHandler } from "../utils/errorHandler";
 import { customSubstring } from "../utils/stringUtils";
@@ -25,7 +26,7 @@ const bookmark: Context = {
       await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
       if (!interaction.isMessageContextMenuCommand()) {
-        await interaction.editReply("Something went wrong!");
+        await interaction.editReply(errors.SomethingWentWrongShortError);
         return;
       }
       const message = interaction.targetMessage;
@@ -33,7 +34,7 @@ const bookmark: Context = {
       const guild = interaction.guild;
 
       if (!message || !channel || !guild || !channel.isTextBased()) {
-        await interaction.editReply("Bookmarking failed!");
+        await interaction.editReply(errors.BookmarkFailedError);
         return;
       }
 
@@ -42,17 +43,18 @@ const bookmark: Context = {
 
       await interaction.user
         .send({
-          content: `Bookmark created: ${`${time(new Date())}`}\n${message.url}`,
+          content: templates.bookmarkCreated(
+            `${time(new Date())}`,
+            message.url,
+          ),
           embeds: [bookmarkEmbed, ...message.embeds],
           components: [buttonRow],
         })
         .then(async () => {
-          await interaction.editReply("Message has been bookmarked!");
+          await interaction.editReply(messages.BookmarkCreated);
         })
         .catch(async () => {
-          await interaction.editReply(
-            "Unable to bookmark! Please make sure you have settings configured to enable DMs",
-          );
+          await interaction.editReply(errors.BookmarkDmsDisabledError);
         });
     } catch (err) {
       await await errorHandler(
