@@ -103,6 +103,6 @@ Event info embeds (returned by `/events info`, and shown after most staff event 
 - **Approve** / **Reject** — only on _Requested_ events; sets the status accordingly.
 - **Create Thread** — on _Approved_ events; equivalent to `/events createthread`.
 - **Announce** — on _Approved_ events that already have a thread; equivalent to `/events announce`.
-- **Add Points** / **Remove Points** — on _Ongoing_ and _Completed_ events; opens the same forms as `/events adduser` and `/events removeuser`.
+- **Add Points** / **Remove Points** — on _Completed_ events; opens the same forms as `/events adduser` and `/events removeuser`.
 
 Event lists and search results also include a **Details** button per event (and a **Join** button on _Requested_ events) so users can pull up the full info card or register interest without re-running a command.
