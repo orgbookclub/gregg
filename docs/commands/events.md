@@ -26,3 +26,5 @@ All commands listed below can be used after typing `/events` in the chat bar on 
 | announce \<id\> [channel]                   | Makes an announcement for an approved event. If `channel` is given, does it in that channel                                                                      |
 | adduser \<id\>                              | Opens a form to add up to 25 users as participants of the event in one submission. Type and points (default 5) are picked in the form |
 | removeuser \<id\>                           | Opens a form to remove up to 25 users as participants from the event in one submission. Type is picked in the form                    |
+
+?\> Most staff actions above (Edit, Approve/Reject, Create Thread, Announce, Add/Remove Points) are also available as inline buttons on the event info embed. See [Staff Action Buttons](guides/events-guide.md#staff-action-buttons).
