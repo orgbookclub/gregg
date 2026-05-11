@@ -187,9 +187,9 @@ export class Sprint {
       return (
         `\`${position}\` ${userMention(
           userId,
-        )} --> **${count}** *(${readingSpeed} per minute)*` + "\n"
+        )} --> **${count}** *(${readingSpeed} per minute)*`
       );
     });
-    return templates.sprintEndHeading() + "\n" + `${scoreStrings.join()}`;
+    return templates.sprintEndHeading() + "\n" + scoreStrings.join('\n');
   }
 }

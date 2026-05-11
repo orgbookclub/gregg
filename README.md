@@ -31,3 +31,8 @@ yarn start
 ## Test
 
 Currently, there is no test suite for the project.
+
+## License
+
+This project is licensed under the GNU General Public License v3.0 or later.
+See the [LICENSE](./LICENSE) file for the full license text.
