@@ -90,7 +90,7 @@ export const handleSearch: CommandHandler = async (bot, interaction) => {
     );
     pagedContentManager.createCollectors(message, interaction, 5 * 60 * 1000);
   } catch (err) {
-    await interaction.reply(errors.SomethingWentWrongError);
+    await interaction.editReply(errors.SomethingWentWrongError);
     await errorHandler(
       bot,
       "commands > events > search",
