@@ -1,14 +1,18 @@
 import {
   EventDocument,
-  EventDtoStatusEnum,
-  EventDtoTypeEnum,
-} from "@orgbookclub/ows-client";
+  EventsV2ControllerFindStatusEnum,
+  EventsV2ControllerFindTypeEnum,
+} from "@organizedbookclub/ows-client";
 
 import { errors } from "../../../config/constants";
 import { CommandHandler } from "../../../models";
 import { errorHandler } from "../../../utils/errorHandler";
+import { EVENT_LIST_FIELDS, findEventsPage } from "../../../utils/eventsApi";
 import { getEventsListContainer } from "../../../utils/eventUtils";
-import { PaginationManagerV2 } from "../../../utils/paginationManagerV2";
+import { LazyPaginationManager } from "../../../utils/lazyPaginationManager";
+
+const UI_PAGE_SIZE = 4;
+const API_PAGE_SIZE = 20;
 
 /**
  * Gets the server event list for a user.
@@ -23,11 +27,11 @@ export const handleEvents: CommandHandler = async (bot, interaction) => {
     const eventType = interaction.options.getString(
       "type",
       true,
-    ) as keyof typeof EventDtoTypeEnum;
+    ) as EventsV2ControllerFindTypeEnum;
     const eventStatus = interaction.options.getString(
       "status",
       true,
-    ) as keyof typeof EventDtoStatusEnum;
+    ) as EventsV2ControllerFindStatusEnum;
 
     const userResponse = await bot.api.users.usersControllerFindOneByUserId({
       userid: user.id,
@@ -40,22 +44,31 @@ export const handleEvents: CommandHandler = async (bot, interaction) => {
     }
 
     const userDoc = userResponse.data;
-    const userEventsResponse = await bot.api.events.eventsControllerFind({
+    const filters = {
       participantIds: [userDoc._id],
       status: eventStatus,
       type: eventType,
-    });
-    if (!userEventsResponse || userEventsResponse.data.length === 0) {
+    };
+    const first = await findEventsPage(
+      bot,
+      filters,
+      EVENT_LIST_FIELDS,
+      undefined,
+      1,
+      API_PAGE_SIZE,
+    );
+    if (first.total === 0) {
       await interaction.editReply(
         "No events found for the user for the chosen options",
       );
       return;
     }
-    const userEvents = userEventsResponse.data;
-    const pageSize = 4;
-    const pagedContentManager = new PaginationManagerV2<EventDocument>(
-      pageSize,
-      userEvents,
+
+    const pagedContentManager = new LazyPaginationManager<EventDocument>(
+      UI_PAGE_SIZE,
+      API_PAGE_SIZE,
+      first.total,
+      first.items,
       bot,
       (title, values, ix, pageInfo) =>
         getEventsListContainer(
@@ -66,6 +79,17 @@ export const handleEvents: CommandHandler = async (bot, interaction) => {
           `${eventType} · ${eventStatus}`,
           pageInfo,
         ),
+      async (apiPage) => {
+        const res = await findEventsPage(
+          bot,
+          filters,
+          EVENT_LIST_FIELDS,
+          undefined,
+          apiPage,
+          API_PAGE_SIZE,
+        );
+        return res.items;
+      },
       `${user.username}'s Events`,
     );
     const message = await interaction.editReply(

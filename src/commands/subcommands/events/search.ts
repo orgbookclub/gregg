@@ -1,15 +1,19 @@
 import {
   EventDocument,
-  EventDtoStatusEnum,
-  EventDtoTypeEnum,
-} from "@orgbookclub/ows-client";
+  EventsV2ControllerFindStatusEnum,
+  EventsV2ControllerFindTypeEnum,
+} from "@organizedbookclub/ows-client";
 import { ChatInputCommandInteraction } from "discord.js";
 
 import { errors, templates } from "../../../config/constants";
 import { CommandHandler } from "../../../models";
 import { errorHandler } from "../../../utils/errorHandler";
+import { EVENT_LIST_FIELDS, findEventsPage } from "../../../utils/eventsApi";
 import { getEventsListContainer } from "../../../utils/eventUtils";
-import { PaginationManagerV2 } from "../../../utils/paginationManagerV2";
+import { LazyPaginationManager } from "../../../utils/lazyPaginationManager";
+
+const UI_PAGE_SIZE = 4;
+const API_PAGE_SIZE = 20;
 
 /**
  * Returns a list of events for the given query string.
@@ -24,23 +28,34 @@ export const handleSearch: CommandHandler = async (bot, interaction) => {
     const eventType = interaction.options.getString("type");
     const eventStatus = interaction.options.getString("status");
 
-    const response = await bot.api.events.eventsControllerFind({
+    const filters = {
       bookSearchQuery: query,
       status: eventStatus
-        ? (eventStatus as keyof typeof EventDtoStatusEnum)
+        ? (eventStatus as EventsV2ControllerFindStatusEnum)
         : undefined,
       type: eventType
-        ? (eventType as keyof typeof EventDtoTypeEnum)
+        ? (eventType as EventsV2ControllerFindTypeEnum)
         : undefined,
-    });
-    if (response.data.length === 0) {
+    };
+
+    const first = await findEventsPage(
+      bot,
+      filters,
+      EVENT_LIST_FIELDS,
+      undefined,
+      1,
+      API_PAGE_SIZE,
+    );
+    if (first.total === 0) {
       await interaction.editReply(templates.noEventsForQuery(query));
       return;
     }
-    const pageSize = 4;
-    const pagedContentManager = new PaginationManagerV2<EventDocument>(
-      pageSize,
-      response.data,
+
+    const pagedContentManager = new LazyPaginationManager<EventDocument>(
+      UI_PAGE_SIZE,
+      API_PAGE_SIZE,
+      first.total,
+      first.items,
       bot,
       (
         title: string,
@@ -49,6 +64,17 @@ export const handleSearch: CommandHandler = async (bot, interaction) => {
         pageInfo: { current: number; total: number },
       ) =>
         getEventsListContainer(title, values, ix, true, `"${query}"`, pageInfo),
+      async (apiPage) => {
+        const res = await findEventsPage(
+          bot,
+          filters,
+          EVENT_LIST_FIELDS,
+          undefined,
+          apiPage,
+          API_PAGE_SIZE,
+        );
+        return res.items;
+      },
       `Event Search`,
     );
     const message = await interaction.editReply(

@@ -19,7 +19,7 @@ import { errors } from "../../../config/constants";
 import { CommandHandler } from "../../../models";
 import { QotdSuggestionStatus } from "../../../models/commands/qotd/QotdSuggestionStatus";
 import { errorHandler } from "../../../utils/errorHandler";
-import { PaginationManagerV2 } from "../../../utils/paginationManagerV2";
+import { PaginationManager } from "../../../utils/paginationManager";
 import { hasRole } from "../../../utils/userUtils";
 
 /**
@@ -54,7 +54,7 @@ const handleList: CommandHandler = async (bot, interaction, guildConfig) => {
       return;
     }
     const pageSize = 7;
-    const pagedContentManager = new PaginationManagerV2<qotds>(
+    const pagedContentManager = new PaginationManager<qotds>(
       pageSize,
       approvedQotdList,
       bot,

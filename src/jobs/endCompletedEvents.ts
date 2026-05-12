@@ -1,13 +1,20 @@
-import { EventDocument, EventDtoStatusEnum } from "@orgbookclub/ows-client";
+import {
+  EventDocument,
+  EventDtoStatusEnum,
+  EventsV2ControllerFindStatusEnum,
+} from "@organizedbookclub/ows-client";
 import { captureCheckIn } from "@sentry/node";
 import { Colors, EmbedBuilder, TextChannel } from "discord.js";
 
 import { Bot, Job } from "../models";
 import { getAllGuildConfigs } from "../utils/dbUtils";
 import { errorHandler } from "../utils/errorHandler";
+import { findAllEvents } from "../utils/eventsApi";
 import { getEventUpdateLogEmbed } from "../utils/eventUtils";
 import { logToWebhook, logger } from "../utils/logHandler";
 import { getButtonActionRow } from "../utils/messageUtils";
+
+const END_EVENT_FIELDS = "book,status,dates.startDate,dates.endDate";
 
 const jobName = "endCompletedEvents";
 
@@ -36,12 +43,14 @@ const endCompletedEvents: Job = {
           continue;
         }
         const now = new Date(Date.now());
-        const eventDocs = (
-          await bot.api.events.eventsControllerFind({
-            status: EventDtoStatusEnum.Ongoing,
+        const eventDocs = await findAllEvents(
+          bot,
+          {
+            status: EventsV2ControllerFindStatusEnum.Ongoing,
             endDateBefore: now.toISOString(),
-          })
-        ).data;
+          },
+          END_EVENT_FIELDS,
+        );
         for (const eventDoc of eventDocs) {
           await endEvent(bot, eventDoc, guildDoc.config.logWebhookUrl);
         }

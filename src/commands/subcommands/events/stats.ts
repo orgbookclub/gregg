@@ -1,4 +1,7 @@
-import { EventDocument, EventDtoStatusEnum } from "@orgbookclub/ows-client";
+import {
+  EventDocument,
+  EventDtoStatusEnum,
+} from "@organizedbookclub/ows-client";
 import {
   ButtonInteraction,
   ChatInputCommandInteraction,
@@ -12,6 +15,7 @@ import { Bot, CommandHandler } from "../../../models";
 import { Stats } from "../../../models/commands/events/Stats";
 import { UserEventStats } from "../../../models/commands/events/UserEventStats";
 import { errorHandler } from "../../../utils/errorHandler";
+import { USER_STATS_FIELDS, findAllEvents } from "../../../utils/eventsApi";
 
 /**
  * Gets the server event stats for a user.
@@ -146,13 +150,15 @@ async function buildUserEventStatsEmbed(
     return `No user found! Please check if the user ID ${user.id} is registered with the bot`;
   }
   const userId = userResponse.data._id;
-  const userEventsResponse = await bot.api.events.eventsControllerFind({
-    participantIds: [userId],
-  });
-  if (!userEventsResponse || userEventsResponse.data.length === 0) {
+  const eventDocs = await findAllEvents(
+    bot,
+    { participantIds: [userId] },
+    USER_STATS_FIELDS,
+  );
+  if (eventDocs.length === 0) {
     return "No events found for given user";
   }
-  const stats = calculateUserEventStats(userId, userEventsResponse.data);
+  const stats = calculateUserEventStats(userId, eventDocs);
   return getUserEventStatsEmbed(stats, userId, user, interaction);
 }
 

@@ -1,10 +1,18 @@
-import { EventDtoStatusEnum, EventDtoTypeEnum } from "@orgbookclub/ows-client";
+import {
+  EventDtoStatusEnum,
+  EventsV2ControllerFindStatusEnum,
+  EventsV2ControllerFindTypeEnum,
+} from "@organizedbookclub/ows-client";
 import { captureCheckIn } from "@sentry/node";
 
 import { Job } from "../models";
 import { getAllGuildConfigs } from "../utils/dbUtils";
 import { errorHandler } from "../utils/errorHandler";
+import { findAllEvents } from "../utils/eventsApi";
 import { updateEventState } from "../utils/eventUtils";
+
+const REJECT_BR_FIELDS =
+  "book,status,dates.startDate,dates.endDate,interested,leaders";
 
 const jobName = "rejectInvalidBRs";
 const cronTime = "10 23 * * *";
@@ -32,13 +40,15 @@ const rejectInvalidBRs: Job = {
           continue;
         }
         const now = new Date(Date.now());
-        const eventDocs = (
-          await bot.api.events.eventsControllerFind({
-            status: EventDtoStatusEnum.Requested,
-            type: EventDtoTypeEnum.BuddyRead,
+        const eventDocs = await findAllEvents(
+          bot,
+          {
+            status: EventsV2ControllerFindStatusEnum.Requested,
+            type: EventsV2ControllerFindTypeEnum.BuddyRead,
             startDateBefore: now.toISOString(),
-          })
-        ).data;
+          },
+          REJECT_BR_FIELDS,
+        );
         const minParticipantCount = guildDoc.config.minParticipantCount;
         for (const eventDoc of eventDocs) {
           if (

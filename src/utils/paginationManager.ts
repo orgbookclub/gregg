@@ -14,7 +14,7 @@ import { errors, labels } from "../config/constants";
 import { Bot } from "../models";
 
 /**
- * Builds the body components for a single page of paginated content (V2).
+ * Builds the body components for a single page of paginated content.
  * Implementations should return one or more top-level components (Section /
  * TextDisplay / Separator / MediaGallery / etc.) that will be inserted into
  * the page Container above the navigation row.
@@ -22,7 +22,7 @@ import { Bot } from "../models";
  * The optional `pageInfo` lets the builder render its own footer (e.g.
  * Combine guild name with `Page X of Y`) instead of the manager appending it.
  */
-export type V2PageBuilder<T> = (
+export type PageBuilder<T> = (
   title: string,
   values: T[],
   interaction: ChatInputCommandInteraction,
@@ -30,24 +30,25 @@ export type V2PageBuilder<T> = (
 ) => ContainerBuilder;
 
 /**
- * Components V2 equivalent of @see PaginationManager. Wraps each page in a
- * single Container with the caller-supplied body, then appends pagination
- * controls (page select + prev/next buttons) inside the same container.
+ * Eagerly-paginated message manager for Components V2 messages.
+ * Wraps each page in a single Container with the caller-supplied body, then
+ * appends pagination controls (page select + prev/next buttons) inside the
+ * same container.
  */
-export class PaginationManagerV2<T> {
-  readonly backId = "v2back";
-  readonly forwardId = "v2forward";
-  readonly selectId = "v2selectPage";
+export class PaginationManager<T> {
+  readonly backId = "pgback";
+  readonly forwardId = "pgforward";
+  readonly selectId = "pgselectPage";
   readonly pageSize: number;
   currPageNum: number;
   readonly totalPageNum: number;
   readonly data: T[];
   readonly bot: Bot;
   readonly title: string;
-  readonly buildPage: V2PageBuilder<T>;
+  readonly buildPage: PageBuilder<T>;
 
   /**
-   * Initializes an instance of the V2 Pagination Manager.
+   * Initializes an instance of the Pagination Manager.
    *
    * @param pageSize The max items on each page.
    * @param objectList An array of objects.
@@ -59,7 +60,7 @@ export class PaginationManagerV2<T> {
     pageSize: number,
     objectList: T[],
     bot: Bot,
-    buildPage: V2PageBuilder<T>,
+    buildPage: PageBuilder<T>,
     title = "Items",
   ) {
     this.currPageNum = 1;
