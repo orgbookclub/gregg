@@ -166,6 +166,9 @@ export const templates = {
   /** Reply when a user joins an event from the event-list embed. */
   eventListJoined: (eventId: string, bookTitle: string) =>
     `You have been marked as an interested participant of event with id \`${eventId}\` of \`${bookTitle}\`!`,
+  /** Reply when a user leaves an event from the event-list embed. */
+  eventListLeft: (eventId: string, bookTitle: string) =>
+    `You have been removed as an interested participant of event with id \`${eventId}\` of \`${bookTitle}\`.`,
   /** State-restricted action gate. */
   mustBeInState: (state: string, action: string) =>
     `Event must be in '${state}' state to ${action}.`,

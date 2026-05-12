@@ -31,9 +31,12 @@ const EVENTS_MAX_PAGE_SIZE = 100;
  *
  * Inclusion mode. Matches what `getEventsListContainer` renders:
  * `book.{title,url,coverUrl,authors}`, `type`, `status`, `dates.startDate`,
- * `dates.endDate`. The `_id` field is always returned regardless.
+ * `dates.endDate`, plus the four participant arrays so the renderer can
+ * pick the right per-row action button (Join / Leave / none) for the
+ * viewer. The `_id` field is always returned regardless.
  */
-const EVENT_LIST_FIELDS = "book,type,status,dates.startDate,dates.endDate";
+const EVENT_LIST_FIELDS =
+  "book,type,status,dates.startDate,dates.endDate,interested,readers,leaders,requestedBy";
 
 /**
  * Field projection for readerboard score aggregation

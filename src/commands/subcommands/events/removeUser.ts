@@ -107,7 +107,7 @@ async function runRemoveUserFlow(
       });
       eventDoc = response.data;
     } catch (_error) {
-      await modalSubmit.editReply(errors.InvalidEventIdError);
+      await modalSubmit.editReply(errors.EventNotFoundError);
       return;
     }
 

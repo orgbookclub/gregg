@@ -63,7 +63,15 @@ export const handleSearch: CommandHandler = async (bot, interaction) => {
         ix: ChatInputCommandInteraction,
         pageInfo: { current: number; total: number },
       ) =>
-        getEventsListContainer(title, values, ix, true, `"${query}"`, pageInfo),
+        getEventsListContainer(
+          title,
+          values,
+          ix,
+          true,
+          `"${query}"`,
+          pageInfo,
+          interaction.user.id,
+        ),
       async (apiPage) => {
         const res = await findEventsPage(
           bot,

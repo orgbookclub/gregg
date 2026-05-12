@@ -82,7 +82,7 @@ const handleBroadcast: CommandHandler = async (
       });
       eventDoc = response.data;
     } catch (_error) {
-      await modalSubmitInteraction.editReply(errors.InvalidEventIdError);
+      await modalSubmitInteraction.editReply(errors.EventNotFoundError);
       return;
     }
 

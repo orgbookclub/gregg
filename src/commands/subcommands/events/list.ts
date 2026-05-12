@@ -69,6 +69,7 @@ export const handleList: CommandHandler = async (bot, interaction) => {
           false,
           `${eventType} · ${eventStatus}`,
           pageInfo,
+          interaction.user.id,
         ),
       async (apiPage) => {
         const res = await findEventsPage(

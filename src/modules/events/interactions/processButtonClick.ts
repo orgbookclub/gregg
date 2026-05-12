@@ -2,7 +2,7 @@ import {
   EventDocument,
   EventDtoStatusEnum,
 } from "@organizedbookclub/ows-client";
-import { ButtonInteraction, GuildMember, MessageFlags } from "discord.js";
+import { ButtonInteraction, GuildMember, MessageFlags, User } from "discord.js";
 
 import { runAddUserFlow } from "../../../commands/subcommands/events/addUser";
 import { showAnnounceModalAndPost } from "../../../commands/subcommands/events/announce";
@@ -19,6 +19,7 @@ import { errorHandler } from "../../../utils/errorHandler";
 import {
   getEventAnnouncementEmbed,
   getEventInfoEmbed,
+  getEventInfoStaffActionRow,
   getEventRequestEmbed,
 } from "../../../utils/eventUtils";
 import {
@@ -73,7 +74,9 @@ const processButtonClick = async (bot: Bot, interaction: ButtonInteraction) => {
     } else if (interaction.customId.startsWith("evt-rmpts-")) {
       await handleEventRemovePoints(interaction, bot);
     } else if (interaction.customId.startsWith("evt-join-")) {
-      await handleEventListJoin(interaction, bot);
+      await handleEventListInterest(interaction, bot, "join");
+    } else if (interaction.customId.startsWith("evt-leave-")) {
+      await handleEventListInterest(interaction, bot, "leave");
     } else if (interaction.customId.startsWith("qotd-post-")) {
       await handleQotdPost(interaction, bot);
     } else if (interaction.customId.startsWith("usr-stats-")) {
@@ -130,67 +133,114 @@ async function handleQotdSuggestionActions(
   }
 }
 
-async function handleEventActions(interaction: ButtonInteraction, bot: Bot) {
-  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
-  const [embedType, eventId, action] = interaction.customId.split("-");
+type InterestAction = "join" | "leave";
 
-  const userDoc = await upsertUser(
-    bot.api,
-    interaction.user.id,
-    interaction.user.username,
-  );
+type ToggleInterestResult =
+  | { ok: true; eventDoc: EventDocument }
+  | {
+      ok: false;
+      reason: "notFound" | "alreadyInterested" | "neverInterested";
+    };
 
+/**
+ * Error message map for the participant-toggle button flows. Both the
+ * request/announcement embed (`er-`/`ea-`) buttons and the event-list
+ * Join / Leave buttons funnel through here, so the messages are written
+ * for the button context — the user did not type an ID, so "Event not
+ * found." is more accurate than "Invalid event ID! Please try again...".
+ */
+const PARTICIPANT_TOGGLE_ERRORS: Record<
+  Exclude<ToggleInterestResult, { ok: true }>["reason"],
+  string
+> = {
+  notFound: errors.EventNotFoundError,
+  alreadyInterested: errors.AlreadyInterestedError,
+  neverInterested: errors.NeverInterestedError,
+};
+
+/**
+ * Adds or removes the given Discord user to/from the event's `interested`
+ * participant list. Idempotent against the requested action — refuses with a
+ * tagged reason when the desired transition is a no-op (already in /
+ * already out) or the event does not exist.
+ *
+ * Used by both the request/announcement embed buttons (which then re-render
+ * the parent embed) and the event-list Join / Leave buttons (which only ack
+ * ephemerally), so it deliberately does not touch the calling
+ * interaction or any UI surface.
+ *
+ * @param bot The bot instance.
+ * @param eventId The event's object ID.
+ * @param user The acting Discord user.
+ * @param action Whether to add (`"join"`) or remove (`"leave"`).
+ * @returns A discriminated result with the updated event doc on success.
+ */
+async function toggleEventInterest(
+  bot: Bot,
+  eventId: string,
+  user: User,
+  action: InterestAction,
+): Promise<ToggleInterestResult> {
   const eventResponse = await bot.api.events.eventsControllerFindOne({
     id: eventId,
   });
-  if (!eventResponse) {
-    await interaction.editReply({
-      content: errors.InvalidEventIdError,
-    });
-    return;
-  }
+  if (!eventResponse) return { ok: false, reason: "notFound" };
   const eventDoc = eventResponse.data;
 
-  const isUserInterestedInEvent = eventDoc.interested.some(
-    (x) => x.user.userId === interaction.user.id,
+  const isInterested = eventDoc.interested.some(
+    (x) => x.user?.userId === user.id,
   );
-  if (action === "interested" && isUserInterestedInEvent) {
+  if (action === "join" && isInterested) {
+    return { ok: false, reason: "alreadyInterested" };
+  }
+  if (action === "leave" && !isInterested) {
+    return { ok: false, reason: "neverInterested" };
+  }
+
+  let nextInterested;
+  if (action === "join") {
+    const userDoc = await upsertUser(bot.api, user.id, user.username);
+    nextInterested = [
+      ...eventDoc.interested.map((x) => participantToDto(x)),
+      { user: userDoc._id, points: 0 },
+    ];
+  } else {
+    nextInterested = eventDoc.interested
+      .filter((x) => x.user?.userId !== user.id)
+      .map((x) => participantToDto(x));
+  }
+
+  const response = await bot.api.events.eventsControllerUpdate({
+    id: eventId,
+    updateEventDto: { interested: nextInterested },
+  });
+  return { ok: true, eventDoc: response.data };
+}
+
+async function handleEventActions(interaction: ButtonInteraction, bot: Bot) {
+  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+  const [embedType, eventId, customAction] = interaction.customId.split("-");
+  const action: InterestAction =
+    customAction === "interested" ? "join" : "leave";
+
+  const result = await toggleEventInterest(
+    bot,
+    eventId,
+    interaction.user,
+    action,
+  );
+  if (!result.ok) {
     await interaction.editReply({
-      content: errors.AlreadyInterestedError,
-    });
-    return;
-  } else if (action === "notInterested" && !isUserInterestedInEvent) {
-    await interaction.editReply({
-      content: errors.NeverInterestedError,
+      content: PARTICIPANT_TOGGLE_ERRORS[result.reason],
     });
     return;
   }
-  const participantDto = {
-    points: 0,
-    user: userDoc._id,
-  };
-  const updateEventDto = {
-    interested:
-      action === "interested"
-        ? [
-            ...eventDoc.interested.map((x) => participantToDto(x)),
-            participantDto,
-          ]
-        : eventDoc.interested
-            .filter((x) => x.user.userId !== interaction.user.id)
-            .map((x) => participantToDto(x)),
-  };
-  const response = await bot.api.events.eventsControllerUpdate({
-    id: eventId,
-    updateEventDto: updateEventDto,
-  });
-  const updatedEventDoc = response.data;
-  let updatedEmbed;
 
+  let updatedEmbed;
   if (embedType === "er") {
-    updatedEmbed = getEventRequestEmbed(updatedEventDoc, interaction);
+    updatedEmbed = getEventRequestEmbed(result.eventDoc, interaction);
   } else if (embedType === "ea") {
-    updatedEmbed = getEventAnnouncementEmbed(updatedEventDoc, interaction);
+    updatedEmbed = getEventAnnouncementEmbed(result.eventDoc, interaction);
   }
   if (!updatedEmbed) {
     await interaction.editReply(errors.EmbedUpdateError);
@@ -199,9 +249,7 @@ async function handleEventActions(interaction: ButtonInteraction, bot: Bot) {
   await interaction.message.edit({ embeds: [updatedEmbed] });
   await interaction.editReply({
     content:
-      action === "interested"
-        ? messages.ParticipantJoined
-        : messages.ParticipantLeft,
+      action === "join" ? messages.ParticipantJoined : messages.ParticipantLeft,
   });
 }
 
@@ -220,50 +268,59 @@ async function handleEventInfo(interaction: ButtonInteraction, bot: Bot) {
       await interaction.editReply(errors.EventNotFoundError);
       return;
     }
-    const embed = getEventInfoEmbed(eventResponse.data, interaction);
-    await interaction.editReply({ embeds: [embed] });
+    const eventDoc = eventResponse.data;
+    const embed = getEventInfoEmbed(eventDoc, interaction);
+
+    let actionRow = null;
+    if (interaction.inGuild() && interaction.guildId) {
+      const guildConfig = await getGuildConfigFromDb(bot, interaction.guildId);
+      const isStaff =
+        !!guildConfig &&
+        !!interaction.member &&
+        hasRole(interaction.member as GuildMember, guildConfig.staffRole);
+      if (isStaff) {
+        actionRow = getEventInfoStaffActionRow(eventDoc);
+      }
+    }
+
+    await interaction.editReply({
+      embeds: [embed],
+      components: actionRow ? [actionRow] : [],
+    });
   } catch {
     await interaction.editReply(errors.EventInfoFetchError);
   }
 }
 
-async function handleEventListJoin(interaction: ButtonInteraction, bot: Bot) {
+async function handleEventListInterest(
+  interaction: ButtonInteraction,
+  bot: Bot,
+  action: InterestAction,
+) {
   await interaction.deferReply({ flags: MessageFlags.Ephemeral });
-  const eventId = interaction.customId.slice("evt-join-".length);
+  const prefix = action === "join" ? "evt-join-" : "evt-leave-";
+  const eventId = interaction.customId.slice(prefix.length);
 
-  const eventResponse = await bot.api.events.eventsControllerFindOne({
-    id: eventId,
-  });
-  if (!eventResponse) {
-    await interaction.editReply(errors.EventNotFoundError);
+  const result = await toggleEventInterest(
+    bot,
+    eventId,
+    interaction.user,
+    action,
+  );
+  if (!result.ok) {
+    await interaction.editReply(PARTICIPANT_TOGGLE_ERRORS[result.reason]);
     return;
   }
-  const eventDoc = eventResponse.data;
-
-  const alreadyInterested = eventDoc.interested.some(
-    (x) => x.user?.userId === interaction.user.id,
-  );
-  if (alreadyInterested) {
-    await interaction.editReply(errors.AlreadyInterestedError);
-    return;
-  }
-
-  const userDoc = await upsertUser(
-    bot.api,
-    interaction.user.id,
-    interaction.user.username,
-  );
-  await bot.api.events.eventsControllerUpdate({
-    id: eventId,
-    updateEventDto: {
-      interested: [
-        ...eventDoc.interested.map((x) => participantToDto(x)),
-        { user: userDoc._id, points: 0 },
-      ],
-    },
-  });
   await interaction.editReply(
-    templates.eventListJoined(eventDoc._id, eventDoc.book.title),
+    action === "join"
+      ? templates.eventListJoined(
+          result.eventDoc._id,
+          result.eventDoc.book.title,
+        )
+      : templates.eventListLeft(
+          result.eventDoc._id,
+          result.eventDoc.book.title,
+        ),
   );
 }
 
@@ -390,7 +447,7 @@ async function requireStaffAndEvent(
     eventDoc = response.data;
   } catch {
     await interaction.reply({
-      content: errors.InvalidEventIdError,
+      content: errors.EventNotFoundError,
       flags: MessageFlags.Ephemeral,
     });
     return null;
