@@ -1,4 +1,4 @@
-import { EventDocument } from "@orgbookclub/ows-client";
+import { EventDocument } from "@organizedbookclub/ows-client";
 import {
   ModalSubmitInteraction,
   TextInputStyle,

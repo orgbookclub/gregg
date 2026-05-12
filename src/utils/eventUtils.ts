@@ -2,7 +2,7 @@ import {
   BookDocument,
   EventDocument,
   EventDtoStatusEnum,
-} from "@orgbookclub/ows-client";
+} from "@organizedbookclub/ows-client";
 import {
   ActionRowBuilder,
   ButtonBuilder,

@@ -1,4 +1,7 @@
-import { EventDocument, EventDtoStatusEnum } from "@orgbookclub/ows-client";
+import {
+  EventDocument,
+  EventDtoStatusEnum,
+} from "@organizedbookclub/ows-client";
 import { ButtonInteraction, GuildMember, MessageFlags } from "discord.js";
 
 import { runAddUserFlow } from "../../../commands/subcommands/events/addUser";

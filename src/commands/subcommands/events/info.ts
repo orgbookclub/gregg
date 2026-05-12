@@ -1,4 +1,4 @@
-import { EventDocument } from "@orgbookclub/ows-client";
+import { EventDocument } from "@organizedbookclub/ows-client";
 import { GuildMember } from "discord.js";
 
 import { errors } from "../../../config/constants";

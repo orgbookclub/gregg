@@ -1,4 +1,4 @@
-import { EventDocument, UpdateEventDto } from "@orgbookclub/ows-client";
+import { EventDocument, UpdateEventDto } from "@organizedbookclub/ows-client";
 import {
   ButtonInteraction,
   ChatInputCommandInteraction,

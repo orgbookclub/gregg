@@ -1,4 +1,4 @@
-import { UserDocument } from "@orgbookclub/ows-client";
+import { UserDocument } from "@organizedbookclub/ows-client";
 import {
   ChatInputCommandInteraction,
   Colors,
