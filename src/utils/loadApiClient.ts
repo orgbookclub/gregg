@@ -10,7 +10,11 @@ import { errorHandler } from "./errorHandler";
  */
 export const loadApiClient = async (bot: Bot) => {
   try {
-    const client = new OWSClient(bot.configs.apiUrl);
+    const client = new OWSClient(
+      bot.configs.apiUrl,
+      bot.configs.clientId,
+      bot.configs.clientSecret,
+    );
     await client.initialize();
     bot.api = client;
   } catch (err) {

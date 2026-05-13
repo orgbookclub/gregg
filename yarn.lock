@@ -625,10 +625,10 @@
   dependencies:
     "@opentelemetry/core" "^1.1.0"
 
-"@organizedbookclub/ows-client@^1.4.0":
-  version "1.4.0"
-  resolved "https://registry.yarnpkg.com/@organizedbookclub/ows-client/-/ows-client-1.4.0.tgz#7ca6e28ac76fe0c097443437ebfdfc31c5f84e56"
-  integrity sha512-6JoyFSncTpNf4iRR1i3zvi49mBpbGqJpWtg7UbrApl1v4ZZdKr8WNtmMK9okox8gcYT8Cl+U9pu5/++8KQkSlg==
+"@organizedbookclub/ows-client@^2.1.1":
+  version "2.1.1"
+  resolved "https://registry.yarnpkg.com/@organizedbookclub/ows-client/-/ows-client-2.1.1.tgz#6aae35ca0fd1c1d41dca525b40a6bf164f2362a8"
+  integrity sha512-U8Cxv+b8yfsq7/nOxR4+wOKbE12ej/CABZxB1Q+K+q6LpQdfD+hMzk8Vb93xS5EVBWOe9pNlMYQNpPVmQp03eg==
   dependencies:
     axios "^1.15.2"
 
