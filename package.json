@@ -28,9 +28,10 @@
     "start:dev": "tsc && node -r dotenv/config ./dist/index.js"
   },
   "dependencies": {
-    "@organizedbookclub/ows-client": "^1.4.0",
+    "@organizedbookclub/ows-client": "^2.1.1",
     "@prisma/client": "^6.4.1",
     "@sentry/node": "^9.22.0",
+    "axios": "^1.15.2",
     "cron": "^4.3.0",
     "discord.js": "^14.26.4",
     "express": "^4.21.2",
