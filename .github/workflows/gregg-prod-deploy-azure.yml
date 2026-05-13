@@ -22,21 +22,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "yarn"
-
-      - name: .npmrc registry login
-        uses: healthplace/npmrc-registry-login-action@v1.0.9
-        with:
-          scope: "@orgbookclub"
-          registry: https://npm.pkg.github.com
-          # The registry auth token
-          auth-token: ${{ secrets.OWS_PACKAGE_READER_PAT }}
 
       - name: yarn install and build
         run: |
@@ -45,7 +37,7 @@ jobs:
 
       - name: "Deploy to Azure WebApp"
         id: deploy-to-webapp
-        uses: azure/webapps-deploy@v2
+        uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           publish-profile: ${{ secrets.AZURE_GREGG_PUBLISH_PROFILE }}
