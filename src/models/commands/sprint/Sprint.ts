@@ -184,12 +184,10 @@ export class Sprint {
       const [userId, count] = item;
       const position = index + 1;
       const readingSpeed = (count / this.duration).toFixed(2);
-      return (
-        `\`${position}\` ${userMention(
-          userId,
-        )} --> **${count}** *(${readingSpeed} per minute)*`
-      );
+      return `\`${position}\` ${userMention(
+        userId,
+      )} --> **${count}** *(${readingSpeed} per minute)*`;
     });
-    return templates.sprintEndHeading() + "\n" + scoreStrings.join('\n');
+    return templates.sprintEndHeading() + "\n" + scoreStrings.join("\n");
   }
 }
