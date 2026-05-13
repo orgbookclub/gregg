@@ -1,4 +1,7 @@
-import { EventDocument, EventDtoStatusEnum } from "@orgbookclub/ows-client";
+import {
+  EventDocument,
+  EventDtoStatusEnum,
+} from "@organizedbookclub/ows-client";
 import { GuildsConfig } from "@prisma/client";
 import {
   ButtonInteraction,

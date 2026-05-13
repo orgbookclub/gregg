@@ -1,11 +1,17 @@
-import { EventDtoStatusEnum } from "@orgbookclub/ows-client";
+import {
+  EventDtoStatusEnum,
+  EventsV2ControllerFindStatusEnum,
+} from "@organizedbookclub/ows-client";
 import { captureCheckIn } from "@sentry/node";
 
 import { Job } from "../models";
 import { getAllGuildConfigs } from "../utils/dbUtils";
 import { errorHandler } from "../utils/errorHandler";
+import { findAllEvents } from "../utils/eventsApi";
 import { getEventUpdateLogEmbed } from "../utils/eventUtils";
 import { logToWebhook } from "../utils/logHandler";
+
+const START_EVENT_FIELDS = "book,status,dates.startDate,dates.endDate";
 
 const jobName = "startAnnouncedEvents";
 
@@ -34,13 +40,15 @@ export const startAnnouncedEvents: Job = {
           continue;
         }
         const now = new Date(Date.now());
-        const eventDocs = (
-          await bot.api.events.eventsControllerFind({
-            status: EventDtoStatusEnum.Announced,
+        const eventDocs = await findAllEvents(
+          bot,
+          {
+            status: EventsV2ControllerFindStatusEnum.Announced,
             startDateBefore: now.toISOString(),
             endDateAfter: now.toISOString(),
-          })
-        ).data;
+          },
+          START_EVENT_FIELDS,
+        );
         for (const eventDoc of eventDocs) {
           const response = await bot.api.events.eventsControllerUpdate({
             id: eventDoc._id,

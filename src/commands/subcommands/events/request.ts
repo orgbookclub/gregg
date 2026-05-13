@@ -2,7 +2,7 @@ import {
   CreateEventDto,
   EventDocumentTypeEnum,
   EventDtoTypeEnum,
-} from "@orgbookclub/ows-client";
+} from "@organizedbookclub/ows-client";
 import {
   ActionRowBuilder,
   DiscordjsError,

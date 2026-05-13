@@ -1,4 +1,4 @@
-import { EventDtoStatusEnum } from "@orgbookclub/ows-client";
+import { EventsV2ControllerFindStatusEnum } from "@organizedbookclub/ows-client";
 import { GuildsConfig } from "@prisma/client";
 import { captureCheckIn } from "@sentry/node";
 import {
@@ -16,17 +16,17 @@ import { Job } from "../models";
 import { OWSClient } from "../providers/owsClient";
 import { getAllGuildConfigs } from "../utils/dbUtils";
 import { errorHandler } from "../utils/errorHandler";
+import { READERBOARD_FIELDS, findAllEvents } from "../utils/eventsApi";
 import { calculateReaderboardScores } from "../utils/eventUtils";
 import { logToWebhook } from "../utils/logHandler";
 import { hasRole } from "../utils/userUtils";
 
 async function getCompletedEvents(client: OWSClient) {
-  const response = await client.events.eventsControllerFind({
-    status: EventDtoStatusEnum.Completed,
-  });
-
-  const eventDocs = response.data;
-  return eventDocs;
+  return await findAllEvents(
+    client,
+    { status: EventsV2ControllerFindStatusEnum.Completed },
+    READERBOARD_FIELDS,
+  );
 }
 
 async function getRoleMapping(

@@ -1,4 +1,4 @@
-import { EventDtoStatusEnum } from "@orgbookclub/ows-client";
+import { EventsV2ControllerFindStatusEnum } from "@organizedbookclub/ows-client";
 import {
   ButtonBuilder,
   ButtonStyle,
@@ -15,8 +15,9 @@ import {
 import { errors } from "../../../config/constants";
 import { CommandHandler } from "../../../models";
 import { errorHandler } from "../../../utils/errorHandler";
+import { READERBOARD_FIELDS, findAllEvents } from "../../../utils/eventsApi";
 import { calculateReaderboardScores } from "../../../utils/eventUtils";
-import { PaginationManagerV2 } from "../../../utils/paginationManagerV2";
+import { PaginationManager } from "../../../utils/paginationManager";
 
 type ReaderboardRow = [string, [number, number]];
 
@@ -36,11 +37,12 @@ const handleReaderboard: CommandHandler = async (bot, interaction) => {
   try {
     await interaction.deferReply();
 
-    const response = await bot.api.events.eventsControllerFind({
-      status: EventDtoStatusEnum.Completed,
-    });
+    const eventDocs = await findAllEvents(
+      bot,
+      { status: EventsV2ControllerFindStatusEnum.Completed },
+      READERBOARD_FIELDS,
+    );
 
-    const eventDocs = response.data;
     if (eventDocs.length === 0) {
       await interaction.editReply(errors.NoEventsForUserError);
       return;
@@ -48,7 +50,7 @@ const handleReaderboard: CommandHandler = async (bot, interaction) => {
     const scores = calculateReaderboardScores(eventDocs);
 
     const pageSize = 10;
-    const pagedContentManager = new PaginationManagerV2<ReaderboardRow>(
+    const pagedContentManager = new PaginationManager<ReaderboardRow>(
       pageSize,
       scores,
       bot,

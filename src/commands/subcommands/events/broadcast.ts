@@ -1,4 +1,4 @@
-import { EventDocument } from "@orgbookclub/ows-client";
+import { EventDocument } from "@organizedbookclub/ows-client";
 import {
   ModalSubmitInteraction,
   TextInputStyle,
@@ -82,7 +82,7 @@ const handleBroadcast: CommandHandler = async (
       });
       eventDoc = response.data;
     } catch (_error) {
-      await modalSubmitInteraction.editReply(errors.InvalidEventIdError);
+      await modalSubmitInteraction.editReply(errors.EventNotFoundError);
       return;
     }
 

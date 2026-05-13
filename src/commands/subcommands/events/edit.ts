@@ -3,7 +3,7 @@ import {
   EventDtoStatusEnum,
   EventDtoTypeEnum,
   UpdateEventDto,
-} from "@orgbookclub/ows-client";
+} from "@organizedbookclub/ows-client";
 import {
   ButtonInteraction,
   ChannelSelectMenuBuilder,

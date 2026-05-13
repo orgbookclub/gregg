@@ -1,4 +1,4 @@
-import { Participant, ParticipantDto } from "@orgbookclub/ows-client";
+import { Participant, ParticipantDto } from "@organizedbookclub/ows-client";
 import { GuildMember, userMention } from "discord.js";
 
 import { OWSClient } from "../providers/owsClient";

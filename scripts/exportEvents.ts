@@ -1,20 +1,35 @@
-import { EventDtoStatusEnum } from "@orgbookclub/ows-client";
+import {
+  EventDocument,
+  EventsV2ControllerFindStatusEnum,
+} from "@organizedbookclub/ows-client";
 import { createArrayCsvWriter as createCsvWriter } from "csv-writer";
 
 import { getAuthorString } from "../src/utils/bookUtils";
+import { findEventsPage } from "../src/utils/eventsApi";
 
 import { getOwsClient } from "./utils";
 
 const BASE_URL = process.env.API_URL ?? "";
+const PAGE_SIZE = 100;
 main();
 
 async function main() {
   const client = await getOwsClient(BASE_URL);
-  const allEvents = (
-    await client.events.eventsControllerFind({
-      status: EventDtoStatusEnum.Completed,
-    })
-  ).data;
+  const allEvents: EventDocument[] = [];
+  let page = 1;
+  while (true) {
+    const res = await findEventsPage(
+      client,
+      { status: EventsV2ControllerFindStatusEnum.Completed },
+      undefined,
+      undefined,
+      page,
+      PAGE_SIZE,
+    );
+    allEvents.push(...res.items);
+    if (page * res.pageSize >= res.total) break;
+    page += 1;
+  }
   const allRows: (string | number)[][] = [];
   const header = [
     "ID",

@@ -7,10 +7,11 @@ import {
   EventDtoTypeEnum,
   ParticipantDto,
   UpdateEventDto,
-} from "@orgbookclub/ows-client";
+} from "@organizedbookclub/ows-client";
 import { parse } from "csv-parse";
 
 import { OWSClient } from "../src/providers/owsClient";
+import { findEventsPage } from "../src/utils/eventsApi";
 import { logger } from "../src/utils/logHandler";
 import { upsertUser } from "../src/utils/userUtils";
 
@@ -29,7 +30,14 @@ async function main() {
     await getGroupedEventRecords();
 
   for await (const key of Object.keys(groupedEventRecords)) {
-    const getResponse = await client.events.eventsControllerFind({ name: key });
+    const getResponse = await findEventsPage(
+      client,
+      { name: key },
+      undefined,
+      undefined,
+      1,
+      1,
+    );
     const { url, createEventDto } = await getEventDto(
       groupedEventRecords[key],
       key,
@@ -38,8 +46,8 @@ async function main() {
     );
     const firstRow = groupedEventRecords[key][0];
 
-    if (getResponse.data.length > 0) {
-      const existingEventDoc = getResponse.data[0];
+    if (getResponse.items.length > 0) {
+      const existingEventDoc = getResponse.items[0];
       await client.events.eventsControllerUpdate({
         id: existingEventDoc._id,
         updateEventDto: createEventDto,

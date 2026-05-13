@@ -1,4 +1,4 @@
-import { StorygraphBookDto } from "@orgbookclub/ows-client";
+import { StorygraphBookDto } from "@organizedbookclub/ows-client";
 import { Colors, EmbedBuilder } from "discord.js";
 
 import { errors } from "../../../config/constants";

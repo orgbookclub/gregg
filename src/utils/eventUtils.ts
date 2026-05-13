@@ -2,7 +2,7 @@ import {
   BookDocument,
   EventDocument,
   EventDtoStatusEnum,
-} from "@orgbookclub/ows-client";
+} from "@organizedbookclub/ows-client";
 import {
   ActionRowBuilder,
   ButtonBuilder,
@@ -120,6 +120,52 @@ function buildStaffActionButtons(event: EventDocument): ButtonBuilder[] {
 }
 
 /**
+ * Picks the per-row participant button (Join / Leave) for an event-list row,
+ * based on the viewer's existing relationship with the event.
+ *
+ * Returns `null` when no button should be shown — either because the viewer
+ * is unknown, or because they hold a non-removable role (reader, leader,
+ * requester) that requires staff intervention to leave.
+ *
+ * @param event The event document; must have populated `interested`,
+ *   `readers`, `leaders`, and `requestedBy` fields (see `EVENT_LIST_FIELDS`).
+ * @param viewerDiscordId The Discord ID of the user the buttons are for.
+ * @returns The button to render, or null.
+ */
+function getParticipantButton(
+  event: EventDocument,
+  viewerDiscordId: string | undefined,
+): ButtonBuilder | null {
+  if (!viewerDiscordId) return null;
+  const isInterested = event.interested.some(
+    (p) => p.user?.userId === viewerDiscordId,
+  );
+  const isReader = event.readers.some(
+    (p) => p.user?.userId === viewerDiscordId,
+  );
+  const isLeader = event.leaders.some(
+    (p) => p.user?.userId === viewerDiscordId,
+  );
+  const isRequester = event.requestedBy?.user?.userId === viewerDiscordId;
+
+  if (isInterested) {
+    return new ButtonBuilder()
+      .setCustomId(`evt-leave-${event._id}`)
+      .setLabel("Leave")
+      .setEmoji({ name: "🚪" })
+      .setStyle(ButtonStyle.Danger);
+  }
+  if (isReader || isLeader || isRequester) {
+    return null;
+  }
+  return new ButtonBuilder()
+    .setCustomId(`evt-join-${event._id}`)
+    .setLabel("Join")
+    .setEmoji({ name: "✅" })
+    .setStyle(ButtonStyle.Success);
+}
+
+/**
  * Creates a Components V2 Container to display a list of events. Each event
  * renders as its own Section with the cover as a thumbnail accessory.
  *
@@ -128,12 +174,24 @@ function buildStaffActionButtons(event: EventDocument): ButtonBuilder[] {
  * type+status (e.g. `/events list`, `/user events`) so those fields don't
  * repeat on every row.
  *
+ * The per-row action button is chosen based on the viewer's relationship to
+ * the event:
+ * - **Leave** if the viewer is in `interested` (and the event is a
+ *   joinable BR); only `interested` is removable from the user's side —
+ *   leaving as a reader/leader/requester is a staff action.
+ * - **Join** if the viewer has no participant role on the event (and the
+ *   event is a joinable BR).
+ * - **No participant button** otherwise (the viewer is a reader / leader /
+ *   requester, the event is not a BR, or the event is in a non-joinable
+ *   state). The Details button is always shown.
+ *
  * @param title The page heading (rendered as `# {title}`).
  * @param eventList Array of events.
  * @param interaction The interaction instance.
  * @param showTypeAndStatus Whether to show per-row type & status lines.
  * @param subtitle Optional small grey subtitle under the heading.
  * @param pageInfo Optional `{ current, total }` to render as part of the footer.
+ * @param viewerDiscordId Discord ID of the user the buttons should be rendered for.
  * @returns The container.
  */
 export function getEventsListContainer(
@@ -143,6 +201,7 @@ export function getEventsListContainer(
   showTypeAndStatus = false,
   subtitle?: string,
   pageInfo?: { current: number; total: number },
+  viewerDiscordId?: string,
 ) {
   const container = new ContainerBuilder().setAccentColor(Colors.Red);
 
@@ -216,13 +275,8 @@ export function getEventsListContainer(
       EventDtoStatusEnum.Ongoing,
     ];
     if (event.type === "BuddyRead" && joinable.includes(event.status)) {
-      buttons.push(
-        new ButtonBuilder()
-          .setCustomId(`evt-join-${event._id}`)
-          .setLabel("Join")
-          .setEmoji({ name: "✅" })
-          .setStyle(ButtonStyle.Success),
-      );
+      const participantButton = getParticipantButton(event, viewerDiscordId);
+      if (participantButton) buttons.push(participantButton);
     }
     container.addActionRowComponents(
       new ActionRowBuilder<ButtonBuilder>().addComponents(buttons),

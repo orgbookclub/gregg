@@ -1,4 +1,4 @@
-import { AuthorDto, BookDto } from "@orgbookclub/ows-client";
+import { AuthorDto, BookDto } from "@organizedbookclub/ows-client";
 import { EmbedBuilder, Colors } from "discord.js";
 
 /**
