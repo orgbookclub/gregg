@@ -136,13 +136,7 @@ function getParticipantButton(
   event: EventDocument,
   viewerDiscordId: string | undefined,
 ): ButtonBuilder | null {
-  if (!viewerDiscordId) {
-    return new ButtonBuilder()
-      .setCustomId(`evt-join-${event._id}`)
-      .setLabel("Join")
-      .setEmoji({ name: "✅" })
-      .setStyle(ButtonStyle.Success);
-  }
+  if (!viewerDiscordId) return null;
   const isInterested = event.interested.some(
     (p) => p.user?.userId === viewerDiscordId,
   );

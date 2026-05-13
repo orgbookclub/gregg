@@ -181,11 +181,15 @@ async function toggleEventInterest(
   user: User,
   action: InterestAction,
 ): Promise<ToggleInterestResult> {
-  const eventResponse = await bot.api.events.eventsControllerFindOne({
-    id: eventId,
-  });
-  if (!eventResponse) return { ok: false, reason: "notFound" };
-  const eventDoc = eventResponse.data;
+  let eventDoc: EventDocument;
+  try {
+    const eventResponse = await bot.api.events.eventsControllerFindOne({
+      id: eventId,
+    });
+    eventDoc = eventResponse.data;
+  } catch {
+    return { ok: false, reason: "notFound" };
+  }
 
   const isInterested = eventDoc.interested.some(
     (x) => x.user?.userId === user.id,
@@ -260,15 +264,19 @@ async function handleBookmarkDelete(interaction: ButtonInteraction) {
 async function handleEventInfo(interaction: ButtonInteraction, bot: Bot) {
   await interaction.deferReply({ flags: MessageFlags.Ephemeral });
   const eventId = interaction.customId.slice("evt-info-".length);
+
+  let eventDoc: EventDocument;
   try {
     const eventResponse = await bot.api.events.eventsControllerFindOne({
       id: eventId,
     });
-    if (!eventResponse) {
-      await interaction.editReply(errors.EventNotFoundError);
-      return;
-    }
-    const eventDoc = eventResponse.data;
+    eventDoc = eventResponse.data;
+  } catch {
+    await interaction.editReply(errors.EventNotFoundError);
+    return;
+  }
+
+  try {
     const embed = getEventInfoEmbed(eventDoc, interaction);
 
     let actionRow = null;
