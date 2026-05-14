@@ -12,6 +12,7 @@ import {
 } from "../config";
 import { EventSortOptions } from "../config/EventSortOptions";
 import { Command, CommandHandler } from "../models";
+import { addDateWindowOptions } from "../utils/dateWindow";
 import { errorHandler } from "../utils/errorHandler";
 
 import {
@@ -187,12 +188,14 @@ const removeUser = new SlashCommandSubcommandBuilder()
     option.setName("id").setDescription("Event ID").setRequired(true),
   );
 
-const stats = new SlashCommandSubcommandBuilder()
-  .setName("stats")
-  .setDescription("Fetches the server event stats for a user")
-  .addUserOption((option) =>
-    option.setName("user").setDescription("User for which to fetch info"),
-  );
+const stats = addDateWindowOptions(
+  new SlashCommandSubcommandBuilder()
+    .setName("stats")
+    .setDescription("Fetches the server event stats for a user")
+    .addUserOption((option) =>
+      option.setName("user").setDescription("User for which to fetch info"),
+    ),
+);
 
 export const events: Command = {
   data: new SlashCommandBuilder()

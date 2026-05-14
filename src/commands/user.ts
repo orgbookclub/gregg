@@ -6,6 +6,7 @@ import {
 
 import { EventTypeOptions, EventStatusOptions } from "../config";
 import { CommandHandler, Command } from "../models";
+import { addDateWindowOptions } from "../utils/dateWindow";
 import { errorHandler } from "../utils/errorHandler";
 
 import {
@@ -20,9 +21,11 @@ const handlers: Record<string, CommandHandler> = {
   readerboard: handleReaderboard,
 };
 
-const userReaderboardSubcommand = new SlashCommandSubcommandBuilder()
-  .setName("readerboard")
-  .setDescription("Shows the server reading leaderboard");
+const userReaderboardSubcommand = addDateWindowOptions(
+  new SlashCommandSubcommandBuilder()
+    .setName("readerboard")
+    .setDescription("Shows the server reading leaderboard"),
+);
 
 const userEventsSubcommand = new SlashCommandSubcommandBuilder()
   .setName("events")

@@ -9,6 +9,12 @@ import {
 import { errors } from "../../../config/constants";
 import { CommandHandler } from "../../../models/commands/CommandHandler";
 import { SprintStats } from "../../../models/commands/sprint/SprintStats";
+import {
+  DateWindow,
+  formatWindowTitle,
+  resolveDateWindow,
+  toPrismaDateRange,
+} from "../../../utils/dateWindow";
 import { errorHandler } from "../../../utils/errorHandler";
 
 /**
@@ -23,6 +29,14 @@ const handleStats: CommandHandler = async (bot, interaction) => {
 
     const user = interaction.options.getUser("user") ?? interaction.user;
 
+    const resolved = resolveDateWindow(interaction);
+    if (!resolved.ok) {
+      await interaction.editReply(resolved.error);
+      return;
+    }
+    const window = resolved.window;
+    const range = toPrismaDateRange(window);
+
     const userSprints = await bot.db.sprints.findMany({
       where: {
         participants: {
@@ -30,10 +44,17 @@ const handleStats: CommandHandler = async (bot, interaction) => {
             userId: user.id,
           },
         },
+        ...(range ? { endedOn: range } : {}),
       },
     });
+    if (userSprints.length === 0) {
+      await interaction.editReply(
+        `No sprints found for given user${range ? ` in ${window.label}` : ""}`,
+      );
+      return;
+    }
     const stats: SprintStats = calculateSprintStats(user.id, userSprints);
-    const embed = getSprintStatsEmbed(user, interaction, stats);
+    const embed = getSprintStatsEmbed(user, interaction, stats, window);
     await interaction.editReply({ embeds: [embed] });
   } catch (err) {
     await interaction.editReply(errors.SomethingWentWrongError);
@@ -77,9 +98,10 @@ function getSprintStatsEmbed(
   user: User,
   interaction: ChatInputCommandInteraction,
   stats: SprintStats,
+  window: DateWindow,
 ) {
   const embed = new EmbedBuilder()
-    .setTitle(`${user.username} | Sprint Stats`)
+    .setTitle(formatWindowTitle(`${user.username} | Sprint Stats`, window))
     .setAuthor({
       name: interaction.guild?.name ?? "Guild Name Unavailable",
       iconURL: interaction.guild?.iconURL() ?? undefined,

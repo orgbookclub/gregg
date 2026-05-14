@@ -13,7 +13,7 @@ All commands listed below can be used after typing `/events` in the chat bar on 
 | info \<id\>                      | Fetches the info for a single event                                                     |
 | list [type] [status]             | Fetches a list of events, filtered according to the options                             |
 | search \<query\> [type] [status] | Fetches a list of events, filtered via `query` and options                              |
-| stats [user]                     | Fetches the server event stats for a user                                               |
+| stats [user] [preset] [from] [to] | Fetches the server event stats for a user. Optional `preset` (`This Year` / `Last Year` / `This Month`) or a custom `from`/`to` range (YYYY-MM-DD, inclusive) filters by event end date. Defaults to All Time |
 | request \<type\>                 | Makes a request for a server reading event                                              |
 | broadcast \<id\> [channel]       | Pings all the participants of an event in the event channel, unless otherwise specified |
 

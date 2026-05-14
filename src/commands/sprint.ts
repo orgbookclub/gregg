@@ -5,6 +5,7 @@ import {
 } from "discord.js";
 
 import { CommandHandler, Command } from "../models";
+import { addDateWindowOptions } from "../utils/dateWindow";
 import { errorHandler } from "../utils/errorHandler";
 
 import {
@@ -60,14 +61,16 @@ const sprintFinishSubcommand = new SlashCommandSubcommandBuilder()
     option.setName("count").setDescription("The final count").setRequired(true),
   );
 
-const sprintStatsSubcommand = new SlashCommandSubcommandBuilder()
-  .setName("stats")
-  .setDescription("Fetches total sprint stats of a user")
-  .addUserOption((option) =>
-    option
-      .setName("user")
-      .setDescription("User for which stats should be shown"),
-  );
+const sprintStatsSubcommand = addDateWindowOptions(
+  new SlashCommandSubcommandBuilder()
+    .setName("stats")
+    .setDescription("Fetches total sprint stats of a user")
+    .addUserOption((option) =>
+      option
+        .setName("user")
+        .setDescription("User for which stats should be shown"),
+    ),
+);
 
 const sprintStatusSubcommand = new SlashCommandSubcommandBuilder()
   .setName("status")

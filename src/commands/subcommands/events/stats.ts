@@ -14,6 +14,12 @@ import { errors } from "../../../config/constants";
 import { Bot, CommandHandler } from "../../../models";
 import { Stats } from "../../../models/commands/events/Stats";
 import { UserEventStats } from "../../../models/commands/events/UserEventStats";
+import {
+  DateWindow,
+  formatWindowTitle,
+  resolveDateWindow,
+  toEventEndDateFilter,
+} from "../../../utils/dateWindow";
 import { errorHandler } from "../../../utils/errorHandler";
 import { USER_STATS_FIELDS, findAllEvents } from "../../../utils/eventsApi";
 
@@ -28,7 +34,18 @@ const handleStats: CommandHandler = async (bot, interaction) => {
     await interaction.deferReply();
     const user = interaction.options.getUser("user", false) ?? interaction.user;
 
-    const result = await buildUserEventStatsEmbed(bot, user, interaction);
+    const resolved = resolveDateWindow(interaction);
+    if (!resolved.ok) {
+      await interaction.editReply(resolved.error);
+      return;
+    }
+
+    const result = await buildUserEventStatsEmbed(
+      bot,
+      user,
+      interaction,
+      resolved.window,
+    );
     if (typeof result === "string") {
       await interaction.editReply(result);
       return;
@@ -97,9 +114,12 @@ function getUserEventStatsEmbed(
   id: string,
   user: User,
   interaction: ChatInputCommandInteraction | ButtonInteraction,
+  window?: DateWindow,
 ) {
+  const baseTitle = `${user.username} | Event Stats`;
+  const title = window ? formatWindowTitle(baseTitle, window) : baseTitle;
   const embed = new EmbedBuilder()
-    .setTitle(`${user.username} | Event Stats`)
+    .setTitle(title)
     .setAuthor({
       name: interaction.guild?.name ?? "Guild Name Unavailable",
       iconURL: interaction.guild?.iconURL() ?? undefined,
@@ -136,12 +156,14 @@ function getUserEventStatsEmbed(
  * @param bot The bot instance.
  * @param user The Discord user.
  * @param interaction The interaction (used for guild metadata in the embed).
+ * @param window Optional time window to scope the stats; omit for all-time.
  * @returns The stats embed, or a user-facing error message.
  */
 async function buildUserEventStatsEmbed(
   bot: Bot,
   user: User,
   interaction: ChatInputCommandInteraction | ButtonInteraction,
+  window?: DateWindow,
 ): Promise<EmbedBuilder | string> {
   const userResponse = await bot.api.users.usersControllerFindOneByUserId({
     userid: user.id,
@@ -152,14 +174,19 @@ async function buildUserEventStatsEmbed(
   const userId = userResponse.data._id;
   const eventDocs = await findAllEvents(
     bot,
-    { participantIds: [userId] },
+    {
+      participantIds: [userId],
+      ...(window ? toEventEndDateFilter(window) : {}),
+    },
     USER_STATS_FIELDS,
   );
   if (eventDocs.length === 0) {
-    return "No events found for given user";
+    return window
+      ? `No events found for given user in ${window.label}`
+      : "No events found for given user";
   }
   const stats = calculateUserEventStats(userId, eventDocs);
-  return getUserEventStatsEmbed(stats, userId, user, interaction);
+  return getUserEventStatsEmbed(stats, userId, user, interaction, window);
 }
 
 export { handleStats, buildUserEventStatsEmbed };

@@ -14,6 +14,11 @@ import {
 
 import { errors } from "../../../config/constants";
 import { CommandHandler } from "../../../models";
+import {
+  formatWindowTitle,
+  resolveDateWindow,
+  toEventEndDateFilter,
+} from "../../../utils/dateWindow";
 import { errorHandler } from "../../../utils/errorHandler";
 import { READERBOARD_FIELDS, findAllEvents } from "../../../utils/eventsApi";
 import { calculateReaderboardScores } from "../../../utils/eventUtils";
@@ -37,9 +42,19 @@ const handleReaderboard: CommandHandler = async (bot, interaction) => {
   try {
     await interaction.deferReply();
 
+    const resolved = resolveDateWindow(interaction);
+    if (!resolved.ok) {
+      await interaction.editReply(resolved.error);
+      return;
+    }
+    const window = resolved.window;
+
     const eventDocs = await findAllEvents(
       bot,
-      { status: EventsV2ControllerFindStatusEnum.Completed },
+      {
+        status: EventsV2ControllerFindStatusEnum.Completed,
+        ...toEventEndDateFilter(window),
+      },
       READERBOARD_FIELDS,
     );
 
@@ -49,13 +64,15 @@ const handleReaderboard: CommandHandler = async (bot, interaction) => {
     }
     const scores = calculateReaderboardScores(eventDocs);
 
+    const title = formatWindowTitle("Server Readerboard", window);
+
     const pageSize = 10;
     const pagedContentManager = new PaginationManager<ReaderboardRow>(
       pageSize,
       scores,
       bot,
       getReaderboardContainer,
-      `Server Readerboard`,
+      title,
     );
     const message = await interaction.editReply(
       pagedContentManager.createMessagePayloadForPage(interaction),

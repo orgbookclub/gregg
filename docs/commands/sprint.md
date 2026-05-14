@@ -14,5 +14,5 @@ All commands listed below can be used after typing `/sprint` in the chat bar on 
 | status                       | Shows the current status of the sprint (if present) in the current channel                                                                    |
 | cancel                       | Cancels a sprint in the current channel                                                                                                       |
 | leave                        | Enables a user to leave an ongoing sprint                                                                                                     |
-| stats [user]                 | Shows the total sprint stats of a user                                                                                                        |
+| stats [user] [preset] [from] [to] | Shows the total sprint stats of a user. Optional `preset` (`This Year` / `Last Year` / `This Month`) or a custom `from`/`to` range (YYYY-MM-DD, inclusive) filters by sprint end date. Defaults to All Time |
 
