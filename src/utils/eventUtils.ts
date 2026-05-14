@@ -569,12 +569,24 @@ export function getNextMonthRange(date: Date): [Date, Date] {
 }
 
 /**
+ * One entry in the readerboard score list.
+ *
+ * Tuple shape: `[discordUserId, [position, points]]`. Sorted by points
+ * descending; `position` is 1-based and assigned in iteration order
+ * (ties are broken arbitrarily — both tied users get the lower of the
+ * two positions but neither is "skipped").
+ */
+export type ReaderboardScore = [string, [number, number]];
+
+/**
  * Given a list of documents, calculates the total reader points for all the users.
  *
  * @param eventDocs List of event documents.
  * @returns An array of users, along with their position and points.
  */
-export function calculateReaderboardScores(eventDocs: EventDocument[]) {
+export function calculateReaderboardScores(
+  eventDocs: EventDocument[],
+): ReaderboardScore[] {
   const scoreMap = new Map<string, number>();
 
   for (const event of eventDocs) {
@@ -592,7 +604,7 @@ export function calculateReaderboardScores(eventDocs: EventDocument[]) {
   scores.sort((a, b) => b[1] - a[1]);
 
   let position = 1;
-  const scoresWithPosition: [string, [number, number]][] = [];
+  const scoresWithPosition: ReaderboardScore[] = [];
   for (const score of scores) {
     const [userId, points] = score;
     scoresWithPosition.push([userId, [position, points]]);

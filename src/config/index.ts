@@ -4,3 +4,4 @@ export * from "./DateWindowPresetOptions";
 export * from "./EventStatusOptions";
 export * from "./EventTypeOptions";
 export * from "./IntentOptions";
+export * from "./ReaderRolePresetOptions";

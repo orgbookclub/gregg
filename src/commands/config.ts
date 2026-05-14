@@ -4,6 +4,7 @@ import {
   SlashCommandSubcommandBuilder,
 } from "discord.js";
 
+import { ReaderRolePresetOptions } from "../config";
 import { CommandHandler, Command } from "../models";
 import { errorHandler } from "../utils/errorHandler";
 
@@ -25,6 +26,14 @@ const setReaderRole = new SlashCommandSubcommandBuilder()
       .setName("points")
       .setDescription("The minimum required points for the role")
       .setRequired(true),
+  )
+  .addStringOption((option) =>
+    option
+      .setName("preset")
+      .setDescription(
+        "Time window the points are scored over (default: All Time)",
+      )
+      .addChoices(...ReaderRolePresetOptions),
   );
 
 const get = new SlashCommandSubcommandBuilder()

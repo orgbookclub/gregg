@@ -2,6 +2,7 @@ import { EventsV2ControllerFindStatusEnum } from "@organizedbookclub/ows-client"
 import { GuildsConfig } from "@prisma/client";
 import { captureCheckIn } from "@sentry/node";
 import {
+  Collection,
   Colors,
   EmbedBuilder,
   Guild,
@@ -12,65 +13,119 @@ import {
 } from "discord.js";
 
 import { titles } from "../config/constants";
-import { Job } from "../models";
-import { OWSClient } from "../providers/owsClient";
+import { Bot, Job } from "../models";
+import {
+  DateWindow,
+  toEventEndDateFilter,
+  windowFromPreset,
+} from "../utils/dateWindow";
 import { getAllGuildConfigs } from "../utils/dbUtils";
 import { errorHandler } from "../utils/errorHandler";
 import { READERBOARD_FIELDS, findAllEvents } from "../utils/eventsApi";
-import { calculateReaderboardScores } from "../utils/eventUtils";
+import {
+  ReaderboardScore,
+  calculateReaderboardScores,
+} from "../utils/eventUtils";
 import { logToWebhook } from "../utils/logHandler";
 import { hasRole } from "../utils/userUtils";
 
-async function getCompletedEvents(client: OWSClient) {
+type ReaderRoleConfig = GuildsConfig["readerRoles"][number];
+
+async function getCompletedEventsForWindow(bot: Bot, window: DateWindow) {
   return await findAllEvents(
-    client,
-    { status: EventsV2ControllerFindStatusEnum.Completed },
+    bot,
+    {
+      status: EventsV2ControllerFindStatusEnum.Completed,
+      ...toEventEndDateFilter(window),
+    },
     READERBOARD_FIELDS,
   );
 }
 
-async function getRoleMapping(
-  guild: Guild,
-  readerRoles: GuildsConfig["readerRoles"],
-) {
-  const roles: [Role, number][] = [];
-  for (const readerRole of readerRoles) {
-    const role = await guild.roles.fetch(readerRole.role);
-    if (!role) {
-      throw new Error(`Role ${readerRole.role} not found!`);
-    }
-    roles.push([role, readerRole.points]);
+async function getRole(guild: Guild, roleId: string): Promise<Role> {
+  const role = await guild.roles.fetch(roleId);
+  if (!role) {
+    throw new Error(`Role ${roleId} not found!`);
   }
-  return roles;
+  return role;
 }
 
 async function updateMemberRole(
-  roleWithPoints: [Role, number],
+  role: Role,
+  requiredPoints: number,
   member: GuildMember,
   points: number,
   logWebhookUrl: string,
 ) {
-  const [requiredRole, requiredPoints] = roleWithPoints;
-
   const embed = new EmbedBuilder()
     .setColor(Colors.Gold)
     .setTitle(titles.ReaderRoleUpdate)
     .setTimestamp();
 
-  if (hasRole(member, requiredRole.id) && points < requiredPoints) {
-    await member.roles.remove(requiredRole);
+  if (hasRole(member, role.id) && points < requiredPoints) {
+    await member.roles.remove(role);
 
     embed.setDescription(
-      `${roleMention(requiredRole.id)} removed from ${userMention(member.id)}`,
+      `${roleMention(role.id)} removed from ${userMention(member.id)}`,
     );
     await logToWebhook({ embeds: [embed] }, logWebhookUrl);
-  } else if (!hasRole(member, requiredRole.id) && points >= requiredPoints) {
-    await member.roles.add(requiredRole);
+  } else if (!hasRole(member, role.id) && points >= requiredPoints) {
+    await member.roles.add(role);
 
     embed.setDescription(
-      `${roleMention(requiredRole.id)} added to ${userMention(member.id)}`,
+      `${roleMention(role.id)} added to ${userMention(member.id)}`,
     );
     await logToWebhook({ embeds: [embed] }, logWebhookUrl);
+  }
+}
+
+function buildScoreMap(scores: ReaderboardScore[]): Map<string, number> {
+  const map = new Map<string, number>();
+  for (const [discordId, [, points]] of scores) {
+    map.set(discordId, points);
+  }
+  return map;
+}
+
+async function processReaderRole(
+  bot: Bot,
+  guild: Guild,
+  guildMembers: Collection<string, GuildMember>,
+  readerRole: ReaderRoleConfig,
+  logWebhookUrl: string,
+  scoreMapCache: Map<string, Map<string, number>>,
+) {
+  const window = windowFromPreset(readerRole.window);
+  const cacheKey = `${window.after?.toISOString() ?? ""}|${window.before?.toISOString() ?? ""}`;
+
+  let scoreMap = scoreMapCache.get(cacheKey);
+  if (!scoreMap) {
+    const eventDocs = await getCompletedEventsForWindow(bot, window);
+    scoreMap = buildScoreMap(calculateReaderboardScores(eventDocs));
+    scoreMapCache.set(cacheKey, scoreMap);
+  }
+
+  const role = await getRole(guild, readerRole.role);
+
+  const candidateIds = new Set<string>();
+  for (const [discordId] of scoreMap) {
+    if (guildMembers.has(discordId)) candidateIds.add(discordId);
+  }
+  for (const member of guildMembers.values()) {
+    if (hasRole(member, role.id)) candidateIds.add(member.id);
+  }
+
+  for (const discordId of candidateIds) {
+    const member = guildMembers.get(discordId);
+    if (!member) continue;
+    const points = scoreMap.get(discordId) ?? 0;
+    await updateMemberRole(
+      role,
+      readerRole.points,
+      member,
+      points,
+      logWebhookUrl,
+    );
   }
 }
 
@@ -105,30 +160,20 @@ export const updateReaderRoles: Job = {
         const readerRoles = guildDoc.config.readerRoles;
         if (readerRoles.length === 0) continue;
 
-        const eventDocs = await getCompletedEvents(bot.api);
-        if (eventDocs.length === 0) continue;
-
-        const scores = calculateReaderboardScores(eventDocs);
         const guild = await bot.guilds.fetch(guildDoc.guildId);
-        const allMembers = await guild.members.fetch();
-        const rolesWithPoints = await getRoleMapping(guild, readerRoles);
-        const filteredScores = scores.filter((x) =>
-          allMembers.some((member) => member.user.id === x[0]),
-        );
+        const guildMembers = await guild.members.fetch();
+        const logWebhookUrl = guildDoc.config.logWebhookUrl;
+        const scoreMapCache = new Map<string, Map<string, number>>();
 
-        for (const score of filteredScores) {
-          const [userId, [_, points]] = score;
-          const member = await guild.members.fetch(userId);
-
-          for (const roleWithPoints of rolesWithPoints) {
-            const logWebhookUrl = guildDoc.config.logWebhookUrl;
-            await updateMemberRole(
-              roleWithPoints,
-              member,
-              points,
-              logWebhookUrl,
-            );
-          }
+        for (const readerRole of readerRoles) {
+          await processReaderRole(
+            bot,
+            guild,
+            guildMembers,
+            readerRole,
+            logWebhookUrl,
+            scoreMapCache,
+          );
         }
       }
       captureCheckIn({

@@ -38,10 +38,12 @@ const handleSetReaderRole: CommandHandler = async (
     const guild = interaction.guild;
     const role = interaction.options.getRole("role", true);
     const points = interaction.options.getInteger("points", true);
+    const window = interaction.options.getString("preset") ?? "all-time";
 
     const newEntry = {
       role: role.id,
       points: points,
+      window: window,
     };
 
     const readerRoles = guildConfig?.readerRoles ?? [];

@@ -21,10 +21,11 @@ import {
 } from "../../../utils/dateWindow";
 import { errorHandler } from "../../../utils/errorHandler";
 import { READERBOARD_FIELDS, findAllEvents } from "../../../utils/eventsApi";
-import { calculateReaderboardScores } from "../../../utils/eventUtils";
+import {
+  ReaderboardScore,
+  calculateReaderboardScores,
+} from "../../../utils/eventUtils";
 import { PaginationManager } from "../../../utils/paginationManager";
-
-type ReaderboardRow = [string, [number, number]];
 
 const MEDAL_BY_POSITION: Record<number, string> = {
   1: "🥇",
@@ -67,7 +68,7 @@ const handleReaderboard: CommandHandler = async (bot, interaction) => {
     const title = formatWindowTitle("Server Readerboard", window);
 
     const pageSize = 10;
-    const pagedContentManager = new PaginationManager<ReaderboardRow>(
+    const pagedContentManager = new PaginationManager<ReaderboardScore>(
       pageSize,
       scores,
       bot,
@@ -93,7 +94,7 @@ const handleReaderboard: CommandHandler = async (bot, interaction) => {
 
 function getReaderboardContainer(
   title: string,
-  data: ReaderboardRow[],
+  data: ReaderboardScore[],
   interaction: ChatInputCommandInteraction,
   pageInfo: { current: number; total: number },
 ) {

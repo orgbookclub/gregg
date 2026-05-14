@@ -20,6 +20,7 @@ type DateWindow = {
 const ALL_TIME_WINDOW: DateWindow = { label: "All Time" };
 
 const PRESET_WINDOWS: Record<string, () => DateWindow> = {
+  "all-time": () => ALL_TIME_WINDOW,
   "this-year": () => {
     const now = new Date();
     const start = new Date(Date.UTC(now.getUTCFullYear(), 0, 1));
@@ -39,6 +40,21 @@ const PRESET_WINDOWS: Record<string, () => DateWindow> = {
     return { label: "This Month", after: start };
   },
 };
+
+/**
+ * Resolves a preset key to a {@link DateWindow} without needing an
+ * interaction. Unknown / null / undefined keys all fall back to "All Time".
+ * Use this from non-Discord call sites such as cron jobs or configuration
+ * persistence.
+ *
+ * @param presetKey The preset choice value, or null/undefined.
+ * @returns The corresponding window.
+ */
+function windowFromPreset(presetKey: string | null | undefined): DateWindow {
+  if (!presetKey) return ALL_TIME_WINDOW;
+  const factory = PRESET_WINDOWS[presetKey];
+  return factory ? factory() : ALL_TIME_WINDOW;
+}
 
 const DATE_INPUT_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
@@ -131,12 +147,7 @@ function resolveDateWindow(
     };
   }
 
-  if (preset) {
-    const factory = PRESET_WINDOWS[preset];
-    if (factory) return { ok: true, window: factory() };
-  }
-
-  return { ok: true, window: ALL_TIME_WINDOW };
+  return { ok: true, window: windowFromPreset(preset) };
 }
 
 /**
@@ -234,4 +245,5 @@ export {
   resolveDateWindow,
   toEventEndDateFilter,
   toPrismaDateRange,
+  windowFromPreset,
 };
