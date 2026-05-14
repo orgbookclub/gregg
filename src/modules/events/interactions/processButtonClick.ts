@@ -9,7 +9,7 @@ import { showAnnounceModalAndPost } from "../../../commands/subcommands/events/a
 import { showCreateThreadModalAndCreate } from "../../../commands/subcommands/events/createThread";
 import { showEventEditModal } from "../../../commands/subcommands/events/edit";
 import { runRemoveUserFlow } from "../../../commands/subcommands/events/removeUser";
-import { buildUserEventStatsEmbed } from "../../../commands/subcommands/events/stats";
+import { buildUserEventStatsContainer } from "../../../commands/subcommands/events/stats";
 import { showQotdPostModalAndPost } from "../../../commands/subcommands/qotd/post";
 import { errors, messages, templates } from "../../../config/constants";
 import { Bot } from "../../../models";
@@ -403,12 +403,15 @@ async function handleUserStats(interaction: ButtonInteraction, bot: Bot) {
   const discordId = interaction.customId.slice("usr-stats-".length);
   try {
     const user = await bot.users.fetch(discordId);
-    const result = await buildUserEventStatsEmbed(bot, user, interaction);
+    const result = await buildUserEventStatsContainer(bot, user, interaction);
     if (typeof result === "string") {
       await interaction.editReply(result);
       return;
     }
-    await interaction.editReply({ embeds: [result] });
+    await interaction.editReply({
+      flags: MessageFlags.IsComponentsV2,
+      components: [result],
+    });
   } catch {
     await interaction.editReply(errors.UserStatsFetchError);
   }

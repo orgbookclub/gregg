@@ -47,7 +47,8 @@ const READERBOARD_FIELDS = "readers,leaders";
 /**
  * Field projection for per-user event statistics (`/events stats`).
  */
-const USER_STATS_FIELDS = "type,status,readers,leaders,interested,requestedBy";
+const USER_STATS_FIELDS =
+  "type,status,readers,leaders,interested,requestedBy,book";
 
 /**
  * Accepts either a {@link Bot} (preferred for command handlers and jobs)

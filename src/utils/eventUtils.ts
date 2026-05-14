@@ -683,3 +683,5 @@ export async function updateEventState(
 
   await deleteBRRequest(bot, eventDoc, webhookUrl);
 }
+
+export { EVENT_TYPE_EMOJI };
