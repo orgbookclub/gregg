@@ -42,12 +42,8 @@ async function getCompletedEventsForWindow(bot: Bot, window: DateWindow) {
   );
 }
 
-async function getRole(guild: Guild, roleId: string): Promise<Role> {
-  const role = await guild.roles.fetch(roleId);
-  if (!role) {
-    throw new Error(`Role ${roleId} not found!`);
-  }
-  return role;
+async function getRole(guild: Guild, roleId: string): Promise<Role | null> {
+  return await guild.roles.fetch(roleId);
 }
 
 async function updateMemberRole(
@@ -106,6 +102,17 @@ async function processReaderRole(
   }
 
   const role = await getRole(guild, readerRole.role);
+  if (!role) {
+    const embed = new EmbedBuilder()
+      .setColor(Colors.Red)
+      .setTitle(titles.ReaderRoleUpdate)
+      .setDescription(
+        `Reader role \`${readerRole.role}\` is configured but no longer exists in this guild — skipping. Use \`/config removereaderrole\` to clean up the entry.`,
+      )
+      .setTimestamp();
+    await logToWebhook({ embeds: [embed] }, logWebhookUrl);
+    return;
+  }
 
   const candidateIds = new Set<string>();
   for (const [discordId] of scoreMap) {

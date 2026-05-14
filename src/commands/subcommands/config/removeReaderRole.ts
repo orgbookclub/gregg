@@ -6,21 +6,15 @@ import { logConfigChange } from "../../../utils/configLogger";
 import { errorHandler } from "../../../utils/errorHandler";
 import { hasRole } from "../../../utils/userUtils";
 
-function formatReaderRoleEntry(
-  entry: { points: number; window: string } | undefined,
-): string {
-  if (!entry) return "(none)";
-  return `${entry.points} pts, ${entry.window}`;
-}
-
 /**
- * Sets the reader role, along with the points in the guild config.
+ * Removes a reader role entry from the guild config. The role itself is
+ * not deleted from Discord — only the threshold mapping in config.
  *
  * @param bot The bot.
  * @param interaction The interaction.
  * @param guildConfig The guild config.
  */
-const handleSetReaderRole: CommandHandler = async (
+const handleRemoveReaderRole: CommandHandler = async (
   bot,
   interaction,
   guildConfig,
@@ -43,55 +37,34 @@ const handleSetReaderRole: CommandHandler = async (
       return;
     }
 
-    const guild = interaction.guild;
     const role = interaction.options.getRole("role", true);
-    const points = interaction.options.getInteger("points", true);
-    const window = interaction.options.getString("preset") ?? "all-time";
-
-    const newEntry = {
-      role: role.id,
-      points: points,
-      window: window,
-    };
 
     const readerRoles = guildConfig?.readerRoles ?? [];
-    const existingEntryIndex = readerRoles.findIndex(
-      (elem) => elem.role === role.id,
-    );
-    const previousEntry =
-      existingEntryIndex !== -1 ? readerRoles[existingEntryIndex] : undefined;
-    if (existingEntryIndex !== -1) {
-      readerRoles[existingEntryIndex] = newEntry;
-    } else {
-      readerRoles.push(newEntry);
+    const existingEntry = readerRoles.find((elem) => elem.role === role.id);
+    if (!existingEntry) {
+      await interaction.editReply(
+        `No reader role entry found for ${roleMention(role.id)}. Nothing to remove.`,
+      );
+      return;
     }
-    await bot.db.guilds.upsert({
+    const filtered = readerRoles.filter((elem) => elem.role !== role.id);
+
+    await bot.db.guilds.update({
       where: {
         guildId: interaction.guild.id,
       },
-      update: {
+      data: {
         config: {
           ...guildConfig,
-          readerRoles: readerRoles,
-        },
-      },
-      create: {
-        guildId: guild.id,
-        name: guild.name,
-        ownerId: guild.ownerId,
-        region: guild.preferredLocale,
-        createdAt: guild.createdAt,
-        joinedAt: guild.joinedAt,
-        config: {
-          readerRoles: readerRoles,
+          readerRoles: filtered,
         },
       },
     });
     await logConfigChange(guildConfig?.logWebhookUrl ?? "", interaction.user, [
       {
         field: `readerRoles ${roleMention(role.id)}`,
-        oldValue: formatReaderRoleEntry(previousEntry),
-        newValue: formatReaderRoleEntry(newEntry),
+        oldValue: `${existingEntry.points} pts, ${existingEntry.window}`,
+        newValue: "(removed)",
       },
     ]);
     await interaction.editReply(messages.GuildConfigUpdated);
@@ -99,7 +72,7 @@ const handleSetReaderRole: CommandHandler = async (
     await interaction.editReply(errors.SomethingWentWrongError);
     await errorHandler(
       bot,
-      "commands > config > setReaderRole",
+      "commands > config > removeReaderRole",
       err,
       interaction.guild?.name,
       undefined,
@@ -108,4 +81,4 @@ const handleSetReaderRole: CommandHandler = async (
   }
 };
 
-export { handleSetReaderRole };
+export { handleRemoveReaderRole };
