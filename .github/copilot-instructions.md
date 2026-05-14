@@ -4,7 +4,7 @@ Gregg is a TypeScript Discord bot (discord.js v14) for the Organized Book Club s
 
 ## Build, lint, run
 
-- Install: `yarn install --frozen-lockfile` (Node 20.x). `@organizedbookclub/ows-client` is published on public npm (`registry.npmjs.org`); no auth needed. (Older CI workflows still log in to GitHub Packages for the legacy `@orgbookclub` scope — those steps are now no-ops and can be removed in a cleanup pass.) `postinstall` runs `prisma generate` against `prisma/schema.prisma`.
+- Install: `yarn install --frozen-lockfile` (Node 24.x). `@organizedbookclub/ows-client` is published on public npm (`registry.npmjs.org`); no auth needed. (Older CI workflows still log in to GitHub Packages for the legacy `@orgbookclub` scope — those steps are now no-ops and can be removed in a cleanup pass.) `postinstall` runs `prisma generate` against `prisma/schema.prisma`.
 - Build: `yarn build` (`tsc` → `./dist`). `yarn prebuild` cleans `./dist`.
 - Lint: `yarn lint` (ESLint with `--max-warnings 0`, then Prettier `--check`). Auto-fix: `yarn lint:fix`. CI runs `yarn lint` then `yarn build`; both must pass.
 - Run dev: `yarn start:dev` (rebuilds, then `node -r dotenv/config ./dist/index.js`). Run prod: `yarn start`. Required env vars are listed in `sample.env` and validated in `src/validateEnv.ts` (the process exits if any are missing).
