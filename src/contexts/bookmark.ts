@@ -7,8 +7,12 @@ import {
   ContextMenuCommandBuilder,
   ContextMenuCommandInteraction,
   EmbedBuilder,
+  Guild,
+  GuildBasedChannel,
   Message,
   MessageFlags,
+  TextBasedChannel,
+  channelMention,
   time,
 } from "discord.js";
 
@@ -16,6 +20,8 @@ import { errors, messages, templates } from "../config/constants";
 import { Context, Bot } from "../models";
 import { errorHandler } from "../utils/errorHandler";
 import { customSubstring } from "../utils/stringUtils";
+
+const MAX_EMBEDS_PER_MESSAGE = 10;
 
 const bookmark: Context = {
   data: new ContextMenuCommandBuilder()
@@ -38,8 +44,13 @@ const bookmark: Context = {
         return;
       }
 
-      const bookmarkEmbed = createBookmarkEmbed(message);
-      const buttonRow = createDeleteBookmarkComponent();
+      const bookmarkEmbed = createBookmarkEmbed(message, channel, guild);
+      const buttonRow = createBookmarkComponent(message.url);
+
+      const embeds = [bookmarkEmbed, ...message.embeds].slice(
+        0,
+        MAX_EMBEDS_PER_MESSAGE,
+      );
 
       await interaction.user
         .send({
@@ -47,7 +58,7 @@ const bookmark: Context = {
             `${time(new Date())}`,
             message.url,
           ),
-          embeds: [bookmarkEmbed, ...message.embeds],
+          embeds: embeds,
           components: [buttonRow],
         })
         .then(async () => {
@@ -57,7 +68,7 @@ const bookmark: Context = {
           await interaction.editReply(errors.BookmarkDmsDisabledError);
         });
     } catch (err) {
-      await await errorHandler(
+      await errorHandler(
         bot,
         "contexts > bookmark",
         err,
@@ -71,13 +82,24 @@ const bookmark: Context = {
   },
 };
 
-function createBookmarkEmbed(message: Message<boolean>) {
+function createBookmarkEmbed(
+  message: Message<boolean>,
+  channel: TextBasedChannel | GuildBasedChannel,
+  guild: Guild,
+) {
   const embed = new EmbedBuilder()
     .setAuthor({
       name: message.author.tag,
       iconURL: message.author.displayAvatarURL(),
     })
-    .setColor(Colors.Red);
+    .setColor(Colors.Red)
+    .addFields([
+      {
+        name: "From",
+        value: `${channelMention(channel.id)} in **${guild.name}**`,
+        inline: false,
+      },
+    ]);
   if (message.content) {
     embed.addFields([
       {
@@ -87,6 +109,15 @@ function createBookmarkEmbed(message: Message<boolean>) {
       },
     ]);
   }
+  message.stickers.forEach((sticker) => {
+    embed.addFields([
+      {
+        name: "Sticker",
+        value: sticker.name,
+        inline: false,
+      },
+    ]);
+  });
   message.attachments.forEach((attachment) => {
     embed.addFields([
       {
@@ -103,12 +134,17 @@ function createBookmarkEmbed(message: Message<boolean>) {
   return embed;
 }
 
-function createDeleteBookmarkComponent() {
+function createBookmarkComponent(messageUrl: string) {
+  const jumpButton = new ButtonBuilder()
+    .setURL(messageUrl)
+    .setLabel("Jump to Message")
+    .setStyle(ButtonStyle.Link);
   const deleteButton = new ButtonBuilder()
     .setCustomId("bookmark-delete")
     .setLabel("Delete")
     .setStyle(ButtonStyle.Danger);
   const row = new ActionRowBuilder<ButtonBuilder>().addComponents([
+    jumpButton,
     deleteButton,
   ]);
   return row;

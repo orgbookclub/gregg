@@ -258,6 +258,18 @@ async function handleEventActions(interaction: ButtonInteraction, bot: Bot) {
 }
 
 async function handleBookmarkDelete(interaction: ButtonInteraction) {
+  if (!interaction.message.channel) {
+    await interaction.client.channels
+      .fetch(interaction.channelId)
+      .catch(() => null);
+  }
+  if (!interaction.message.channel) {
+    await interaction.reply({
+      content: errors.SomethingWentWrongShortError,
+      flags: MessageFlags.Ephemeral,
+    });
+    return;
+  }
   await interaction.message.delete();
 }
 
