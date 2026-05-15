@@ -26,6 +26,7 @@ import {
   handleRemoveUser,
   handleRequest,
   handleSearch,
+  handleServerStats,
   handleStats,
 } from "./subcommands/events";
 
@@ -41,6 +42,7 @@ const handlers: Record<string, CommandHandler> = {
   adduser: handleAddUser,
   removeuser: handleRemoveUser,
   stats: handleStats,
+  serverstats: handleServerStats,
 };
 
 const list = new SlashCommandSubcommandBuilder()
@@ -197,6 +199,12 @@ const stats = addDateWindowOptions(
     ),
 );
 
+const serverStats = addDateWindowOptions(
+  new SlashCommandSubcommandBuilder()
+    .setName("serverstats")
+    .setDescription("Shows guild-wide event stats for the configured window"),
+);
+
 export const events: Command = {
   data: new SlashCommandBuilder()
     .setName("events")
@@ -205,6 +213,7 @@ export const events: Command = {
     .addSubcommand(list)
     .addSubcommand(search)
     .addSubcommand(stats)
+    .addSubcommand(serverStats)
     .addSubcommand(request)
     .addSubcommand(broadcast)
     .addSubcommand(edit)

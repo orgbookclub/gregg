@@ -14,6 +14,7 @@ All commands listed below can be used after typing `/events` in the chat bar on 
 | list [type] [status]             | Fetches a list of events, filtered according to the options                             |
 | search \<query\> [type] [status] | Fetches a list of events, filtered via `query` and options                              |
 | stats [user] [preset] [from] [to] | Fetches the server event stats for a user. Optional `preset` (`This Year` / `Last Year` / `This Month`) or a custom `from`/`to` range (YYYY-MM-DD, inclusive) filters by event end date. Defaults to All Time |
+| serverstats [preset] [from] [to] | Shows guild-wide event stats. Same date-window options as `stats` (filters by event end date). Surfaces total completed events, per-type breakdown, most active month (when window spans multiple months), top books / authors / genres (count ≥ 2), top readers across all event types, and top BR leaders (BuddyRead-only) |
 | request \<type\>                 | Makes a request for a server reading event                                              |
 | broadcast \<id\> [channel]       | Pings all the participants of an event in the event channel, unless otherwise specified |
 
