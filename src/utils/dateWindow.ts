@@ -89,20 +89,90 @@ function parseDateInput(label: string, raw: string | null): DateParseResult {
   return { ok: true, value: d };
 }
 
+const MONTH_NAMES = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
+const QUARTER_BOUNDS: Array<{ startMonth: number; endMonth: number }> = [
+  { startMonth: 0, endMonth: 2 },
+  { startMonth: 3, endMonth: 5 },
+  { startMonth: 6, endMonth: 8 },
+  { startMonth: 9, endMonth: 11 },
+];
+
+function lastDayOfUtcMonth(year: number, monthZeroBased: number): number {
+  return new Date(Date.UTC(year, monthZeroBased + 1, 0)).getUTCDate();
+}
+
+/**
+ * Detects whether a closed `from`/`to` range aligns to a calendar
+ * boundary (full year, full month, full quarter) and returns a friendly
+ * label for it. Returns `null` for arbitrary ranges so the caller falls
+ * back to the raw `YYYY-MM-DD → YYYY-MM-DD` rendering.
+ *
+ * @param from The inclusive start date (UTC).
+ * @param to The inclusive end date (UTC).
+ */
+function smartRangeLabel(from: Date, to: Date): string | null {
+  const fy = from.getUTCFullYear();
+  const fm = from.getUTCMonth();
+  const fd = from.getUTCDate();
+  const ty = to.getUTCFullYear();
+  const tm = to.getUTCMonth();
+  const td = to.getUTCDate();
+
+  if (fy !== ty) return null;
+
+  if (fm === 0 && fd === 1 && tm === 11 && td === 31) {
+    return `${fy}`;
+  }
+
+  if (fm === tm && fd === 1 && td === lastDayOfUtcMonth(fy, fm)) {
+    return `${MONTH_NAMES[fm]} ${fy}`;
+  }
+
+  for (let q = 0; q < QUARTER_BOUNDS.length; q += 1) {
+    const { startMonth, endMonth } = QUARTER_BOUNDS[q];
+    if (
+      fm === startMonth &&
+      fd === 1 &&
+      tm === endMonth &&
+      td === lastDayOfUtcMonth(fy, endMonth)
+    ) {
+      return `Q${q + 1} ${fy}`;
+    }
+  }
+
+  return null;
+}
+
 function buildCustomWindow(
   fromRaw: string,
   toRaw: string,
   fromDate: Date | null,
   toDate: Date | null,
 ): DateWindow {
-  const win: DateWindow = {
-    label:
-      fromRaw && toRaw
-        ? `${fromRaw} → ${toRaw}`
-        : fromRaw
-          ? `Since ${fromRaw}`
-          : `Until ${toRaw}`,
-  };
+  let label: string;
+  if (fromRaw && toRaw && fromDate && toDate) {
+    label = smartRangeLabel(fromDate, toDate) ?? `${fromRaw} → ${toRaw}`;
+  } else if (fromRaw) {
+    label = `Since ${fromRaw}`;
+  } else {
+    label = `Until ${toRaw}`;
+  }
+
+  const win: DateWindow = { label };
   if (fromDate) win.after = fromDate;
   if (toDate) win.before = new Date(toDate.getTime() + ONE_DAY_MS);
   return win;
