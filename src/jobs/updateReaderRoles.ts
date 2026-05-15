@@ -97,6 +97,17 @@ async function processReaderRole(
   let scoreMap = scoreMapCache.get(cacheKey);
   if (!scoreMap) {
     const eventDocs = await getCompletedEventsForWindow(bot, window);
+    if (eventDocs.length === 0) {
+      const embed = new EmbedBuilder()
+        .setColor(Colors.Yellow)
+        .setTitle(titles.ReaderRoleUpdate)
+        .setDescription(
+          `No completed events found for the configured window — skipping reader role \`${readerRole.role}\` to avoid stripping current holders based on an empty score map.`,
+        )
+        .setTimestamp();
+      await logToWebhook({ embeds: [embed] }, logWebhookUrl);
+      return;
+    }
     scoreMap = buildScoreMap(calculateReaderboardScores(eventDocs));
     scoreMapCache.set(cacheKey, scoreMap);
   }

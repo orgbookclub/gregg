@@ -12,6 +12,7 @@ import {
 import { errors, messages } from "../../../config/constants";
 import { CommandHandler } from "../../../models";
 import { ConfigChange, logConfigChange } from "../../../utils/configLogger";
+import { getGuildConfigFromDb } from "../../../utils/dbUtils";
 import { errorHandler } from "../../../utils/errorHandler";
 import { hasRole } from "../../../utils/userUtils";
 
@@ -126,11 +127,12 @@ const handleEditFeatures: CommandHandler = async (
         return;
       }
 
+      const latestConfig = await getGuildConfigFromDb(bot, guild.id);
       await bot.db.guilds.upsert({
         where: { guildId: guild.id },
         update: {
           config: {
-            ...guildConfig,
+            ...latestConfig,
             minParticipantCount: newMin,
           },
         },
@@ -146,7 +148,7 @@ const handleEditFeatures: CommandHandler = async (
       });
 
       await logConfigChange(
-        guildConfig?.logWebhookUrl ?? "",
+        latestConfig?.logWebhookUrl ?? guildConfig?.logWebhookUrl ?? "",
         submit.user,
         changes,
       );

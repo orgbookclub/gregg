@@ -10,6 +10,7 @@ import {
 } from "discord.js";
 
 import { errors } from "../../../config/constants";
+import { SprintMetric } from "../../../config/SprintMetricOptions";
 import { CommandHandler } from "../../../models";
 import {
   formatWindowTitle,
@@ -18,8 +19,6 @@ import {
 } from "../../../utils/dateWindow";
 import { errorHandler } from "../../../utils/errorHandler";
 import { PaginationManager } from "../../../utils/paginationManager";
-
-type SprintMetric = "pages" | "minutes" | "completed";
 
 const METRIC_LABEL: Record<SprintMetric, string> = {
   pages: "Pages",

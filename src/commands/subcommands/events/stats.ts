@@ -92,6 +92,7 @@ function calculateUserEventStats(
 
   const authorCounts = new Map<string, { url?: string; count: number }>();
   const genreCounts = new Map<string, { display: string; count: number }>();
+  const pagesCountedBookIds = new Set<string>();
 
   for (const event of eventDocs) {
     const eventType = event.type;
@@ -132,7 +133,13 @@ function calculateUserEventStats(
       userEventStats.totalScore += readerPoints + leaderPoints;
 
       if (wasReader || wasLeader) {
-        accumulateBookStats(event, userEventStats, authorCounts, genreCounts);
+        accumulateBookStats(
+          event,
+          userEventStats,
+          authorCounts,
+          genreCounts,
+          pagesCountedBookIds,
+        );
       }
     }
   }
@@ -148,12 +155,17 @@ function accumulateBookStats(
   stats: UserEventStats,
   authorCounts: Map<string, { url?: string; count: number }>,
   genreCounts: Map<string, { display: string; count: number }>,
+  pagesCountedBookIds: Set<string>,
 ) {
   const book = event.book;
   if (!book) return;
 
   if (book.numPages && book.numPages > 0) {
-    stats.totalPages += book.numPages;
+    const bookId = book._id;
+    if (!bookId || !pagesCountedBookIds.has(bookId)) {
+      stats.totalPages += book.numPages;
+      if (bookId) pagesCountedBookIds.add(bookId);
+    }
   }
 
   const primaryAuthor = book.authors?.[0];

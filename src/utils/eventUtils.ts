@@ -572,9 +572,10 @@ export function getNextMonthRange(date: Date): [Date, Date] {
  * One entry in the readerboard score list.
  *
  * Tuple shape: `[discordUserId, [position, points]]`. Sorted by points
- * descending; `position` is 1-based and assigned in iteration order
- * (ties are broken arbitrarily — both tied users get the lower of the
- * two positions but neither is "skipped").
+ * descending; `position` is 1-based and assigned strictly sequentially
+ * in sort order (every entry gets a distinct position, so two users
+ * with equal points are ordered arbitrarily by the sort and receive
+ * adjacent positions like 3 and 4 rather than sharing rank 3).
  */
 export type ReaderboardScore = [string, [number, number]];
 

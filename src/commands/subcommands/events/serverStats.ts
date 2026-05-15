@@ -180,7 +180,7 @@ function calculateServerStats(eventDocs: EventDocument[]): ServerStats {
     if (endDateRaw) {
       const d = new Date(endDateRaw);
       if (!Number.isNaN(d.getTime())) {
-        const key = `${d.getUTCFullYear()}-${String(d.getUTCMonth()).padStart(2, "0")}`;
+        const key = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
         const label = `${MONTH_NAMES[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
         const existing = monthCounts.get(key);
         if (existing) existing.count += 1;
