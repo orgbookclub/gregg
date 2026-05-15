@@ -133,6 +133,7 @@ export const titles = {
   ReaderRoleUpdate: "Reader Role Update",
   EventBroadcast: "Event Broadcast",
   MessageDelete: "Message Delete",
+  GuildConfigUpdate: "Guild Config Update",
 };
 
 export const placeholders = {

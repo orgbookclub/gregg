@@ -47,7 +47,15 @@ const READERBOARD_FIELDS = "readers,leaders";
 /**
  * Field projection for per-user event statistics (`/events stats`).
  */
-const USER_STATS_FIELDS = "type,status,readers,leaders,interested,requestedBy";
+const USER_STATS_FIELDS =
+  "type,status,readers,leaders,interested,requestedBy,book";
+
+/**
+ * Field projection for guild-wide event statistics (`/server stats`).
+ * Trims the user-only fields (`interested`, `requestedBy`) and adds
+ * `dates.endDate` for most-active-month bucketing.
+ */
+const SERVER_STATS_FIELDS = "type,status,readers,leaders,book,dates.endDate";
 
 /**
  * Accepts either a {@link Bot} (preferred for command handlers and jobs)
@@ -149,6 +157,7 @@ export {
   EVENTS_MAX_PAGE_SIZE,
   EVENT_LIST_FIELDS,
   READERBOARD_FIELDS,
+  SERVER_STATS_FIELDS,
   USER_STATS_FIELDS,
   EventsFindFilters,
   findAllEvents,

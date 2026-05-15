@@ -4,13 +4,21 @@ import {
   SlashCommandSubcommandBuilder,
 } from "discord.js";
 
+import { ReaderRolePresetOptions } from "../config";
 import { CommandHandler, Command } from "../models";
 import { errorHandler } from "../utils/errorHandler";
 
-import { handleGet, handleSetReaderRole } from "./subcommands/config";
+import {
+  handleEditFeatures,
+  handleGet,
+  handleRemoveReaderRole,
+  handleSetReaderRole,
+} from "./subcommands/config";
 
 const handlers: Record<string, CommandHandler> = {
   setreaderrole: handleSetReaderRole,
+  removereaderrole: handleRemoveReaderRole,
+  editfeatures: handleEditFeatures,
   get: handleGet,
 };
 
@@ -25,6 +33,27 @@ const setReaderRole = new SlashCommandSubcommandBuilder()
       .setName("points")
       .setDescription("The minimum required points for the role")
       .setRequired(true),
+  )
+  .addStringOption((option) =>
+    option
+      .setName("preset")
+      .setDescription(
+        "Time window the points are scored over (default: All Time)",
+      )
+      .addChoices(...ReaderRolePresetOptions),
+  );
+
+const removeReaderRole = new SlashCommandSubcommandBuilder()
+  .setName("removereaderrole")
+  .setDescription("Removes a reader role entry from the guild config")
+  .addRoleOption((option) =>
+    option.setName("role").setDescription("The role").setRequired(true),
+  );
+
+const editFeatures = new SlashCommandSubcommandBuilder()
+  .setName("editfeatures")
+  .setDescription(
+    "Opens a modal to edit feature settings (min participants, etc.)",
   );
 
 const get = new SlashCommandSubcommandBuilder()
@@ -36,6 +65,8 @@ export const config: Command = {
     .setName("config")
     .setDescription("For guild config management")
     .addSubcommand(setReaderRole)
+    .addSubcommand(removeReaderRole)
+    .addSubcommand(editFeatures)
     .addSubcommand(get)
     .setContexts(InteractionContextType.Guild),
   run: async (bot, interaction, guildConfig) => {

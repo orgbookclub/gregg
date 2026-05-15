@@ -4,7 +4,9 @@ import {
   SlashCommandSubcommandBuilder,
 } from "discord.js";
 
+import { SprintPresetOptions, SprintMetricOptions } from "../config";
 import { CommandHandler, Command } from "../models";
+import { addDateWindowOptions } from "../utils/dateWindow";
 import { errorHandler } from "../utils/errorHandler";
 
 import {
@@ -14,6 +16,7 @@ import {
   handleCancel,
   handleStatus,
   handleFinish,
+  handleLeaderboard,
   handleStats,
 } from "./subcommands/sprint";
 
@@ -25,6 +28,7 @@ const handlers: Record<string, CommandHandler> = {
   status: handleStatus,
   finish: handleFinish,
   stats: handleStats,
+  leaderboard: handleLeaderboard,
 };
 
 const sprintStartSubcommand = new SlashCommandSubcommandBuilder()
@@ -60,14 +64,30 @@ const sprintFinishSubcommand = new SlashCommandSubcommandBuilder()
     option.setName("count").setDescription("The final count").setRequired(true),
   );
 
-const sprintStatsSubcommand = new SlashCommandSubcommandBuilder()
-  .setName("stats")
-  .setDescription("Fetches total sprint stats of a user")
-  .addUserOption((option) =>
-    option
-      .setName("user")
-      .setDescription("User for which stats should be shown"),
-  );
+const sprintStatsSubcommand = addDateWindowOptions(
+  new SlashCommandSubcommandBuilder()
+    .setName("stats")
+    .setDescription("Fetches total sprint stats of a user")
+    .addUserOption((option) =>
+      option
+        .setName("user")
+        .setDescription("User for which stats should be shown"),
+    ),
+  SprintPresetOptions,
+);
+
+const sprintLeaderboardSubcommand = addDateWindowOptions(
+  new SlashCommandSubcommandBuilder()
+    .setName("leaderboard")
+    .setDescription("Shows the top sprinters in the guild")
+    .addStringOption((option) =>
+      option
+        .setName("metric")
+        .setDescription("What to rank sprinters by (default: pages)")
+        .addChoices(...SprintMetricOptions),
+    ),
+  SprintPresetOptions,
+);
 
 const sprintStatusSubcommand = new SlashCommandSubcommandBuilder()
   .setName("status")
@@ -89,6 +109,7 @@ export const sprint: Command = {
     .addSubcommand(sprintJoinSubcommand)
     .addSubcommand(sprintFinishSubcommand)
     .addSubcommand(sprintStatsSubcommand)
+    .addSubcommand(sprintLeaderboardSubcommand)
     .addSubcommand(sprintStatusSubcommand)
     .addSubcommand(sprintCancelSubcommand)
     .addSubcommand(sprintLeaveSubcommand)

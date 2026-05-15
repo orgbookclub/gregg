@@ -8,4 +8,5 @@ export * from "./list";
 export * from "./removeUser";
 export * from "./request";
 export * from "./search";
+export * from "./serverStats";
 export * from "./stats";

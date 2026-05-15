@@ -106,3 +106,25 @@ Event info embeds (returned by `/events info`, and shown after most staff event 
 - **Add Points** / **Remove Points** — on _Completed_ events; opens the same forms as `/events adduser` and `/events removeuser`.
 
 Event lists and search results also include a **Details** button per event (and a **Join** button on _Requested_ events) so users can pull up the full info card or register interest without re-running a command.
+
+## Stats and Recognition
+
+Once events start completing, several commands surface aggregated activity:
+
+- **`/events stats [user]`** — per-user breakdown: total points, total pages read, top authors and genres, and per-event-type activity. Optional `preset` (`This Year` / `Last Year` / `This Month`) or a custom `from` / `to` range scopes everything to a date window.
+- **`/events serverstats`** — guild-wide rollup: total completed events, breakdown by type, most active month, top books / authors / genres across the server, top readers (across all event types), and top BR leaders (BuddyRead-only). Same date-window options as `stats`.
+- **`/user readerboard`** — points-based leaderboard. Optional `type` filters to a single event type; same date-window options. Surfaces your own rank when you appear in the rankings.
+
+## Reader Roles
+
+Staff can configure Discord roles that are auto-assigned by the bot based on a points threshold, scored over an optional time window. This is managed by the `updateReaderRoles` job (runs nightly when `enableEventJobs` is on).
+
+Use `/config setreaderrole <role> <points> [preset]` to define a role:
+
+- **All Time** (default) — permanent threshold roles like `Bookworm` (e.g. 50+ points). Once earned, the role stays unless points drop below the threshold (rare in practice — happens on event edits).
+- **This Year** — recognition roles like `Reader of the Year` that reset annually. Holders are revoked when their year-to-date score falls below the threshold (typically when the year rolls over).
+- **This Month** — same idea but monthly: `Reader of the Month`.
+
+Use `/config removereaderrole <role>` to retire a role tier or clean up after deleting the Discord role.
+
+The job uses the same scoring as `/user readerboard`, just scoped to each role's configured window.

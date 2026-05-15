@@ -35,6 +35,7 @@ type GuildsConfig {
 type GuildsReaderRoles {
   points Int    @default(0)
   role   String @default("")
+  window String @default("all-time")
 }
 
 model commandUsages {

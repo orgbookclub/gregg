@@ -12,6 +12,7 @@ import {
 } from "../config";
 import { EventSortOptions } from "../config/EventSortOptions";
 import { Command, CommandHandler } from "../models";
+import { addDateWindowOptions } from "../utils/dateWindow";
 import { errorHandler } from "../utils/errorHandler";
 
 import {
@@ -25,6 +26,7 @@ import {
   handleRemoveUser,
   handleRequest,
   handleSearch,
+  handleServerStats,
   handleStats,
 } from "./subcommands/events";
 
@@ -40,6 +42,7 @@ const handlers: Record<string, CommandHandler> = {
   adduser: handleAddUser,
   removeuser: handleRemoveUser,
   stats: handleStats,
+  serverstats: handleServerStats,
 };
 
 const list = new SlashCommandSubcommandBuilder()
@@ -187,12 +190,20 @@ const removeUser = new SlashCommandSubcommandBuilder()
     option.setName("id").setDescription("Event ID").setRequired(true),
   );
 
-const stats = new SlashCommandSubcommandBuilder()
-  .setName("stats")
-  .setDescription("Fetches the server event stats for a user")
-  .addUserOption((option) =>
-    option.setName("user").setDescription("User for which to fetch info"),
-  );
+const stats = addDateWindowOptions(
+  new SlashCommandSubcommandBuilder()
+    .setName("stats")
+    .setDescription("Fetches the server event stats for a user")
+    .addUserOption((option) =>
+      option.setName("user").setDescription("User for which to fetch info"),
+    ),
+);
+
+const serverStats = addDateWindowOptions(
+  new SlashCommandSubcommandBuilder()
+    .setName("serverstats")
+    .setDescription("Shows guild-wide event stats for the configured window"),
+);
 
 export const events: Command = {
   data: new SlashCommandBuilder()
@@ -202,6 +213,7 @@ export const events: Command = {
     .addSubcommand(list)
     .addSubcommand(search)
     .addSubcommand(stats)
+    .addSubcommand(serverStats)
     .addSubcommand(request)
     .addSubcommand(broadcast)
     .addSubcommand(edit)

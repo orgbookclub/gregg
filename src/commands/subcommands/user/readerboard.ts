@@ -1,4 +1,7 @@
-import { EventsV2ControllerFindStatusEnum } from "@organizedbookclub/ows-client";
+import {
+  EventsV2ControllerFindStatusEnum,
+  EventsV2ControllerFindTypeEnum,
+} from "@organizedbookclub/ows-client";
 import {
   ButtonBuilder,
   ButtonStyle,
@@ -14,17 +17,34 @@ import {
 
 import { errors } from "../../../config/constants";
 import { CommandHandler } from "../../../models";
+import {
+  formatWindowTitle,
+  resolveDateWindow,
+  toEventEndDateFilter,
+} from "../../../utils/dateWindow";
 import { errorHandler } from "../../../utils/errorHandler";
 import { READERBOARD_FIELDS, findAllEvents } from "../../../utils/eventsApi";
-import { calculateReaderboardScores } from "../../../utils/eventUtils";
+import {
+  ReaderboardScore,
+  calculateReaderboardScores,
+} from "../../../utils/eventUtils";
 import { PaginationManager } from "../../../utils/paginationManager";
-
-type ReaderboardRow = [string, [number, number]];
 
 const MEDAL_BY_POSITION: Record<number, string> = {
   1: "🥇",
   2: "🥈",
   3: "🥉",
+};
+
+type ViewerRank = {
+  position: number;
+  points: number;
+  percentile: number;
+};
+
+type ReaderboardExtras = {
+  totalRanked: number;
+  viewerRank: ViewerRank | null;
 };
 
 /**
@@ -37,9 +57,23 @@ const handleReaderboard: CommandHandler = async (bot, interaction) => {
   try {
     await interaction.deferReply();
 
+    const resolved = resolveDateWindow(interaction);
+    if (!resolved.ok) {
+      await interaction.editReply(resolved.error);
+      return;
+    }
+    const window = resolved.window;
+    const eventType = interaction.options.getString(
+      "type",
+    ) as EventsV2ControllerFindTypeEnum | null;
+
     const eventDocs = await findAllEvents(
       bot,
-      { status: EventsV2ControllerFindStatusEnum.Completed },
+      {
+        status: EventsV2ControllerFindStatusEnum.Completed,
+        ...(eventType ? { type: eventType } : {}),
+        ...toEventEndDateFilter(window),
+      },
       READERBOARD_FIELDS,
     );
 
@@ -49,13 +83,25 @@ const handleReaderboard: CommandHandler = async (bot, interaction) => {
     }
     const scores = calculateReaderboardScores(eventDocs);
 
+    const viewerRank = computeViewerRank(scores, interaction.user.id);
+
+    const baseTitle = eventType
+      ? `Server Readerboard · ${eventType}`
+      : "Server Readerboard";
+    const title = formatWindowTitle(baseTitle, window);
+
+    const extras: ReaderboardExtras = {
+      totalRanked: scores.length,
+      viewerRank,
+    };
+
     const pageSize = 10;
-    const pagedContentManager = new PaginationManager<ReaderboardRow>(
+    const pagedContentManager = new PaginationManager<ReaderboardScore>(
       pageSize,
       scores,
       bot,
-      getReaderboardContainer,
-      `Server Readerboard`,
+      (t, v, ix, pi) => getReaderboardContainer(t, v, ix, pi, extras),
+      title,
     );
     const message = await interaction.editReply(
       pagedContentManager.createMessagePayloadForPage(interaction),
@@ -74,17 +120,37 @@ const handleReaderboard: CommandHandler = async (bot, interaction) => {
   }
 };
 
+function computeViewerRank(
+  scores: ReaderboardScore[],
+  viewerDiscordId: string,
+): ViewerRank | null {
+  const entry = scores.find(([id]) => id === viewerDiscordId);
+  if (!entry) return null;
+  const [, [position, points]] = entry;
+  const percentile = Math.max(1, Math.ceil((position / scores.length) * 100));
+  return { position, points, percentile };
+}
+
 function getReaderboardContainer(
   title: string,
-  data: ReaderboardRow[],
+  data: ReaderboardScore[],
   interaction: ChatInputCommandInteraction,
   pageInfo: { current: number; total: number },
+  extras: ReaderboardExtras,
 ) {
   const container = new ContainerBuilder().setAccentColor(Colors.DarkGold);
 
+  const headerLines: string[] = [`# ${title}`];
+  if (extras.viewerRank) {
+    const { position, points, percentile } = extras.viewerRank;
+    headerLines.push(
+      `**You are #${position}** · **${points}** pts · Top ${percentile}%`,
+    );
+  }
   container.addTextDisplayComponents(
-    new TextDisplayBuilder().setContent(`# ${title}`),
+    new TextDisplayBuilder().setContent(headerLines.join("\n")),
   );
+
   container.addSeparatorComponents(
     new SeparatorBuilder()
       .setDivider(true)
@@ -111,8 +177,13 @@ function getReaderboardContainer(
   const guildName = interaction.inGuild()
     ? (interaction.guild?.name ?? "Unknown Guild")
     : "";
-  const pageStr = `Page ${pageInfo.current} of ${pageInfo.total}`;
-  const footerParts = [guildName, pageStr].filter((s) => s.length > 0);
+  const startIdx = data[0]?.[1]?.[0] ?? 1;
+  const endIdx = data[data.length - 1]?.[1]?.[0] ?? extras.totalRanked;
+  const pageSummary =
+    extras.totalRanked === 0
+      ? `Page ${pageInfo.current} of ${pageInfo.total}`
+      : `Showing #${startIdx}–#${endIdx} of ${extras.totalRanked} readers`;
+  const footerParts = [guildName, pageSummary].filter((s) => s.length > 0);
   container
     .addSeparatorComponents(
       new SeparatorBuilder()
