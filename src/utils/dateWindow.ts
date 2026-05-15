@@ -17,7 +17,15 @@ type DateWindow = {
   before?: Date;
 };
 
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+const DATE_INPUT_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
 const ALL_TIME_WINDOW: DateWindow = { label: "All Time" };
+
+function rollingDaysWindow(days: number, label: string): DateWindow {
+  const now = Date.now();
+  return { label, after: new Date(now - days * ONE_DAY_MS) };
+}
 
 const PRESET_WINDOWS: Record<string, () => DateWindow> = {
   "all-time": () => ALL_TIME_WINDOW,
@@ -39,6 +47,9 @@ const PRESET_WINDOWS: Record<string, () => DateWindow> = {
     );
     return { label: "This Month", after: start };
   },
+  "past-7-days": () => rollingDaysWindow(7, "Past 7 Days"),
+  "past-30-days": () => rollingDaysWindow(30, "Past 30 Days"),
+  "past-90-days": () => rollingDaysWindow(90, "Past 90 Days"),
 };
 
 /**
@@ -55,9 +66,6 @@ function windowFromPreset(presetKey: string | null | undefined): DateWindow {
   const factory = PRESET_WINDOWS[presetKey];
   return factory ? factory() : ALL_TIME_WINDOW;
 }
-
-const DATE_INPUT_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
-const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
 type DateParseResult =
   | { ok: true; value: Date | null }
@@ -213,17 +221,21 @@ function toPrismaDateRange(
  * {@link resolveDateWindow} to read them back.
  *
  * @param builder The subcommand builder to extend.
+ * @param presets The preset choices to expose. Defaults to the calendar
+ *   preset set; pass `SprintPresetOptions` (or another superset) for
+ *   commands that benefit from rolling presets like Past 7/30/90 Days.
  * @returns The same builder, for chaining.
  */
 function addDateWindowOptions(
   builder: SlashCommandSubcommandBuilder,
+  presets: readonly { name: string; value: string }[] = DateWindowPresetOptions,
 ): SlashCommandSubcommandBuilder {
   return builder
     .addStringOption((option) =>
       option
         .setName("preset")
         .setDescription("Calendar window (mutually exclusive with from/to)")
-        .addChoices(...DateWindowPresetOptions),
+        .addChoices(...presets),
     )
     .addStringOption((option) =>
       option
