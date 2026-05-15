@@ -24,7 +24,13 @@ const handlers: Record<string, CommandHandler> = {
 const userReaderboardSubcommand = addDateWindowOptions(
   new SlashCommandSubcommandBuilder()
     .setName("readerboard")
-    .setDescription("Shows the server reading leaderboard"),
+    .setDescription("Shows the server reading leaderboard")
+    .addStringOption((option) =>
+      option
+        .setName("type")
+        .setDescription("Filter the leaderboard to a single event type")
+        .addChoices(...EventTypeOptions),
+    ),
 );
 
 const userEventsSubcommand = new SlashCommandSubcommandBuilder()
