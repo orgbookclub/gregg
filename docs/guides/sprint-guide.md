@@ -43,3 +43,10 @@ stateDiagram-v2
     fin --> com : after 2 minutes
     com --> [*]
 ```
+
+## Stats and Leaderboards
+
+Once you've participated in a few sprints, two commands surface aggregated activity:
+
+- **`/sprint stats [user]`** — per-user breakdown: sprint count + completion rate, total pages, total time + average pace, personal records (best sprint by pages, fastest by pages/min), and a weekly streak. Optional `preset` (`All Time` / `This Year` / `Last Year` / `This Month` / `Past 7 / 30 / 90 Days`) or a custom `from` / `to` range scopes everything to a date window. The streak's "current" leg is shown only when the window includes this week.
+- **`/sprint leaderboard`** — top sprinters in the guild ranked by your chosen `metric` (`Pages read` by default, or `Minutes sprinted` / `Sprints completed`). Same date-window options as `stats`. Paginated; surfaces your own rank when you appear in the rankings.
