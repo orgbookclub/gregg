@@ -6,6 +6,7 @@ import { connectPrisma } from "./database/connectPrisma";
 import { Bot } from "./models";
 import { SprintManager } from "./models/commands/sprint/SprintManager";
 import { JobManager } from "./models/jobs/JobManager";
+import { createAIAgent } from "./modules/ai";
 import { createServer } from "./server/createServer";
 import { errorHandler } from "./utils/errorHandler";
 import { loadApiClient } from "./utils/loadApiClient";
@@ -75,6 +76,9 @@ void (async () => {
 
   logger.debug("Initializing API Client...");
   await loadApiClient(bot);
+
+  logger.debug("Initializing AI agent...");
+  bot.ai = createAIAgent(bot);
 
   logger.debug("Initializing job manager...");
   const jobs = await loadJobs();

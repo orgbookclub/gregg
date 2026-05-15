@@ -38,6 +38,21 @@ export const validateEnv = (): Bot["configs"] => {
     process.exit(1);
   }
 
+  if (process.env.AI_ENABLED === "true") {
+    if (!process.env.AZURE_FOUNDRY_ENDPOINT) {
+      logger.error("AI_ENABLED=true but missing AZURE_FOUNDRY_ENDPOINT");
+      process.exit(1);
+    }
+    if (!process.env.AZURE_FOUNDRY_API_KEY) {
+      logger.error("AI_ENABLED=true but missing AZURE_FOUNDRY_API_KEY");
+      process.exit(1);
+    }
+    if (!process.env.AI_MODEL_GENERAL) {
+      logger.error("AI_ENABLED=true but missing AI_MODEL_GENERAL");
+      process.exit(1);
+    }
+  }
+
   return {
     token: process.env.DISCORD_TOKEN,
     clientId: process.env.CLIENT_ID,

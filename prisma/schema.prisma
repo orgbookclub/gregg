@@ -142,3 +142,50 @@ model eventMessages {
   updatedOn  DateTime @db.Date
   v          Int?     @map("__v") @ignore
 }
+
+model aiSessions {
+  id                    String   @id @default(auto()) @map("_id") @db.ObjectId
+  guildId               String
+  channelId             String
+  isThread              Boolean
+  userId                String
+  source                String
+  status                String
+  turnCount             Int      @default(0)
+  totalPromptTokens     Int      @default(0)
+  totalCompletionTokens Int      @default(0)
+  totalReasoningTokens  Int      @default(0)
+  totalCostUsd          Float    @default(0)
+  lastResponseId        String?
+  startedAt             DateTime @db.Date
+  lastTurnAt            DateTime @db.Date
+  closedAt              DateTime? @db.Date
+  closeReason           String?
+
+  @@index([guildId, channelId, userId, status], map: "guildId_1_channelId_1_userId_1_status_1")
+  @@index([userId, startedAt], map: "userId_1_startedAt_1")
+  @@index([guildId, startedAt], map: "guildId_1_startedAt_1")
+}
+
+model aiInteractions {
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  sessionId        String   @db.ObjectId
+  turnIndex        Int
+  openaiResponseId String
+  prevResponseId   String?
+  inputHash        String
+  inputRaw         String?
+  outputRaw        String?
+  promptTokens     Int      @default(0)
+  completionTokens Int      @default(0)
+  reasoningTokens  Int      @default(0)
+  toolCalls        Json
+  artifacts        Json
+  latencyMs        Int      @default(0)
+  finishReason     String
+  costUsdEstimate  Float    @default(0)
+  createdAt        DateTime @default(now()) @db.Date
+
+  @@index([sessionId, turnIndex], map: "sessionId_1_turnIndex_1")
+  @@index([createdAt], map: "createdAt_1")
+}
