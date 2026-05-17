@@ -97,11 +97,14 @@ export class OWSClient {
 
   /**
    * Returns a non-expired access token, refreshing if the cached one is
-   * absent or within {@link REFRESH_SKEW_SECONDS} of its expiry.
+   * absent or within {@link REFRESH_SKEW_SECONDS} of its expiry. Public
+   * because secondary OWS surfaces (e.g. The MCP transport in the AI
+   * module) need to share the same single-flight refresh and cache as
+   * the generated `*Api` clients.
    *
    * @returns The current access token.
    */
-  private async getValidToken(): Promise<string> {
+  async getValidToken(): Promise<string> {
     const nowSeconds = Math.floor(Date.now() / 1000);
     if (
       !this.accessToken ||
@@ -110,6 +113,17 @@ export class OWSClient {
       await this.refresh();
     }
     return this.accessToken;
+  }
+
+  /**
+   * Drops the cached access token so the next {@link getValidToken}
+   * call forces a fresh fetch. Used by 401 retry paths in transports
+   * (e.g. The MCP client) that don't sit behind the axios response
+   * interceptor and therefore can't piggy-back on its automatic retry.
+   */
+  invalidateToken(): void {
+    this.accessToken = "";
+    this.expiresAt = 0;
   }
 
   /**

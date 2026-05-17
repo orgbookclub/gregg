@@ -1,9 +1,6 @@
-import { GoodreadsBookDto } from "@organizedbookclub/ows-client";
-import { Colors, EmbedBuilder } from "discord.js";
-
 import { errors } from "../../../config/constants";
 import { CommandHandler } from "../../../models";
-import { getAuthorString } from "../../../utils/bookUtils";
+import { getGoodreadsBookEmbed } from "../../../utils/bookUtils";
 import { errorHandler } from "../../../utils/errorHandler";
 
 /**
@@ -45,25 +42,5 @@ const handleBook: CommandHandler = async (bot, interaction) => {
     }
   }
 };
-
-function getGoodreadsBookEmbed(book: GoodreadsBookDto) {
-  const authorUrl = book.authors[0].url;
-  const embed = new EmbedBuilder()
-    .setTitle(book.title)
-    .setURL(book.url)
-    .setAuthor({ name: getAuthorString(book.authors), url: authorUrl })
-    .setDescription(book.description)
-    .setThumbnail(book.coverUrl)
-    .addFields(
-      { name: "Rating ⭐", value: `${book.avgRating}`, inline: true },
-      { name: "Pages 📄", value: `${book.numPages}`, inline: true },
-    )
-    .setFooter({ text: `Fetched from Goodreads` })
-    .setColor(Colors.Aqua);
-  if (book.genres.length > 0) {
-    embed.addFields({ name: "Genres 🔖", value: `${book.genres.join(", ")}` });
-  }
-  return embed;
-}
 
 export { handleBook };
