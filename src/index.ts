@@ -56,12 +56,10 @@ void (async () => {
     logger.error("Failed to import commands");
     return;
   }
-  if (process.env.NODE_ENV !== "production") {
-    logger.debug("Registering commands in development...");
-    const success = await registerCommands(bot);
-    if (!success) {
-      return;
-    }
+  logger.debug("Registering commands...");
+  const success = await registerCommands(bot);
+  if (!success) {
+    return;
   }
 
   logger.debug("Initializing database...");
