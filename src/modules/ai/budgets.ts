@@ -10,6 +10,15 @@ const DEFAULT_DAILY_TOKEN_BUDGET = 100_000;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 /**
+ * Hard safety ceiling on per-turn tokens that engages regardless of
+ * `enabled` or `bypassRoleId`. A runaway tool loop for a staff /
+ * bypass user must still terminate before spending an unbounded
+ * amount, so this absolute cap is intentionally non-configurable —
+ * it's a sanity stop, not a knob.
+ */
+const ABSOLUTE_TURN_MAX_TOKENS = 100_000;
+
+/**
  * Per-turn and per-day token budget knobs plus the controls that
  * disable enforcement entirely (`enabled=false`) or exempt members
  * with a specific role (`bypassRoleId`). Both ceilings count
@@ -109,7 +118,11 @@ export class BudgetChecker {
     const since = new Date(Date.now() - DAY_MS);
     try {
       const sessions = await this.db.aiSessions.findMany({
-        where: { guildId: key.guildId, userId: key.userId },
+        where: {
+          guildId: key.guildId,
+          userId: key.userId,
+          lastTurnAt: { gte: since },
+        },
         select: { id: true },
       });
       if (sessions.length === 0) {
@@ -147,12 +160,29 @@ export class BudgetChecker {
   /**
    * Pure check: has this turn's accumulated prompt+completion tokens
    * crossed the per-turn ceiling? Called by the agent loop after
-   * each Responses-API iteration.
+   * each Responses-API iteration. Respects the `enabled` /
+   * `bypassRoleId` policy; the caller gates this on
+   * `isEnforcedFor(member)`.
    *
    * @param totals The per-turn token accumulator the agent maintains.
    * @returns True if the loop should stop synthesising more tool calls.
    */
   isOverTurnBudget(totals: { prompt: number; completion: number }): boolean {
     return totals.prompt + totals.completion >= this.config.turnMaxTokens;
+  }
+
+  /**
+   * Pure check: has this turn's accumulated prompt+completion tokens
+   * crossed the absolute non-configurable safety ceiling? This fires
+   * even when budgets are globally disabled or the caller has the
+   * bypass role — its job is to stop a runaway tool loop from
+   * spending unbounded tokens, not to enforce a user policy. The
+   * agent loop calls this independently of `isOverTurnBudget`.
+   *
+   * @param totals The per-turn token accumulator the agent maintains.
+   * @returns True if the loop must stop regardless of any policy toggle.
+   */
+  isOverAbsoluteCap(totals: { prompt: number; completion: number }): boolean {
+    return totals.prompt + totals.completion >= ABSOLUTE_TURN_MAX_TOKENS;
   }
 }

@@ -45,11 +45,17 @@ const BOOK_LOOKUP_SCHEMA: OpenAI.Responses.Tool = {
  * skill and expects every field non-null, so missing values fall
  * back to safe defaults; the builder already guards URL fields
  * against empty strings before handing them to discord.js validators.
+ *
+ * `author.url` is intentionally left empty rather than falling back
+ * to the book URL — synthesising a wrong link (the author's name
+ * pointing at the book's page) is worse than rendering the author
+ * name as plain text. The embed builder's `authorUrl || undefined`
+ * guard handles this correctly.
  */
 function toGoodreadsDto(skill: GoodreadsBookSkillResult): GoodreadsBookDto {
   return {
     title: skill.title,
-    authors: skill.authors.map((name) => ({ name, url: skill.url ?? "" })),
+    authors: skill.authors.map((name) => ({ name, url: "" })),
     url: skill.url ?? "",
     coverUrl: skill.coverUrl ?? "",
     description: skill.description ?? "",

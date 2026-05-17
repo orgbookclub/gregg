@@ -37,10 +37,9 @@ export function isAllowed(
 
 /**
  * Strips mass-mention tokens from text the model will see. Prevents
- * prompt-injection attempts that try to get the bot to re-emit.
- *
- * @everyone / @here. Role mentions are also stripped because the bot
- * cannot meaningfully verify them in a stateless guard.
+ * prompt-injection attempts that try to get the bot to re-emit
+ * everyone/here pings. Role mentions are also stripped because the
+ * bot cannot meaningfully verify them in a stateless guard.
  *
  * @param text Raw user input.
  * @returns Sanitized text safe to send to the model.

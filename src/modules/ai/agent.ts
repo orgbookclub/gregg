@@ -218,7 +218,10 @@ export class AIAgent {
         isFirstIteration = false;
         this.accumulateUsage(totals, response);
         this.recordHostedToolCalls(response, toolCalls);
-        if (enforceBudgets && this.budgets.isOverTurnBudget(totals)) {
+        if (
+          this.budgets.isOverAbsoluteCap(totals) ||
+          (enforceBudgets && this.budgets.isOverTurnBudget(totals))
+        ) {
           finishReason = "budget";
           break;
         }
@@ -242,7 +245,10 @@ export class AIAgent {
           collectedArtifacts,
           totals,
         );
-        if (enforceBudgets && this.budgets.isOverTurnBudget(totals)) {
+        if (
+          this.budgets.isOverAbsoluteCap(totals) ||
+          (enforceBudgets && this.budgets.isOverTurnBudget(totals))
+        ) {
           finishReason = "budget";
           break;
         }

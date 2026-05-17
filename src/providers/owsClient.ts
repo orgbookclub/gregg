@@ -100,7 +100,7 @@ export class OWSClient {
    * absent or within {@link REFRESH_SKEW_SECONDS} of its expiry. Public
    * because secondary OWS surfaces (e.g. The MCP transport in the AI
    * module) need to share the same single-flight refresh and cache as
-   * the generated `*Api` clients..
+   * the generated `*Api` clients.
    *
    * @returns The current access token.
    */
