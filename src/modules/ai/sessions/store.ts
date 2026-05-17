@@ -5,12 +5,16 @@ import { AgentSource, SessionKey } from "../types";
 
 import { sessionCacheKey } from "./key";
 
+const DEFAULT_IDLE_MINUTES = 30;
+const DEFAULT_SESSION_MAX_PROMPT_TOKENS = 50_000;
+const DEFAULT_SESSION_MAX_COMPLETION_TOKENS = 20_000;
+
 /**
  * Active-session record cached in-memory and mirrored to Mongo. The
  * canonical row lives in the aiSessions collection; this struct is a
  * lightweight view of the fields the agent loop needs hot.
  */
-interface ActiveSession {
+export interface ActiveSession {
   id: string;
   key: SessionKey;
   source: AgentSource;
@@ -25,7 +29,7 @@ interface ActiveSession {
 /**
  * Per-turn statistics persisted by recordTurn.
  */
-interface TurnRecord {
+export interface TurnRecord {
   openaiResponseId: string;
   promptTokens: number;
   completionTokens: number;
@@ -36,7 +40,7 @@ interface TurnRecord {
 /**
  * Reason a session was closed. Mirrored into aiSessions.closeReason.
  */
-type SessionCloseReason =
+export type SessionCloseReason =
   | "idle"
   | "capped"
   | "revoked"
@@ -48,17 +52,11 @@ type SessionCloseReason =
  * Configuration knobs for session lifecycle policy. Defaults match the
  * AI_SESSION_* env vars described in the plan.
  */
-interface SessionStoreConfig {
+export interface SessionStoreConfig {
   idleMinutes: number;
   sessionMaxPromptTokens: number;
   sessionMaxCompletionTokens: number;
 }
-
-const DEFAULT_CONFIG: SessionStoreConfig = {
-  idleMinutes: 30,
-  sessionMaxPromptTokens: 50_000,
-  sessionMaxCompletionTokens: 20_000,
-};
 
 /**
  * Holds the active conversation for each (guild, channel/thread, user)
@@ -66,7 +64,7 @@ const DEFAULT_CONFIG: SessionStoreConfig = {
  * so the hot path is a single Map lookup; Mongo is the source of truth
  * across restarts.
  */
-class SessionStore {
+export class SessionStore {
   private cache: Map<string, ActiveSession> = new Map();
   private readonly db: PrismaClient;
   private readonly config: SessionStoreConfig;
@@ -79,7 +77,14 @@ class SessionStore {
    */
   constructor(db: PrismaClient, config: Partial<SessionStoreConfig> = {}) {
     this.db = db;
-    this.config = { ...DEFAULT_CONFIG, ...config };
+    this.config = {
+      idleMinutes: config.idleMinutes ?? DEFAULT_IDLE_MINUTES,
+      sessionMaxPromptTokens:
+        config.sessionMaxPromptTokens ?? DEFAULT_SESSION_MAX_PROMPT_TOKENS,
+      sessionMaxCompletionTokens:
+        config.sessionMaxCompletionTokens ??
+        DEFAULT_SESSION_MAX_COMPLETION_TOKENS,
+    };
   }
 
   /**
@@ -255,11 +260,3 @@ class SessionStore {
     return this.exceedsCap(session) ? "capped" : "idle";
   }
 }
-
-export { SessionStore };
-export type {
-  ActiveSession,
-  SessionCloseReason,
-  SessionStoreConfig,
-  TurnRecord,
-};

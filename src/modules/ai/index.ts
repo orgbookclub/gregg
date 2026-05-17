@@ -3,7 +3,10 @@ import { logger } from "../../utils/logHandler";
 
 import { AIAgent, AIAgentConfig } from "./agent";
 import { AiLogger } from "./logging";
+import { OwsMcpClient } from "./mcp/client";
 import { SessionStore } from "./sessions/store";
+import { McpToolSource } from "./tools/mcpToolSource";
+import { CompositeToolRegistry, ToolSource } from "./tools/registry";
 
 /**
  * Returns true when AI features are enabled via env. The bot bootstrap
@@ -34,6 +37,19 @@ function parseIntEnv(name: string, fallback: number): number {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+function buildMcpClient(bot: Bot): OwsMcpClient | null {
+  const explicit = process.env.OWS_MCP_URL;
+  const derived = bot.configs.apiUrl
+    ? `${bot.configs.apiUrl.replace(/\/$/, "")}/mcp`
+    : null;
+  const url = explicit ?? derived;
+  if (!url) {
+    logger.debug("AI module: no OWS_MCP_URL or API_URL — agent runs tool-less");
+    return null;
+  }
+  return new OwsMcpClient(url, bot.api);
+}
+
 /**
  * Bootstraps the AI agent for the bot. Returns null when AI is disabled
  * so the caller can attach (or not) without branching on env vars at
@@ -59,7 +75,13 @@ function createAIAgent(bot: Bot): AIAgent | null {
   const aiLogger = new AiLogger(bot.db, {
     logRaw: process.env.AI_LOG_RAW === "true",
   });
-  return AIAgent.create(bot, config, sessions, aiLogger);
+  const mcp = buildMcpClient(bot);
+  const sources: ToolSource[] = [];
+  if (mcp) {
+    sources.push(new McpToolSource(mcp));
+  }
+  const tools = new CompositeToolRegistry(sources);
+  return AIAgent.create(bot, config, sessions, aiLogger, tools);
 }
 
 export { AIAgent } from "./agent";
