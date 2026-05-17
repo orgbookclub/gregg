@@ -2,6 +2,7 @@ import { Bot } from "../../models";
 import { logger } from "../../utils/logHandler";
 
 import { AIAgent, AIAgentConfig } from "./agent";
+import { BudgetChecker } from "./budgets";
 import { createAzureFoundryClient } from "./client/azureClient";
 import { AiLogger } from "./logging";
 import { OwsMcpClient } from "./mcp/client";
@@ -80,6 +81,12 @@ function createAIAgent(bot: Bot): AIAgent | null {
       20_000,
     ),
   });
+  const budgets = new BudgetChecker(bot.db, {
+    enabled: process.env.AI_BUDGETS_ENABLED !== "false",
+    turnMaxTokens: parseIntEnv("AI_TURN_MAX_TOKENS", 10_000),
+    dailyTokenBudget: parseIntEnv("AI_DAILY_TOKEN_BUDGET", 100_000),
+    bypassRoleId: process.env.AI_BUDGET_BYPASS_ROLE_ID,
+  });
   const aiLogger = new AiLogger(bot.db, {
     logRaw: process.env.AI_LOG_RAW === "true",
   });
@@ -106,9 +113,13 @@ function createAIAgent(bot: Bot): AIAgent | null {
     sessions,
     aiLogger,
     tools,
+    budgets,
   );
 }
 
 export { AIAgent } from "./agent";
+export { deliverToInteraction, deliverToMessage } from "./deliver";
+export { isAllowed } from "./guards";
 export { aiMentionHandler } from "./listener";
+export type { AgentContext, SessionKey } from "./types";
 export { createAIAgent, isAiEnabled };

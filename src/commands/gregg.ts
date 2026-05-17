@@ -9,12 +9,14 @@ import { CommandHandler, Command } from "../models";
 import { errorHandler } from "../utils/errorHandler";
 
 import { handlePing, handleAbout } from "./subcommands/gregg";
+import { handleAsk } from "./subcommands/gregg/ask";
 import { handleEcho } from "./subcommands/gregg/echo";
 
 const handlers: Record<string, CommandHandler> = {
   ping: handlePing,
   about: handleAbout,
   echo: handleEcho,
+  ask: handleAsk,
 };
 
 const greggPingSubcommand = new SlashCommandSubcommandBuilder()
@@ -40,6 +42,20 @@ const greggEchoSubcommand = new SlashCommandSubcommandBuilder()
       .setDescription("The channel to send the message in")
       .addChannelTypes(ChannelType.GuildText),
   );
+
+const greggAskSubcommand = new SlashCommandSubcommandBuilder()
+  .setName("ask")
+  .setDescription(
+    "Ask the AI assistant a one-off question (no conversation history)",
+  )
+  .addStringOption((option) =>
+    option
+      .setName("query")
+      .setDescription("What you want to ask")
+      .setRequired(true)
+      .setMaxLength(1000),
+  );
+
 export const gregg: Command = {
   data: new SlashCommandBuilder()
     .setName("gregg")
@@ -47,6 +63,7 @@ export const gregg: Command = {
     .addSubcommand(greggPingSubcommand)
     .addSubcommand(greggInfoSubcommand)
     .addSubcommand(greggEchoSubcommand)
+    .addSubcommand(greggAskSubcommand)
     .setContexts(InteractionContextType.Guild),
   run: async (bot, interaction, guildConfig) => {
     try {

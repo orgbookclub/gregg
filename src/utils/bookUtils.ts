@@ -71,13 +71,15 @@ export function getGoodreadsBookEmbed(book: GoodreadsBookDto) {
       name: getAuthorString(book.authors),
       url: authorUrl || undefined,
     })
-    .setDescription(book.description)
     .addFields(
       { name: "Rating ⭐", value: `${book.avgRating}`, inline: true },
       { name: "Pages 📄", value: `${book.numPages}`, inline: true },
     )
     .setFooter({ text: `Fetched from Goodreads` })
     .setColor(Colors.Aqua);
+  if (book.description) {
+    embed.setDescription(book.description);
+  }
   if (book.url) {
     embed.setURL(book.url);
   }

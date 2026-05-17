@@ -3,6 +3,7 @@ import OpenAI from "openai";
 import { Bot } from "../../models";
 import { errorHandler } from "../../utils/errorHandler";
 
+import { BudgetChecker } from "./budgets";
 import { AzureFoundryConfig } from "./client/azureClient";
 import { sanitizeInput, sanitizeOutput } from "./guards";
 import { AiLogger } from "./logging";
@@ -103,6 +104,7 @@ export class AIAgent {
   private readonly sessions: SessionStore;
   private readonly aiLogger: AiLogger;
   private readonly tools: ToolRegistry;
+  private readonly budgets: BudgetChecker;
 
   /**
    * Initialises an AIAgent.
@@ -113,6 +115,7 @@ export class AIAgent {
    * @param sessions The SessionStore that owns conversation lifecycle.
    * @param aiLogger The per-turn logger writing to aiInteractions.
    * @param tools The ToolRegistry that lists and dispatches tools.
+   * @param budgets The BudgetChecker enforcing per-turn + per-day caps.
    */
   constructor(
     bot: Bot,
@@ -121,6 +124,7 @@ export class AIAgent {
     sessions: SessionStore,
     aiLogger: AiLogger,
     tools: ToolRegistry,
+    budgets: BudgetChecker,
   ) {
     this.bot = bot;
     this.client = client;
@@ -128,13 +132,13 @@ export class AIAgent {
     this.sessions = sessions;
     this.aiLogger = aiLogger;
     this.tools = tools;
+    this.budgets = budgets;
   }
 
   /**
-   * Convenience constructor that reuses the supplied client + store +
-   * logger + registry. The OpenAI client is built in the bootstrap so
-   * it can be shared with the GoodreadsBookSkill that backs the
-   * book_lookup tool.
+   * Convenience constructor that reuses the supplied dependencies.
+   * The OpenAI client is built in the bootstrap so it can be shared
+   * with the GoodreadsBookSkill that backs the book_lookup tool.
    *
    * @param bot The bot instance, used for canonical error reporting.
    * @param client The OpenAI SDK client pointed at Foundry.
@@ -142,6 +146,7 @@ export class AIAgent {
    * @param sessions The SessionStore instance.
    * @param aiLogger The AiLogger instance.
    * @param tools The ToolRegistry instance.
+   * @param budgets The BudgetChecker instance.
    * @returns A ready-to-use agent.
    */
   static create(
@@ -151,17 +156,19 @@ export class AIAgent {
     sessions: SessionStore,
     aiLogger: AiLogger,
     tools: ToolRegistry,
+    budgets: BudgetChecker,
   ): AIAgent {
-    return new AIAgent(bot, client, model, sessions, aiLogger, tools);
+    return new AIAgent(bot, client, model, sessions, aiLogger, tools, budgets);
   }
 
   /**
-   * Runs one conversation turn. Resolves or extends a session for the
-   * caller's context, calls the Responses API with chained
+   * Runs one conversation turn. Refuses upfront when the user's
+   * rolling 24h budget is spent, otherwise resolves or extends a
+   * session, calls the Responses API with chained
    * previous_response_id when applicable, runs the function-call
    * dispatch loop until the model produces a final message (or hits
-   * the iteration cap), persists usage, and returns the structured
-   * result for the caller to deliver.
+   * the iteration cap or per-turn token cap), persists usage, and
+   * returns the structured result for the caller to deliver.
    *
    * @param input Raw text from the user (will be sanitized).
    * @param context Per-call context from the caller.
@@ -169,6 +176,19 @@ export class AIAgent {
    */
   async run(input: string, context: AgentContext): Promise<AgentResult> {
     const startedAt = Date.now();
+    const enforceBudgets = this.budgets.isEnforcedFor(context.member);
+    if (enforceBudgets) {
+      const dailyCheck = await this.budgets.checkDailyBudget(
+        context.sessionKey,
+      );
+      if (!dailyCheck.ok) {
+        return this.dailyBudgetRefusal(
+          dailyCheck.usedTokens,
+          dailyCheck.budget,
+          startedAt,
+        );
+      }
+    }
     const sanitized = sanitizeInput(input);
     const session = await this.sessions.getOrCreate(
       context.sessionKey,
@@ -198,6 +218,10 @@ export class AIAgent {
         isFirstIteration = false;
         this.accumulateUsage(totals, response);
         this.recordHostedToolCalls(response, toolCalls);
+        if (enforceBudgets && this.budgets.isOverTurnBudget(totals)) {
+          finishReason = "budget";
+          break;
+        }
         const funcCalls = response.output.filter(
           (item): item is OpenAI.Responses.ResponseFunctionToolCall =>
             item.type === "function_call",
@@ -218,6 +242,10 @@ export class AIAgent {
           collectedArtifacts,
           totals,
         );
+        if (enforceBudgets && this.budgets.isOverTurnBudget(totals)) {
+          finishReason = "budget";
+          break;
+        }
         chainAnchor = response.id;
         nextInput = outputs;
       }
@@ -410,6 +438,44 @@ export class AIAgent {
         toolCalls,
         latencyMs: Date.now() - startedAt,
         finishReason: "error",
+        costUsdEstimate: 0,
+      },
+    };
+  }
+
+  /**
+   * Builds a refusal AgentResult when the user has exhausted their
+   * rolling 24h token budget. No session is created and no
+   * Responses-API call is made — the refusal is the entire turn.
+   * Skips persisting an aiInteractions row because there's no
+   * sessionId to attach it to and the refusal carries zero tokens.
+   * The returned `session` field is null because no aiSessions row
+   * was opened; callers that need session metadata must handle
+   * null gracefully.
+   *
+   * @param used Tokens used in the last 24h (for the user-facing message).
+   * @param budget Configured daily budget (for the user-facing message).
+   * @param startedAt The wall-clock time the run() invocation began.
+   * @returns A budget-refusal AgentResult.
+   */
+  private dailyBudgetRefusal(
+    used: number,
+    budget: number,
+    startedAt: number,
+  ): AgentResult {
+    const text =
+      `You've used ${used.toLocaleString()} of your ${budget.toLocaleString()} ` +
+      "daily token budget. Please try again later.";
+    return {
+      text,
+      session: null,
+      meta: {
+        promptTokens: 0,
+        completionTokens: 0,
+        reasoningTokens: 0,
+        toolCalls: [],
+        latencyMs: Date.now() - startedAt,
+        finishReason: "budget",
         costUsdEstimate: 0,
       },
     };

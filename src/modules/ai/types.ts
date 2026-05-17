@@ -83,11 +83,18 @@ export interface AgentResult {
   )[];
   attachments?: AttachmentBuilder[];
   ephemeralPreferred?: boolean;
+  /**
+   * The aiSessions row this turn belongs to, or null when the agent
+   * declined to run (e.g. Budget refusal) and no session was opened.
+   * Callers that want to surface "this came from session X" can rely
+   * on a non-null value only for turns that actually invoked the
+   * model.
+   */
   session: {
     sessionId: string;
     openaiResponseId: string;
     turnIndex: number;
-  };
+  } | null;
   meta: {
     promptTokens: number;
     completionTokens: number;

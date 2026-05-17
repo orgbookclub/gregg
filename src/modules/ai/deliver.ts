@@ -1,6 +1,9 @@
 import {
   ActionRowBuilder,
+  ChatInputCommandInteraction,
   ContainerBuilder,
+  InteractionEditReplyOptions,
+  InteractionReplyOptions,
   Message,
   MessageActionRowComponentBuilder,
   MessageCreateOptions,
@@ -103,4 +106,44 @@ async function deliverToMessage(
   }
 }
 
-export { deliverToMessage };
+/**
+ * Posts an AgentResult to a deferred ChatInputCommandInteraction. The
+ * first non-ComponentsV2 payload edits the deferred reply (replacing
+ * the "Loading..." state); any additional payloads — including the
+ * separate CV2 container — go out as follow-ups. If every payload is
+ * CV2 (interaction.editReply can't carry the IsComponentsV2 flag),
+ * the deferred reply is deleted and all payloads land as follow-ups.
+ * The caller is responsible for having called interaction.deferReply
+ * before invoking the agent.
+ *
+ * @param interaction The deferred slash command interaction.
+ * @param result The agent's result to deliver.
+ */
+async function deliverToInteraction(
+  interaction: ChatInputCommandInteraction,
+  result: AgentResult,
+): Promise<void> {
+  const payloads = buildPayloads(result);
+  let editedDeferred = false;
+  for (const payload of payloads) {
+    const isCv2 = ((payload.flags as number) ?? 0) !== 0;
+    if (!editedDeferred && !isCv2) {
+      const editable: InteractionEditReplyOptions = {
+        content: payload.content ?? null,
+        embeds: payload.embeds ?? [],
+        components: payload.components ?? [],
+        files: payload.files ?? [],
+        allowedMentions: payload.allowedMentions,
+      };
+      await interaction.editReply(editable);
+      editedDeferred = true;
+      continue;
+    }
+    await interaction.followUp(payload as unknown as InteractionReplyOptions);
+  }
+  if (!editedDeferred) {
+    await interaction.deleteReply().catch(() => undefined);
+  }
+}
+
+export { deliverToInteraction, deliverToMessage };
