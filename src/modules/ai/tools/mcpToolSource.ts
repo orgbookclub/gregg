@@ -18,10 +18,14 @@ function toFunctionTool(tool: McpToolDefinition): OpenAI.Responses.Tool {
 /**
  * A ToolSource backed by an OwsMcpClient. Lazily fetches and caches
  * the OWS MCP tool catalogue, exposes each tool as an OpenAI function
- * tool, and dispatches calls back over MCP.
+ * tool, and dispatches calls back over MCP. An optional deny-list of
+ * tool names hides server-side tools the agent shouldn't see — useful
+ * when the OWS catalogue exposes power-user tools the AI's default
+ * flow shouldn't pick by accident.
  */
 export class McpToolSource implements ToolSource {
   private readonly mcp: OwsMcpClient;
+  private readonly denyList: Set<string>;
   private toolsCache: OpenAI.Responses.Tool[] | null = null;
   private nameSet: Set<string> = new Set();
 
@@ -29,9 +33,12 @@ export class McpToolSource implements ToolSource {
    * Constructs an MCP-backed tool source.
    *
    * @param mcp The connected OwsMcpClient.
+   * @param options Optional configuration; `denyList` hides server-side
+   *   tools from the agent's catalogue.
    */
-  constructor(mcp: OwsMcpClient) {
+  constructor(mcp: OwsMcpClient, options: { denyList?: string[] } = {}) {
     this.mcp = mcp;
+    this.denyList = new Set(options.denyList ?? []);
   }
 
   /**
@@ -39,6 +46,8 @@ export class McpToolSource implements ToolSource {
    * tool shape. The first call connects to MCP and caches the result;
    * subsequent calls are zero-cost. MCP errors are logged and treated
    * as "no tools" so the agent can still respond from training data.
+   * Tools named in the constructor's deny-list are filtered out before
+   * caching.
    *
    * @returns The MCP tools as function tools.
    */
@@ -46,8 +55,9 @@ export class McpToolSource implements ToolSource {
     if (this.toolsCache) return this.toolsCache;
     try {
       const tools = await this.mcp.listTools();
-      this.toolsCache = tools.map(toFunctionTool);
-      this.nameSet = new Set(tools.map((t) => t.name));
+      const allowed = tools.filter((t) => !this.denyList.has(t.name));
+      this.toolsCache = allowed.map(toFunctionTool);
+      this.nameSet = new Set(allowed.map((t) => t.name));
       return this.toolsCache;
     } catch (err) {
       logger.warn(err, "MCP tools/list failed; agent will run tool-less");

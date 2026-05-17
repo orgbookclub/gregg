@@ -1,22 +1,55 @@
+import {
+  ActionRowBuilder,
+  AttachmentBuilder,
+  ContainerBuilder,
+  EmbedBuilder,
+  MessageActionRowComponentBuilder,
+} from "discord.js";
 import OpenAI from "openai";
 
 import { logger } from "../../../utils/logHandler";
+import { ToolCallLog } from "../types";
 
 function getToolName(tool: OpenAI.Responses.Tool): string | undefined {
   return (tool as { name?: string }).name;
 }
 
 /**
+ * Discord-renderable artifacts a tool may emit alongside the text it
+ * returns to the model. Collected by the agent loop and merged into
+ * the final AgentResult for delivery. All fields are optional —
+ * non-render tools simply omit this from their dispatch result.
+ */
+export interface ToolArtifacts {
+  embeds?: EmbedBuilder[];
+  components?: (
+    | ActionRowBuilder<MessageActionRowComponentBuilder>
+    | ContainerBuilder
+  )[];
+  attachments?: AttachmentBuilder[];
+}
+
+/**
  * Outcome of dispatching a single function tool call. The agent loop
- * converts this into a `function_call_output` item for the Responses
- * API. `ok=false` covers both transport-level failures and
- * tool-reported errors; the agent surfaces it as a `tool_error` finish
- * reason without crashing the turn.
+ * converts `text` into a `function_call_output` item for the Responses
+ * API and merges any `artifacts` into the final AgentResult. `ok=false`
+ * covers both transport-level failures and tool-reported errors; the
+ * agent surfaces it as a `tool_error` finish reason without crashing
+ * the turn.
+ *
+ * `nestedCalls` and `nestedUsage` let a handler that invokes a skill
+ * (or otherwise makes its own sub-model-calls — e.g. The book_lookup
+ * handler calling the GoodreadsBookSkill) surface those calls into
+ * the turn's audit log and token totals. The agent merges them after
+ * the parent call's own log entry.
  */
 export interface ToolDispatchResult {
   ok: boolean;
   text: string;
   errorCode?: string;
+  artifacts?: ToolArtifacts;
+  nestedCalls?: ToolCallLog[];
+  nestedUsage?: { prompt: number; completion: number; reasoning: number };
 }
 
 /**

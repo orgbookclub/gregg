@@ -52,7 +52,7 @@ export interface ToolCallLog {
  * Identifies the Discord-renderable artifact type a render tool emitted.
  * Used by the deliver layer to choose between embeds and IsComponentsV2.
  */
-export type ArtifactKind = "embed" | "containerV2";
+export type ArtifactKind = "embed" | "containerV2" | "actionRow" | "attachment";
 
 /**
  * Why the agent loop stopped on a given turn. Mirrored into

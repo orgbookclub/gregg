@@ -2,9 +2,12 @@ import { Bot } from "../../models";
 import { logger } from "../../utils/logHandler";
 
 import { AIAgent, AIAgentConfig } from "./agent";
+import { createAzureFoundryClient } from "./client/azureClient";
 import { AiLogger } from "./logging";
 import { OwsMcpClient } from "./mcp/client";
 import { SessionStore } from "./sessions/store";
+import { GoodreadsBookSkill } from "./skills/goodreadsBookSkill";
+import { LocalToolSource } from "./tools/localToolSource";
 import { McpToolSource } from "./tools/mcpToolSource";
 import { CompositeToolRegistry, ToolSource } from "./tools/registry";
 
@@ -64,6 +67,11 @@ function createAIAgent(bot: Bot): AIAgent | null {
     return null;
   }
   const config = readConfigFromEnv();
+  const client = createAzureFoundryClient(config.foundry);
+  const goodreadsBookSkill = new GoodreadsBookSkill({
+    client,
+    model: config.foundry.model,
+  });
   const sessions = new SessionStore(bot.db, {
     idleMinutes: parseIntEnv("AI_SESSION_IDLE_MINUTES", 30),
     sessionMaxPromptTokens: parseIntEnv("AI_SESSION_MAX_PROMPT_TOKENS", 50_000),
@@ -78,10 +86,27 @@ function createAIAgent(bot: Bot): AIAgent | null {
   const mcp = buildMcpClient(bot);
   const sources: ToolSource[] = [];
   if (mcp) {
-    sources.push(new McpToolSource(mcp));
+    sources.push(
+      new McpToolSource(mcp, {
+        denyList: [
+          "goodreads_search_books",
+          "storygraph_search_books",
+          "goodreads_search_and_get_book",
+          "storygraph_search_and_get_book",
+        ],
+      }),
+    );
   }
+  sources.push(new LocalToolSource({ bot, goodreadsBookSkill }));
   const tools = new CompositeToolRegistry(sources);
-  return AIAgent.create(bot, config, sessions, aiLogger, tools);
+  return AIAgent.create(
+    bot,
+    client,
+    config.foundry.model,
+    sessions,
+    aiLogger,
+    tools,
+  );
 }
 
 export { AIAgent } from "./agent";

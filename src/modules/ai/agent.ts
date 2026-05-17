@@ -3,23 +3,30 @@ import OpenAI from "openai";
 import { Bot } from "../../models";
 import { errorHandler } from "../../utils/errorHandler";
 
-import {
-  AzureFoundryConfig,
-  createAzureFoundryClient,
-} from "./client/azureClient";
+import { AzureFoundryConfig } from "./client/azureClient";
 import { sanitizeInput, sanitizeOutput } from "./guards";
 import { AiLogger } from "./logging";
 import { buildInstructions } from "./prompts/promptBuilder";
 import { ActiveSession, SessionStore } from "./sessions/store";
-import { ToolRegistry } from "./tools/registry";
+import { ToolArtifacts, ToolRegistry } from "./tools/registry";
 import {
   AgentContext,
   AgentFinishReason,
   AgentResult,
+  ArtifactKind,
   ToolCallLog,
 } from "./types";
 
 const MAX_TOOL_ITERATIONS = 6;
+
+/**
+ * Hosted web_search tool exposed to the model on every turn. Foundry
+ * runs the search server-side; the SDK surfaces a web_search_call
+ * output item and incorporates the result into the assistant message
+ * with markdown `[label](url)` citations. We never dispatch it via
+ * the registry.
+ */
+const WEB_SEARCH_TOOL = { type: "web_search" } as OpenAI.Responses.Tool;
 
 type ParseResult = { ok: true; value: unknown } | { ok: false; error: string };
 
@@ -30,6 +37,44 @@ function safeParseJson(raw: string): ParseResult {
   } catch (err) {
     return { ok: false, error: (err as Error).message };
   }
+}
+
+function mergeArtifacts(
+  target: ToolArtifacts,
+  source: ToolArtifacts | undefined,
+): void {
+  if (!source) return;
+  if (source.embeds && source.embeds.length > 0) {
+    target.embeds = [...(target.embeds ?? []), ...source.embeds];
+  }
+  if (source.components && source.components.length > 0) {
+    target.components = [...(target.components ?? []), ...source.components];
+  }
+  if (source.attachments && source.attachments.length > 0) {
+    target.attachments = [...(target.attachments ?? []), ...source.attachments];
+  }
+}
+
+function summarizeArtifacts(
+  artifacts: ToolArtifacts,
+): { kind: ArtifactKind; index: number }[] {
+  const summary: { kind: ArtifactKind; index: number }[] = [];
+  (artifacts.embeds ?? []).forEach((_, i) =>
+    summary.push({ kind: "embed", index: i }),
+  );
+  (artifacts.components ?? []).forEach((component, i) =>
+    summary.push({
+      kind:
+        component.constructor.name === "ContainerBuilder"
+          ? "containerV2"
+          : "actionRow",
+      index: i,
+    }),
+  );
+  (artifacts.attachments ?? []).forEach((_, i) =>
+    summary.push({ kind: "attachment", index: i }),
+  );
+  return summary;
 }
 
 /**
@@ -86,11 +131,14 @@ export class AIAgent {
   }
 
   /**
-   * Convenience constructor that wires up the OpenAI client from a
-   * config bundle and reuses the supplied store + logger + registry.
+   * Convenience constructor that reuses the supplied client + store +
+   * logger + registry. The OpenAI client is built in the bootstrap so
+   * it can be shared with the GoodreadsBookSkill that backs the
+   * book_lookup tool.
    *
    * @param bot The bot instance, used for canonical error reporting.
-   * @param config Foundry endpoint + model.
+   * @param client The OpenAI SDK client pointed at Foundry.
+   * @param model The Foundry model deployment name.
    * @param sessions The SessionStore instance.
    * @param aiLogger The AiLogger instance.
    * @param tools The ToolRegistry instance.
@@ -98,20 +146,13 @@ export class AIAgent {
    */
   static create(
     bot: Bot,
-    config: AIAgentConfig,
+    client: OpenAI,
+    model: string,
     sessions: SessionStore,
     aiLogger: AiLogger,
     tools: ToolRegistry,
   ): AIAgent {
-    const client = createAzureFoundryClient(config.foundry);
-    return new AIAgent(
-      bot,
-      client,
-      config.foundry.model,
-      sessions,
-      aiLogger,
-      tools,
-    );
+    return new AIAgent(bot, client, model, sessions, aiLogger, tools);
   }
 
   /**
@@ -134,25 +175,29 @@ export class AIAgent {
       context.source,
     );
     const isFirstTurn = session.lastResponseId === null;
-    const tools = await this.tools.list();
+    const registryTools = await this.tools.list();
+    const tools = [...registryTools, WEB_SEARCH_TOOL];
     const totals = { prompt: 0, completion: 0, reasoning: 0 };
     const toolCalls: ToolCallLog[] = [];
+    const collectedArtifacts: ToolArtifacts = {};
     let chainAnchor = session.lastResponseId;
     let nextInput: OpenAI.Responses.ResponseCreateParams["input"] = sanitized;
     let finishReason: AgentFinishReason = "stop";
     let response: OpenAI.Responses.Response | null = null;
-    let sendInstructions = isFirstTurn;
+    const turnInstructions = buildInstructions();
+    let isFirstIteration = true;
     try {
       for (let iter = 0; iter < MAX_TOOL_ITERATIONS; iter++) {
         const isLastIter = iter === MAX_TOOL_ITERATIONS - 1;
         response = await this.callResponses({
-          instructions: sendInstructions ? buildInstructions() : undefined,
+          instructions: isFirstIteration ? turnInstructions : undefined,
           previousResponseId: chainAnchor,
           input: nextInput,
           tools: isLastIter ? undefined : tools,
         });
-        sendInstructions = false;
+        isFirstIteration = false;
         this.accumulateUsage(totals, response);
+        this.recordHostedToolCalls(response, toolCalls);
         const funcCalls = response.output.filter(
           (item): item is OpenAI.Responses.ResponseFunctionToolCall =>
             item.type === "function_call",
@@ -167,7 +212,12 @@ export class AIAgent {
           finishReason = "length";
           break;
         }
-        const outputs = await this.dispatchToolCalls(funcCalls, toolCalls);
+        const outputs = await this.dispatchToolCalls(
+          funcCalls,
+          toolCalls,
+          collectedArtifacts,
+          totals,
+        );
         chainAnchor = response.id;
         nextInput = outputs;
       }
@@ -195,13 +245,16 @@ export class AIAgent {
       completionTokens: totals.completion,
       reasoningTokens: totals.reasoning,
       toolCalls,
-      artifacts: [],
+      artifacts: summarizeArtifacts(collectedArtifacts),
       latencyMs: Date.now() - startedAt,
       finishReason,
       costUsdEstimate: 0,
     });
     return {
       text: outputText || undefined,
+      embeds: collectedArtifacts.embeds,
+      components: collectedArtifacts.components,
+      attachments: collectedArtifacts.attachments,
       session: {
         sessionId: session.id,
         openaiResponseId: response.id,
@@ -224,6 +277,7 @@ export class AIAgent {
     previousResponseId: string | null;
     input: OpenAI.Responses.ResponseCreateParams["input"];
     tools: OpenAI.Responses.Tool[] | undefined;
+    toolChoice?: OpenAI.Responses.ResponseCreateParams["tool_choice"];
   }): Promise<OpenAI.Responses.Response> {
     const hasTools = args.tools !== undefined && args.tools.length > 0;
     return await this.client.responses.create({
@@ -235,6 +289,8 @@ export class AIAgent {
       tools: hasTools ? args.tools : undefined,
       // eslint-disable-next-line camelcase
       parallel_tool_calls: hasTools ? false : undefined,
+      // eslint-disable-next-line camelcase
+      tool_choice: hasTools ? args.toolChoice : undefined,
     });
   }
 
@@ -248,9 +304,33 @@ export class AIAgent {
       response.usage?.output_tokens_details?.reasoning_tokens ?? 0;
   }
 
+  private recordHostedToolCalls(
+    response: OpenAI.Responses.Response,
+    log: ToolCallLog[],
+  ): void {
+    for (const item of response.output) {
+      if (item.type === "web_search_call") {
+        const call = item as {
+          type: "web_search_call";
+          status?: string;
+          action?: unknown;
+        };
+        log.push({
+          name: "web_search",
+          args: call.action,
+          ok: call.status !== "failed",
+          latencyMs: 0,
+          errorCode: call.status === "failed" ? "tool_error" : undefined,
+        });
+      }
+    }
+  }
+
   private async dispatchToolCalls(
     funcCalls: OpenAI.Responses.ResponseFunctionToolCall[],
     log: ToolCallLog[],
+    artifacts: ToolArtifacts,
+    totals: { prompt: number; completion: number; reasoning: number },
   ): Promise<OpenAI.Responses.ResponseInputItem[]> {
     const outputs: OpenAI.Responses.ResponseInputItem[] = [];
     for (const call of funcCalls) {
@@ -270,6 +350,7 @@ export class AIAgent {
           errorCode: "invalid_arguments",
         };
       }
+      mergeArtifacts(artifacts, result.artifacts);
       log.push({
         name: call.name,
         args: parsed.ok ? parsed.value : { __unparsed: call.arguments },
@@ -277,6 +358,14 @@ export class AIAgent {
         latencyMs: Date.now() - toolStart,
         errorCode: result.errorCode,
       });
+      if (result.nestedCalls && result.nestedCalls.length > 0) {
+        log.push(...result.nestedCalls);
+      }
+      if (result.nestedUsage) {
+        totals.prompt += result.nestedUsage.prompt;
+        totals.completion += result.nestedUsage.completion;
+        totals.reasoning += result.nestedUsage.reasoning;
+      }
       outputs.push({
         type: "function_call_output",
         // eslint-disable-next-line camelcase

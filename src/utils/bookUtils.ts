@@ -1,4 +1,9 @@
-import { AuthorDto, BookDto } from "@organizedbookclub/ows-client";
+import {
+  AuthorDto,
+  BookDto,
+  GoodreadsBookDto,
+  StorygraphBookDto,
+} from "@organizedbookclub/ows-client";
 import { EmbedBuilder, Colors } from "discord.js";
 
 /**
@@ -46,5 +51,86 @@ export function getBookSearchEmbed(
     .setDescription(description)
     .setFooter({ text: `Fetched from ${source}` })
     .setColor(source === "Goodreads" ? Colors.Aqua : Colors.DarkAqua);
+  return embed;
+}
+
+/**
+ * Creates an embed displaying a single book's details fetched from
+ * Goodreads. Shared between the `/goodreads book` slash command and the
+ * AI agent's book-lookup render tool so the visual presentation stays
+ * in lockstep across surfaces.
+ *
+ * @param book The Goodreads book DTO.
+ * @returns The Goodreads book embed.
+ */
+export function getGoodreadsBookEmbed(book: GoodreadsBookDto) {
+  const authorUrl = book.authors[0].url;
+  const embed = new EmbedBuilder()
+    .setTitle(book.title)
+    .setAuthor({
+      name: getAuthorString(book.authors),
+      url: authorUrl || undefined,
+    })
+    .setDescription(book.description)
+    .addFields(
+      { name: "Rating ⭐", value: `${book.avgRating}`, inline: true },
+      { name: "Pages 📄", value: `${book.numPages}`, inline: true },
+    )
+    .setFooter({ text: `Fetched from Goodreads` })
+    .setColor(Colors.Aqua);
+  if (book.url) {
+    embed.setURL(book.url);
+  }
+  if (book.coverUrl) {
+    embed.setThumbnail(book.coverUrl);
+  }
+  if (book.genres.length > 0) {
+    embed.addFields({ name: "Genres 🔖", value: `${book.genres.join(", ")}` });
+  }
+  return embed;
+}
+
+/**
+ * Creates an embed displaying a single book's details fetched from
+ * Storygraph. Shared between the `/storygraph book` slash command and
+ * the AI agent's book-lookup render tool so the visual presentation
+ * stays in lockstep across surfaces.
+ *
+ * @param book The Storygraph book DTO.
+ * @returns The Storygraph book embed.
+ */
+export function getStorygraphBookEmbed(book: StorygraphBookDto) {
+  const authorUrl = book.authors[0].url;
+  const embed = new EmbedBuilder()
+    .setTitle(book.title)
+    .setAuthor({
+      name: getAuthorString(book.authors),
+      url: authorUrl || undefined,
+    })
+    .addFields(
+      { name: "Rating ⭐", value: `${book.avgRating}`, inline: true },
+      { name: "Pages 📄", value: book.numPages.toString(), inline: true },
+      {
+        name: "Moods 🤔",
+        value: `${book.moods.slice(0, 3).join(", ")}`,
+        inline: false,
+      },
+      { name: "Pace 🏃‍♂️", value: `${book.pace.join(", ")}`, inline: true },
+    )
+    .setFooter({ text: `Fetched from Storygraph` })
+    .setColor(Colors.DarkAqua);
+  if (book.url) {
+    embed.setURL(book.url);
+  }
+  if (book.coverUrl) {
+    embed.setThumbnail(book.coverUrl);
+  }
+  book.quesAns.forEach((element) => {
+    embed.addFields({
+      name: `🔹 ${element.question}`,
+      value: element.answer,
+      inline: false,
+    });
+  });
   return embed;
 }

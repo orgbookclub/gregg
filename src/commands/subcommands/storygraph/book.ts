@@ -1,9 +1,6 @@
-import { StorygraphBookDto } from "@organizedbookclub/ows-client";
-import { Colors, EmbedBuilder } from "discord.js";
-
 import { errors } from "../../../config/constants";
 import { CommandHandler } from "../../../models";
-import { getAuthorString } from "../../../utils/bookUtils";
+import { getStorygraphBookEmbed } from "../../../utils/bookUtils";
 import { errorHandler } from "../../../utils/errorHandler";
 
 /**
@@ -42,34 +39,5 @@ const handleBook: CommandHandler = async (bot, interaction) => {
     }
   }
 };
-
-function getStorygraphBookEmbed(book: StorygraphBookDto) {
-  const authorUrl = book.authors[0].url;
-  const embed = new EmbedBuilder()
-    .setTitle(book.title)
-    .setURL(book.url)
-    .setAuthor({ name: getAuthorString(book.authors), url: authorUrl })
-    .setThumbnail(book.coverUrl)
-    .addFields(
-      { name: "Rating ⭐", value: `${book.avgRating}`, inline: true },
-      { name: "Pages 📄", value: book.numPages.toString(), inline: true },
-      {
-        name: "Moods 🤔",
-        value: `${book.moods.slice(0, 3).join(", ")}`,
-        inline: false,
-      },
-      { name: "Pace 🏃‍♂️", value: `${book.pace.join(", ")}`, inline: true },
-    )
-    .setFooter({ text: `Fetched from Storygraph` })
-    .setColor(Colors.DarkAqua);
-  book.quesAns.forEach((element) => {
-    embed.addFields({
-      name: `🔹 ${element.question}`,
-      value: element.answer,
-      inline: false,
-    });
-  });
-  return embed;
-}
 
 export { handleBook };
