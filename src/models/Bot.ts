@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { Client, WebhookClient } from "discord.js";
 
+import { AIAgent } from "../modules/ai";
 import { OWSClient } from "../providers/owsClient";
 
 import { Command } from "./commands/Command";
@@ -28,4 +29,5 @@ export interface Bot extends Client {
   jobManager: JobManager;
   cooldowns: Record<string, Record<string, number>>;
   debugHook: WebhookClient;
+  ai: AIAgent | null;
 }

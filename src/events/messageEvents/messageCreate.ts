@@ -1,6 +1,7 @@
 import { ChannelType, Events, Message } from "discord.js";
 
 import { Bot, Event } from "../../models";
+import { aiMentionHandler } from "../../modules/ai";
 import { errorHandler } from "../../utils/errorHandler";
 
 const messageCreate: Event = {
@@ -13,6 +14,7 @@ const messageCreate: Event = {
       }
 
       await upsertMessageCountInDb(bot, message);
+      await aiMentionHandler(bot, message);
     } catch (error) {
       await errorHandler(
         bot,
