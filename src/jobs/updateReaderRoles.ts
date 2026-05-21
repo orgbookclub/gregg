@@ -16,6 +16,7 @@ import { titles } from "../config/constants";
 import { Bot, Job } from "../models";
 import {
   DateWindow,
+  isAllTimeWindow,
   toEventEndDateFilter,
   windowFromPreset,
 } from "../utils/dateWindow";
@@ -137,7 +138,7 @@ async function processReaderRole(
   // recognition tier — "Reader of the Month/Year" — awarded to the member(s)
   // with the highest score in the window, provided they also clear the
   // configured points floor. Ties result in all tied members holding the role.
-  const isTopScorerMode = readerRole.window !== "all-time";
+  const isTopScorerMode = !isAllTimeWindow(window);
   let winners: Set<string> | undefined;
   if (isTopScorerMode) {
     let maxPoints = -1;
