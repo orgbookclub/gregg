@@ -16,6 +16,7 @@ import { titles } from "../config/constants";
 import { Bot, Job } from "../models";
 import {
   DateWindow,
+  isAllTimeWindow,
   toEventEndDateFilter,
   windowFromPreset,
 } from "../utils/dateWindow";
@@ -133,17 +134,77 @@ async function processReaderRole(
     if (hasRole(member, role.id)) candidateIds.add(member.id);
   }
 
+  // For non-all-time windows (e.g. "this-year", "this-month") the role is a
+  // recognition tier — "Reader of the Month/Year" — awarded to the member(s)
+  // with the highest score in the window, provided they also clear the
+  // configured points floor. Ties result in all tied members holding the role.
+  const isTopScorerMode = !isAllTimeWindow(window);
+  let winners: Set<string> | undefined;
+  if (isTopScorerMode) {
+    let maxPoints = -1;
+    for (const discordId of candidateIds) {
+      if (!guildMembers.has(discordId)) continue;
+      const points = scoreMap.get(discordId) ?? 0;
+      if (points >= readerRole.points && points > maxPoints) {
+        maxPoints = points;
+      }
+    }
+    winners = new Set<string>();
+    if (maxPoints >= readerRole.points && maxPoints > 0) {
+      for (const discordId of candidateIds) {
+        if (!guildMembers.has(discordId)) continue;
+        const points = scoreMap.get(discordId) ?? 0;
+        if (points === maxPoints) winners.add(discordId);
+      }
+    }
+  }
+
   for (const discordId of candidateIds) {
     const member = guildMembers.get(discordId);
     if (!member) continue;
     const points = scoreMap.get(discordId) ?? 0;
-    await updateMemberRole(
-      role,
-      readerRole.points,
-      member,
-      points,
-      logWebhookUrl,
+    if (isTopScorerMode && winners) {
+      await updateMemberRoleTopScorer(
+        role,
+        member,
+        winners.has(discordId),
+        logWebhookUrl,
+      );
+    } else {
+      await updateMemberRole(
+        role,
+        readerRole.points,
+        member,
+        points,
+        logWebhookUrl,
+      );
+    }
+  }
+}
+
+async function updateMemberRoleTopScorer(
+  role: Role,
+  member: GuildMember,
+  shouldHold: boolean,
+  logWebhookUrl: string,
+) {
+  const embed = new EmbedBuilder()
+    .setColor(Colors.Gold)
+    .setTitle(titles.ReaderRoleUpdate)
+    .setTimestamp();
+
+  if (hasRole(member, role.id) && !shouldHold) {
+    await member.roles.remove(role);
+    embed.setDescription(
+      `${roleMention(role.id)} removed from ${userMention(member.id)}`,
     );
+    await logToWebhook({ embeds: [embed] }, logWebhookUrl);
+  } else if (!hasRole(member, role.id) && shouldHold) {
+    await member.roles.add(role);
+    embed.setDescription(
+      `${roleMention(role.id)} added to ${userMention(member.id)}`,
+    );
+    await logToWebhook({ embeds: [embed] }, logWebhookUrl);
   }
 }
 
