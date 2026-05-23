@@ -46,7 +46,7 @@
   },
   "devDependencies": {
     "@eslint/compat": "^1.2.7",
-    "@eslint/eslintrc": "^3.3.0",
+    "@eslint/eslintrc": "^3.3.5",
     "@eslint/js": "^9.39.2",
     "@types/express": "^4.17.17",
     "@types/node": "^24.12.4",
