@@ -25,6 +25,17 @@ import { customSubstring } from "./stringUtils";
 const OPENLIBRARY_BASE_URL = "https://openlibrary.org";
 
 /**
+ * The registrable domains of book sources the backend can resolve. Open
+ * Library is used for fresh fetches; Goodreads/Storygraph resolve only for
+ * books already stored in the database.
+ */
+const SUPPORTED_BOOK_DOMAINS = [
+  "openlibrary.org",
+  "goodreads.com",
+  "thestorygraph.com",
+];
+
+/**
  * Custom-id prefix for the "Request Buddy Read" button rendered on an
  * Open Library book container. The buddy-read request flow is keyed off
  * the Open Library work id that follows this prefix.
@@ -63,16 +74,25 @@ export function buildOpenLibraryWorkUrl(workId: string): string {
 /**
  * Checks whether a URL points to a book source the backend can resolve
  * (Open Library for fresh fetches, plus Goodreads/Storygraph for books
- * already stored in the database).
+ * already stored in the database). Validates the scheme and parsed
+ * hostname so paths that merely contain a known domain are rejected.
  *
  * @param url The book URL.
  * @returns True if the URL is from a supported source.
  */
 export function isSupportedBookUrl(url: string): boolean {
-  return (
-    url.includes("openlibrary.org/") ||
-    url.includes("goodreads.com/") ||
-    url.includes("storygraph.com/")
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return false;
+  }
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    return false;
+  }
+  const host = parsed.hostname.toLowerCase();
+  return SUPPORTED_BOOK_DOMAINS.some(
+    (domain) => host === domain || host.endsWith(`.${domain}`),
   );
 }
 

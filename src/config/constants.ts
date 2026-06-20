@@ -28,7 +28,7 @@ export const errors = {
   NoQuotesFoundError: "No quotes found with that query!",
   BookAlreadyExistsError: "That book is already in the library!",
   UnsupportedBookUrlError:
-    "That URL isn't supported. Please use an OpenLibrary link.",
+    "That URL isn't supported. Please use an OpenLibrary, Goodreads or Storygraph link.",
   // Events
   InvalidEventIdError:
     "Invalid event ID! Please try again with a valid event ID.",
