@@ -22,10 +22,13 @@ export const errors = {
   GuildNotConfiguredError: "This server is not configured.",
   NotInGuildError: "You are not in a guild!",
   // Books
-  GoodreadsIssueError:
-    "Unfortunately, due to Goodreads being Goodreads, I cannot complete your request at the moment 😔\nPlease try again later, or use Storygraph instead 😆",
+  BookSourceIssueError:
+    "Unfortunately, I couldn't fetch that book right now 😔\nPlease try again later.",
   NoBooksFoundError: "No books found with that query!",
   NoQuotesFoundError: "No quotes found with that query!",
+  BookAlreadyExistsError: "That book is already in the library!",
+  UnsupportedBookUrlError:
+    "That URL isn't supported. Please use an OpenLibrary, Goodreads or Storygraph link.",
   // Events
   InvalidEventIdError:
     "Invalid event ID! Please try again with a valid event ID.",
@@ -112,6 +115,8 @@ export const labels = {
   Approve: "Approve",
   Reject: "Reject",
   Edit: "Edit",
+  // Books
+  RequestBuddyRead: "Request Buddy Read",
   // Pagination
   Previous: "Previous",
   Next: "Next",
@@ -137,14 +142,17 @@ export const titles = {
 };
 
 export const placeholders = {
-  BookLinkPrompt: "What's the GR or SG link to the book?",
-  BookLinkExample: "https://www.goodreads.com/book/show/xxxxyyy-zzzz",
+  // Rendered as a modal TextInput label, which Discord caps at 45 chars.
+  BookLinkPrompt: "Book link (OpenLibrary URL)",
+  BookLinkExample: "https://openlibrary.org/works/OL12345W",
   EventStartPrompt: "When do you want the event to start?",
   EventEndPrompt: "When do you want the event to end?",
   DatePlaceholder: "YYYY-MM-DD",
   RequestReasonPrompt: "Why are you requesting this book?",
   RequestReasonExample:
     "A short description of why other folks should join your event",
+  RequestedByPrompt: "Requested By",
+  RequestedByDescription: "Staff can request on behalf of another member.",
 };
 
 /**
@@ -262,4 +270,7 @@ export const templates = {
   noUserForDiscordId: (id: string) => `No user found with user Id: ${id}`,
   /** Create-thread "first" gate. */
   createThreadFirst: () => "Create a thread first before announcing.",
+  /** Manual book-add success ack. */
+  bookAdded: (title: string, url: string) =>
+    `Added **${title}** to the library! Members can now request it with \`/events request\` using ${url}`,
 };

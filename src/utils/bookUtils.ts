@@ -2,9 +2,99 @@ import {
   AuthorDto,
   BookDto,
   GoodreadsBookDto,
-  StorygraphBookDto,
+  OpenLibraryBookDto,
 } from "@organizedbookclub/ows-client";
-import { EmbedBuilder, Colors } from "discord.js";
+import {
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  Colors,
+  ContainerBuilder,
+  EmbedBuilder,
+  SectionBuilder,
+  SeparatorBuilder,
+  SeparatorSpacingSize,
+  TextDisplayBuilder,
+  ThumbnailBuilder,
+} from "discord.js";
+
+import { labels } from "../config/constants";
+
+import { customSubstring } from "./stringUtils";
+
+const OPENLIBRARY_BASE_URL = "https://openlibrary.org";
+
+/**
+ * The registrable domains of book sources the backend can resolve. Open
+ * Library is used for fresh fetches; Goodreads/Storygraph resolve only for
+ * books already stored in the database.
+ */
+const SUPPORTED_BOOK_DOMAINS = [
+  "openlibrary.org",
+  "goodreads.com",
+  "thestorygraph.com",
+];
+
+/**
+ * Custom-id prefix for the "Request Buddy Read" button rendered on an
+ * Open Library book container. The buddy-read request flow is keyed off
+ * the Open Library work id that follows this prefix.
+ */
+export const OPENLIBRARY_BR_BUTTON_PREFIX = "book-br-";
+
+/**
+ * Extracts the Open Library work id (e.g. "OL12345W") from a work URL.
+ *
+ * @param url The Open Library work URL.
+ * @returns The work id, or null if the URL is not a work URL.
+ */
+export function getOpenLibraryWorkId(url: string): string | null {
+  const marker = "/works/";
+  const index = url.indexOf(marker);
+  if (index === -1) {
+    return null;
+  }
+  const id = url
+    .slice(index + marker.length)
+    .split("/")[0]
+    .split(".")[0];
+  return id.length > 0 ? id : null;
+}
+
+/**
+ * Reconstructs the canonical Open Library work URL from a work id.
+ *
+ * @param workId The Open Library work id.
+ * @returns The canonical work URL.
+ */
+export function buildOpenLibraryWorkUrl(workId: string): string {
+  return `${OPENLIBRARY_BASE_URL}/works/${workId}`;
+}
+
+/**
+ * Checks whether a URL points to a book source the backend can resolve
+ * (Open Library for fresh fetches, plus Goodreads/Storygraph for books
+ * already stored in the database). Validates the scheme and parsed
+ * hostname so paths that merely contain a known domain are rejected.
+ *
+ * @param url The book URL.
+ * @returns True if the URL is from a supported source.
+ */
+export function isSupportedBookUrl(url: string): boolean {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return false;
+  }
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    return false;
+  }
+  const host = parsed.hostname.toLowerCase();
+  return SUPPORTED_BOOK_DOMAINS.some(
+    (domain) => host === domain || host.endsWith(`.${domain}`),
+  );
+}
 
 /**
  * Processes a list of @see AuthorDto objects and returns a readable string.
@@ -25,40 +115,31 @@ export const getAuthorString = (authors: AuthorDto[], limit = 3) => {
 };
 
 /**
- * Creates an embed for book search results.
+ * Builds a ComponentsV2 container listing Open Library search results.
  *
  * @param query The query string.
- * @param bookList The list of bookDto objects.
- * @param source The source. Can be Goodreads or Storygraph.
- * @returns The book search embed.
+ * @param bookList The list of book DTOs.
+ * @returns The ComponentsV2 container.
  */
-export function getBookSearchEmbed(
+export function getOpenLibraryBookSearchContainer(
   query: string,
   bookList: BookDto[],
-  source: "Goodreads" | "Storygraph",
 ) {
-  let description = "";
-  for (let i = 0; i < bookList.length; i++) {
-    const book = bookList[i];
+  const lines = [`## Search results for "${query}"`];
+  bookList.forEach((book, index) => {
     const authorString = getAuthorString(book.authors);
-    const bookString = `\`${i + 1}\` [${book.title}](${
-      book.url
-    }) - *${authorString}*`;
-    description += bookString + "\n";
-  }
-  const embed = new EmbedBuilder()
-    .setTitle(`Search results for "${query}"`)
-    .setDescription(description)
-    .setFooter({ text: `Fetched from ${source}` })
-    .setColor(source === "Goodreads" ? Colors.Aqua : Colors.DarkAqua);
-  return embed;
+    const suffix = authorString ? ` — *${authorString}*` : "";
+    lines.push(`\`${index + 1}\` [${book.title}](${book.url})${suffix}`);
+  });
+  return new ContainerBuilder().addTextDisplayComponents(
+    new TextDisplayBuilder().setContent(lines.join("\n")),
+  );
 }
 
 /**
  * Creates an embed displaying a single book's details fetched from
- * Goodreads. Shared between the `/goodreads book` slash command and the
- * AI agent's book-lookup render tool so the visual presentation stays
- * in lockstep across surfaces.
+ * Goodreads. Used by the AI agent's book-lookup render tool
+ * (`book_lookup`) to present web-searched Goodreads results.
  *
  * @param book The Goodreads book DTO.
  * @returns The Goodreads book embed.
@@ -93,46 +174,92 @@ export function getGoodreadsBookEmbed(book: GoodreadsBookDto) {
 }
 
 /**
- * Creates an embed displaying a single book's details fetched from
- * Storygraph. Shared between the `/storygraph book` slash command and
- * the AI agent's book-lookup render tool so the visual presentation
- * stays in lockstep across surfaces.
+ * Builds the ComponentsV2 message components for a single book's details
+ * fetched from Open Library: a container with the book details, followed by
+ * a "Request Buddy Read" button (outside the container) that launches the
+ * buddy-read request flow for this book directly.
  *
- * @param book The Storygraph book DTO.
- * @returns The Storygraph book embed.
+ * @param book The Open Library book DTO.
+ * @returns The ComponentsV2 message components.
  */
-export function getStorygraphBookEmbed(book: StorygraphBookDto) {
-  const authorUrl = book.authors[0].url;
-  const embed = new EmbedBuilder()
-    .setTitle(book.title)
-    .setAuthor({
-      name: getAuthorString(book.authors),
-      url: authorUrl || undefined,
-    })
-    .addFields(
-      { name: "Rating ⭐", value: `${book.avgRating}`, inline: true },
-      { name: "Pages 📄", value: book.numPages.toString(), inline: true },
-      {
-        name: "Moods 🤔",
-        value: `${book.moods.slice(0, 3).join(", ")}`,
-        inline: false,
-      },
-      { name: "Pace 🏃‍♂️", value: `${book.pace.join(", ")}`, inline: true },
-    )
-    .setFooter({ text: `Fetched from Storygraph` })
-    .setColor(Colors.DarkAqua);
-  if (book.url) {
-    embed.setURL(book.url);
+export function getOpenLibraryBookComponents(book: OpenLibraryBookDto) {
+  const authorString = getAuthorString(book.authors);
+  const headerLines = [`### [${book.title}](${book.url})`];
+  if (authorString) {
+    headerLines.push(`-# by ${authorString}`);
   }
+  const meta: string[] = [];
+  if (book.numPages) {
+    meta.push(`📄 ${book.numPages}`);
+  }
+  if (book.series) {
+    meta.push(`📚 ${book.series}`);
+  }
+  if (meta.length > 0) {
+    headerLines.push(`-# ${meta.join("  •  ")}`);
+  }
+
+  const headerText = new TextDisplayBuilder().setContent(
+    headerLines.join("\n"),
+  );
+  const container = new ContainerBuilder();
   if (book.coverUrl) {
-    embed.setThumbnail(book.coverUrl);
+    container.addSectionComponents(
+      new SectionBuilder()
+        .addTextDisplayComponents(headerText)
+        .setThumbnailAccessory(new ThumbnailBuilder().setURL(book.coverUrl)),
+    );
+  } else {
+    container.addTextDisplayComponents(headerText);
   }
-  book.quesAns.forEach((element) => {
-    embed.addFields({
-      name: `🔹 ${element.question}`,
-      value: element.answer,
-      inline: false,
-    });
-  });
-  return embed;
+
+  if (book.description && book.description !== "No description available") {
+    container.addSeparatorComponents(
+      new SeparatorBuilder()
+        .setDivider(true)
+        .setSpacing(SeparatorSpacingSize.Small),
+    );
+    container.addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(
+        customSubstring(book.description, 1500),
+      ),
+    );
+  }
+
+  const footerLines: string[] = [];
+  if (book.genres.length > 0) {
+    footerLines.push(`🔖 ${book.genres.join(", ")}`);
+  }
+  if (book.avgRating) {
+    footerLines.push(
+      `⭐ ${Number(book.avgRating.toFixed(2))} (${book.numRatings})`,
+    );
+  }
+  if (footerLines.length > 0) {
+    container.addSeparatorComponents(
+      new SeparatorBuilder()
+        .setDivider(true)
+        .setSpacing(SeparatorSpacingSize.Small),
+    );
+    container.addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(footerLines.join("\n")),
+    );
+  }
+
+  const components: (ContainerBuilder | ActionRowBuilder<ButtonBuilder>)[] = [
+    container,
+  ];
+  const workId = getOpenLibraryWorkId(book.url);
+  if (workId) {
+    components.push(
+      new ActionRowBuilder<ButtonBuilder>().addComponents(
+        new ButtonBuilder()
+          .setCustomId(`${OPENLIBRARY_BR_BUTTON_PREFIX}${workId}`)
+          .setLabel(labels.RequestBuddyRead)
+          .setEmoji({ name: "📖" })
+          .setStyle(ButtonStyle.Primary),
+      ),
+    );
+  }
+  return components;
 }

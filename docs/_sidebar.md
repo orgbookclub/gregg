@@ -1,7 +1,6 @@
 - [Getting Started](getting-started.md)
 - Commands
-  - [Goodreads](commands/goodreads.md)
-  - [Storygraph](commands/storygraph.md)
+  - [Book](commands/book.md)
   - [Events](commands/events.md)
   - [User](commands/user.md)
   - [Sprint](commands/sprint.md)

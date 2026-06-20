@@ -1,5 +1,6 @@
 import { captureException } from "@sentry/node";
 import {
+  ButtonInteraction,
   Colors,
   CommandInteraction,
   ContextMenuCommandInteraction,
@@ -34,7 +35,8 @@ const errorHandler = async (
   interaction?:
     | CommandInteraction
     | ContextMenuCommandInteraction
-    | ModalSubmitInteraction,
+    | ModalSubmitInteraction
+    | ButtonInteraction,
 ) => {
   const error = err as Error;
   logger.error(error, `Error in ${context}`);
@@ -52,7 +54,8 @@ function getErrorEmbed(
   interaction?:
     | CommandInteraction
     | ContextMenuCommandInteraction
-    | ModalSubmitInteraction,
+    | ModalSubmitInteraction
+    | ButtonInteraction,
   message?: Message,
 ) {
   const errorEmbed = new EmbedBuilder()
