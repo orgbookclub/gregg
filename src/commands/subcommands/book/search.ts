@@ -1,33 +1,35 @@
-import { ChatInputCommandInteraction } from "discord.js";
+import { MessageFlags } from "discord.js";
 
 import { errors } from "../../../config/constants";
-import { CommandHandler, Bot } from "../../../models";
-import { getBookSearchEmbed } from "../../../utils/bookUtils";
+import { CommandHandler } from "../../../models";
+import { getOpenLibraryBookSearchContainer } from "../../../utils/bookUtils";
 import { errorHandler } from "../../../utils/errorHandler";
 
 /**
- * Fetches a list of book links from SG.
+ * Fetches a list of book links from Open Library.
  *
  * @param bot The bot instance.
  * @param interaction The interaction.
  */
-const handleSearch: CommandHandler = async (
-  bot: Bot,
-  interaction: ChatInputCommandInteraction,
-) => {
+const handleSearch: CommandHandler = async (bot, interaction) => {
   try {
     const query = interaction.options.getString("query", true);
     const limit = interaction.options.getInteger("limit") ?? 5;
-    const isEphemeral = interaction.options.getBoolean("ephemeral") ?? true;
+    const isEphemeral = interaction.options.getBoolean("ephemeral") ?? false;
     await interaction.deferReply({ ephemeral: isEphemeral });
 
-    const response = await bot.api.storygraph.storygraphControllerSearchBooks({
-      q: query,
-      k: limit,
-    });
+    const response = await bot.api.openLibrary.openLibraryControllerSearchBooks(
+      {
+        q: query,
+        k: limit,
+      },
+    );
 
-    const embed = getBookSearchEmbed(query, response.data, "Storygraph");
-    await interaction.editReply({ embeds: [embed] });
+    const container = getOpenLibraryBookSearchContainer(query, response.data);
+    await interaction.editReply({
+      flags: MessageFlags.IsComponentsV2,
+      components: [container],
+    });
   } catch (err) {
     const error = err as Error;
     if (error.message === "Request failed with status code 404") {
@@ -36,7 +38,7 @@ const handleSearch: CommandHandler = async (
       await interaction.editReply(errors.SomethingWentWrongError);
       await errorHandler(
         bot,
-        "commands > storygraph > search",
+        "commands > book > search",
         err,
         interaction.guild?.name,
         undefined,

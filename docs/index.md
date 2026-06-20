@@ -10,8 +10,7 @@ A discord bot built for book clubs, specifically for the [Organized Book Club Di
 - Reader role recognition — auto-assigned reader roles by points threshold, with optional time windows (e.g. Reader of the Year, Reader of the Month)
 - Question of the Day (QOTD) — staff-moderated daily prompts with thread creation
 - Message bookmarking — right-click any message to save it to your DMs
-- [Goodreads](https://goodreads.com) book search
-- [Storygraph](https://app.thestorygraph.com/) book search
+- [Open Library](https://openlibrary.org) book search and lookup
 
 # Support
 

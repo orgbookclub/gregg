@@ -1,10 +1,10 @@
 /* eslint-disable camelcase, import/no-named-as-default-member */
 import {
   AccessTokenDto,
+  BooksApi,
   Configuration,
   EventsApi,
-  GoodreadsApi,
-  StorygraphApi,
+  OpenLibraryApi,
   UsersApi,
 } from "@organizedbookclub/ows-client";
 import axios, {
@@ -44,8 +44,8 @@ export class OWSClient {
   private refreshPromise: Promise<void> | null;
   private apiAxios: AxiosInstance;
   public events: EventsApi;
-  public goodreads: GoodreadsApi;
-  public storygraph: StorygraphApi;
+  public books: BooksApi;
+  public openLibrary: OpenLibraryApi;
   public users: UsersApi;
 
   /**
@@ -78,8 +78,8 @@ export class OWSClient {
       accessToken: () => this.getValidToken(),
     });
     this.events = new EventsApi(configuration, undefined, this.apiAxios);
-    this.goodreads = new GoodreadsApi(configuration, undefined, this.apiAxios);
-    this.storygraph = new StorygraphApi(
+    this.books = new BooksApi(configuration, undefined, this.apiAxios);
+    this.openLibrary = new OpenLibraryApi(
       configuration,
       undefined,
       this.apiAxios,

@@ -77,7 +77,7 @@ stateDiagram-v2
 
 ## Requesting a BuddyRead
 
-1. Request an event with type **BuddyRead** using the `/events request` command in any channel of the server. You will be asked for a URL, the dates for the event, and a reason. Note that for a request to be successful, the URL must be a valid Goodreads or Storygraph URL and the dates **must** be in YYYY-MM-DD format. In case of any errors, please ask staff to edit or delete the event request.
+1. Request an event with type **BuddyRead** using the `/events request` command in any channel of the server. You will be asked for a URL, the dates for the event, and a reason. Note that for a request to be successful, the URL must be a valid Open Library, Goodreads, or Storygraph URL and the dates **must** be in YYYY-MM-DD format. For a quicker path, you can also use the **Request Buddy Read** button on a `/book info` result. In case of any errors, please ask staff to edit or delete the event request.
 2. A successful event request will create a post in the #br-requests channel. There will be an "Interested" button available below the post. All interested members, (including the requestor), must click the button for the bot to register them as interested participants.
 3. Your event will be **Approved** or **Rejected** based on the number of participants it gains before its start date.
 

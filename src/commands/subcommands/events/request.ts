@@ -3,21 +3,25 @@ import {
   EventDocumentTypeEnum,
   EventDtoTypeEnum,
 } from "@organizedbookclub/ows-client";
+import { GuildsConfig } from "@prisma/client";
 import {
-  ActionRowBuilder,
+  ButtonInteraction,
+  ChatInputCommandInteraction,
   DiscordjsError,
   GuildMember,
+  LabelBuilder,
   MessageFlags,
-  ModalActionRowComponentBuilder,
   ModalBuilder,
   ModalSubmitInteraction,
   TextInputBuilder,
   TextInputStyle,
+  UserSelectMenuBuilder,
 } from "discord.js";
 
 import { errors, placeholders, templates } from "../../../config/constants";
 import { Bot, CommandHandler } from "../../../models";
 import { EventRequestSubmission } from "../../../models/commands/events/EventRequestSubmission";
+import { isSupportedBookUrl } from "../../../utils/bookUtils";
 import { createEventMessageDoc } from "../../../utils/dbUtils";
 import { errorHandler } from "../../../utils/errorHandler";
 import {
@@ -32,6 +36,7 @@ const BOOK_LINK_FIELD_ID = "link";
 const START_DATE_FIELD_ID = "startDate";
 const END_DATE_FIELD_ID = "endDate";
 const REQUEST_REASON_FIELD_ID = "reason";
+const REQUESTED_BY_FIELD_ID = "requestedBy";
 
 /**
  * For requesting an event.
@@ -41,17 +46,50 @@ const REQUEST_REASON_FIELD_ID = "reason";
  * @param guildConfig The guild config.
  */
 const handleRequest: CommandHandler = async (bot, interaction, guildConfig) => {
+  const eventType = interaction.options.getString(
+    "type",
+    true,
+  ) as keyof typeof EventDtoTypeEnum;
+  await runEventRequestFlow(bot, interaction, guildConfig, eventType);
+};
+
+/**
+ * Shows the event-request modal and creates the event from the submission.
+ * Shared between the `/events request` slash command and the "Request Buddy
+ * Read" button on an Open Library book, so it accepts either a chat-input or
+ * a button interaction. When `prefilledLink` is provided (the button flow),
+ * the book-link field is pre-populated with that URL.
+ *
+ * @param bot The bot instance.
+ * @param interaction The triggering interaction.
+ * @param guildConfig The guild config.
+ * @param eventType The type of event to request.
+ * @param prefilledLink An optional book URL to pre-fill the link field with.
+ */
+async function runEventRequestFlow(
+  bot: Bot,
+  interaction: ChatInputCommandInteraction | ButtonInteraction,
+  guildConfig: GuildsConfig | undefined,
+  eventType: keyof typeof EventDtoTypeEnum,
+  prefilledLink?: string,
+) {
   try {
     if (!guildConfig || !interaction.member) {
       await interaction.reply(errors.EventRequestStrayError);
       return;
     }
-    const eventType = interaction.options.getString(
-      "type",
-      true,
-    ) as keyof typeof EventDtoTypeEnum;
+    const isStaff = hasRole(
+      interaction.member as GuildMember,
+      guildConfig.staffRole,
+    );
     const salt = Math.random() * 100;
-    const modal = getEventRequestModal(eventType, salt);
+    const modal = getEventRequestModal(
+      eventType,
+      salt,
+      isStaff,
+      interaction.user.id,
+      prefilledLink,
+    );
     await interaction.showModal(modal);
     const filter = (msInteraction: ModalSubmitInteraction) =>
       msInteraction.customId === EVENT_REQUEST_MODAL_ID + salt;
@@ -65,13 +103,7 @@ const handleRequest: CommandHandler = async (bot, interaction, guildConfig) => {
       modalSubmitInteraction,
       eventType,
     );
-    const validationResponse = isValidSubmission(
-      submission,
-      hasRole(
-        modalSubmitInteraction.member as GuildMember,
-        guildConfig.staffRole,
-      ),
-    );
+    const validationResponse = isValidSubmission(submission, isStaff);
     if (!validationResponse.isValid) {
       await modalSubmitInteraction.editReply(
         templates.invalidSubmission(validationResponse.message),
@@ -79,11 +111,8 @@ const handleRequest: CommandHandler = async (bot, interaction, guildConfig) => {
       return;
     }
 
-    const user = await upsertUser(
-      bot.api,
-      modalSubmitInteraction.user.id,
-      modalSubmitInteraction.user.username,
-    );
+    const requester = resolveRequester(modalSubmitInteraction, isStaff);
+    const user = await upsertUser(bot.api, requester.id, requester.username);
 
     const response = await createEvent(eventType, submission, user._id, bot);
     if (!response) {
@@ -138,7 +167,7 @@ const handleRequest: CommandHandler = async (bot, interaction, guildConfig) => {
       error.name === "AxiosError" &&
       error.message === "Request failed with status code 503"
     ) {
-      await interaction.followUp(errors.GoodreadsIssueError);
+      await interaction.followUp(errors.BookSourceIssueError);
     } else {
       await interaction.followUp(errors.SomethingWentWrongError);
       await errorHandler(
@@ -151,7 +180,7 @@ const handleRequest: CommandHandler = async (bot, interaction, guildConfig) => {
       );
     }
   }
-};
+}
 
 async function createEvent(
   eventType: keyof typeof EventDtoTypeEnum,
@@ -177,65 +206,108 @@ async function createEvent(
   return response;
 }
 
-function getEventRequestModal(eventType: string, salt: number) {
+function getEventRequestModal(
+  eventType: string,
+  salt: number,
+  isStaff: boolean,
+  requesterId: string,
+  prefilledLink?: string,
+) {
   const modal = new ModalBuilder()
     .setCustomId(EVENT_REQUEST_MODAL_ID + salt)
     .setTitle(`${eventType} Request`);
+
   const linkInput = new TextInputBuilder()
     .setCustomId(BOOK_LINK_FIELD_ID)
-    .setLabel(placeholders.BookLinkPrompt)
     .setRequired(true)
     .setPlaceholder(placeholders.BookLinkExample)
     .setStyle(TextInputStyle.Short);
-  const linkActionRow =
-    new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
-      linkInput,
+  if (prefilledLink) {
+    linkInput.setValue(prefilledLink);
+  }
+  const labelComponents: LabelBuilder[] = [
+    new LabelBuilder()
+      .setLabel(placeholders.BookLinkPrompt)
+      .setTextInputComponent(linkInput),
+  ];
+
+  if (isStaff) {
+    const requestedBySelect = new UserSelectMenuBuilder()
+      .setCustomId(REQUESTED_BY_FIELD_ID)
+      .setRequired(false)
+      .setMinValues(0)
+      .setMaxValues(1)
+      .setDefaultUsers(requesterId);
+    labelComponents.push(
+      new LabelBuilder()
+        .setLabel(placeholders.RequestedByPrompt)
+        .setDescription(placeholders.RequestedByDescription)
+        .setUserSelectMenuComponent(requestedBySelect),
     );
-  modal.addComponents(linkActionRow);
+  }
 
   if (eventType !== EventDtoTypeEnum.MonthlyRead) {
     const startDateInput = new TextInputBuilder()
       .setCustomId(START_DATE_FIELD_ID)
-      .setLabel(placeholders.EventStartPrompt)
       .setRequired(true)
       .setPlaceholder(placeholders.DatePlaceholder)
       .setStyle(TextInputStyle.Short)
       .setMaxLength(10)
       .setMinLength(10);
-
-    const startDateRow =
-      new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
-        startDateInput,
-      );
-    modal.addComponents(startDateRow);
-
     const endDateInput = new TextInputBuilder()
       .setCustomId(END_DATE_FIELD_ID)
-      .setLabel(placeholders.EventEndPrompt)
       .setRequired(true)
       .setPlaceholder(placeholders.DatePlaceholder)
       .setStyle(TextInputStyle.Short)
       .setMaxLength(10)
       .setMinLength(10);
-
-    const endDateRow =
-      new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
-        endDateInput,
-      );
-    modal.addComponents(endDateRow);
+    labelComponents.push(
+      new LabelBuilder()
+        .setLabel(placeholders.EventStartPrompt)
+        .setTextInputComponent(startDateInput),
+      new LabelBuilder()
+        .setLabel(placeholders.EventEndPrompt)
+        .setTextInputComponent(endDateInput),
+    );
   }
+
   const reasonInput = new TextInputBuilder()
     .setCustomId(REQUEST_REASON_FIELD_ID)
-    .setLabel(placeholders.RequestReasonPrompt)
     .setPlaceholder(placeholders.RequestReasonExample)
     .setRequired(true)
     .setStyle(TextInputStyle.Paragraph);
-  const reasonActionRow =
-    new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
-      reasonInput,
-    );
-  modal.addComponents(reasonActionRow);
+  labelComponents.push(
+    new LabelBuilder()
+      .setLabel(placeholders.RequestReasonPrompt)
+      .setTextInputComponent(reasonInput),
+  );
+
+  modal.addLabelComponents(...labelComponents);
   return modal;
+}
+
+/**
+ * Resolves the user the event should be attributed to. Staff may request on
+ * behalf of another member via the "Requested By" select; for everyone else
+ * the selection is ignored and the submitter is used.
+ *
+ * @param interaction The modal submit interaction.
+ * @param isStaff Whether the submitter has the staff role.
+ * @returns The Discord user the event is requested for.
+ */
+function resolveRequester(
+  interaction: ModalSubmitInteraction,
+  isStaff: boolean,
+) {
+  if (isStaff) {
+    const selected = interaction.fields
+      .getSelectedUsers(REQUESTED_BY_FIELD_ID)
+      ?.first();
+    if (selected) {
+      return selected;
+    }
+  }
+  return interaction.user;
 }
 
 function getEventRequestSubmission(
@@ -290,7 +362,7 @@ function isValidSubmission(request: EventRequestSubmission, isStaff: boolean) {
       message: "End date cannot be before the start date!",
     };
   }
-  if (!link.includes("goodreads.com/") && !link.includes("storygraph.com/")) {
+  if (!isSupportedBookUrl(link)) {
     return {
       isValid: false,
       message: "Invalid link",
@@ -299,4 +371,4 @@ function isValidSubmission(request: EventRequestSubmission, isStaff: boolean) {
   return { isValid: true };
 }
 
-export { handleRequest };
+export { handleRequest, runEventRequestFlow };

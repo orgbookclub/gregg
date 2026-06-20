@@ -9,11 +9,16 @@ import { showAnnounceModalAndPost } from "../../../commands/subcommands/events/a
 import { showCreateThreadModalAndCreate } from "../../../commands/subcommands/events/createThread";
 import { showEventEditModal } from "../../../commands/subcommands/events/edit";
 import { runRemoveUserFlow } from "../../../commands/subcommands/events/removeUser";
+import { runEventRequestFlow } from "../../../commands/subcommands/events/request";
 import { buildUserEventStatsContainer } from "../../../commands/subcommands/events/stats";
 import { showQotdPostModalAndPost } from "../../../commands/subcommands/qotd/post";
 import { errors, messages, templates } from "../../../config/constants";
 import { Bot } from "../../../models";
 import { QotdSuggestionStatus } from "../../../models/commands/qotd/QotdSuggestionStatus";
+import {
+  buildOpenLibraryWorkUrl,
+  OPENLIBRARY_BR_BUTTON_PREFIX,
+} from "../../../utils/bookUtils";
 import { getGuildConfigFromDb } from "../../../utils/dbUtils";
 import { errorHandler } from "../../../utils/errorHandler";
 import {
@@ -81,6 +86,8 @@ const processButtonClick = async (bot: Bot, interaction: ButtonInteraction) => {
       await handleQotdPost(interaction, bot);
     } else if (interaction.customId.startsWith("usr-stats-")) {
       await handleUserStats(interaction, bot);
+    } else if (interaction.customId.startsWith(OPENLIBRARY_BR_BUTTON_PREFIX)) {
+      await handleBookBuddyReadRequest(interaction, bot);
     } else {
       return;
     }
@@ -410,6 +417,39 @@ async function handleUserStats(interaction: ButtonInteraction, bot: Bot) {
   } catch {
     await interaction.editReply(errors.UserStatsFetchError);
   }
+}
+
+/**
+ * Handles the "Request Buddy Read" button on an Open Library book by
+ * launching the buddy-read request flow pre-filled with the book's URL.
+ *
+ * @param interaction The button interaction.
+ * @param bot The bot instance.
+ */
+async function handleBookBuddyReadRequest(
+  interaction: ButtonInteraction,
+  bot: Bot,
+) {
+  if (!interaction.guildId) {
+    await interaction.reply({
+      content: errors.GuildOnlyActionError,
+      flags: MessageFlags.Ephemeral,
+    });
+    return;
+  }
+  const guildConfig = await getGuildConfigFromDb(bot, interaction.guildId);
+  if (!guildConfig) {
+    await interaction.reply({
+      content: errors.GuildNotConfiguredError,
+      flags: MessageFlags.Ephemeral,
+    });
+    return;
+  }
+  const workId = interaction.customId.slice(
+    OPENLIBRARY_BR_BUTTON_PREFIX.length,
+  );
+  const url = buildOpenLibraryWorkUrl(workId);
+  await runEventRequestFlow(bot, interaction, guildConfig, "BuddyRead", url);
 }
 
 async function handleEventEdit(interaction: ButtonInteraction, bot: Bot) {

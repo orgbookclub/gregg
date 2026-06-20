@@ -80,9 +80,9 @@ function parseQuery(args: unknown): string | null {
  *   1. Validate the query string from the model.
  *   2. Run the GoodreadsBookSkill (LLM sub-call + Goodreads-targeted
  *      web_search + strict-JSON extraction).
- *   3. Build the Goodreads embed via the shared utility used by the
- *      `/goodreads book` slash command, so the visual output is
- *      identical regardless of which entry point the user took.
+ *   3. Build the Goodreads embed via the shared `getGoodreadsBookEmbed`
+ *      utility (the `book_lookup` tool is now the only surface that
+ *      renders this embed).
  *
  * Surfaces the skill's sub-call tokens + tool log up to the agent
  * via `nestedCalls` / `nestedUsage` so the per-turn audit row
