@@ -1,5 +1,6 @@
 export * from "./constants";
 export * from "./EventFieldOptions";
+export * from "./EventSortOptions";
 export * from "./DateWindowPresetOptions";
 export * from "./EventStatusOptions";
 export * from "./EventTypeOptions";

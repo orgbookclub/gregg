@@ -1,5 +1,6 @@
 import {
   EventDocument,
+  EventsV2ControllerFindSortByEnum,
   EventsV2ControllerFindStatusEnum,
   EventsV2ControllerFindTypeEnum,
 } from "@organizedbookclub/ows-client";
@@ -32,6 +33,12 @@ export const handleEvents: CommandHandler = async (bot, interaction) => {
       "status",
       true,
     ) as EventsV2ControllerFindStatusEnum;
+    const eventSortOrder = interaction.options.getString(
+      "sort",
+      false,
+    ) as EventsV2ControllerFindSortByEnum | null;
+    const sortBy: EventsV2ControllerFindSortByEnum =
+      eventSortOrder ?? "startDateDesc";
 
     const userResponse = await bot.api.users.usersControllerFindOneByUserId({
       userid: user.id,
@@ -53,7 +60,7 @@ export const handleEvents: CommandHandler = async (bot, interaction) => {
       bot,
       filters,
       EVENT_LIST_FIELDS,
-      undefined,
+      sortBy,
       1,
       API_PAGE_SIZE,
     );
@@ -85,7 +92,7 @@ export const handleEvents: CommandHandler = async (bot, interaction) => {
           bot,
           filters,
           EVENT_LIST_FIELDS,
-          undefined,
+          sortBy,
           apiPage,
           API_PAGE_SIZE,
         );
