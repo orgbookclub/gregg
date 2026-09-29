@@ -4,7 +4,11 @@ import {
   SlashCommandSubcommandBuilder,
 } from "discord.js";
 
-import { EventTypeOptions, EventStatusOptions } from "../config";
+import {
+  EventSortOptions,
+  EventStatusOptions,
+  EventTypeOptions,
+} from "../config";
 import { CommandHandler, Command } from "../models";
 import { addDateWindowOptions } from "../utils/dateWindow";
 import { errorHandler } from "../utils/errorHandler";
@@ -49,6 +53,13 @@ const userEventsSubcommand = new SlashCommandSubcommandBuilder()
       .setDescription("Event Status")
       .addChoices(...EventStatusOptions)
       .setRequired(true),
+  )
+  .addStringOption((option) =>
+    option
+      .setName("sort")
+      .setDescription("Sort by")
+      .addChoices(...EventSortOptions)
+      .setRequired(false),
   )
   .addUserOption((option) =>
     option.setName("user").setDescription("User for which to fetch info"),

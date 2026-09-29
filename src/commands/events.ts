@@ -7,10 +7,10 @@ import {
 
 import {
   EventFieldOptions,
+  EventSortOptions,
   EventStatusOptions,
   EventTypeOptions,
 } from "../config";
-import { EventSortOptions } from "../config/EventSortOptions";
 import { Command, CommandHandler } from "../models";
 import { addDateWindowOptions } from "../utils/dateWindow";
 import { errorHandler } from "../utils/errorHandler";
@@ -174,6 +174,13 @@ const search = new SlashCommandSubcommandBuilder()
       .setName("status")
       .setDescription("Event Status")
       .addChoices(...EventStatusOptions),
+  )
+  .addStringOption((option) =>
+    option
+      .setName("sort")
+      .setDescription("Sort by")
+      .addChoices(...EventSortOptions)
+      .setRequired(false),
   );
 
 const addUser = new SlashCommandSubcommandBuilder()

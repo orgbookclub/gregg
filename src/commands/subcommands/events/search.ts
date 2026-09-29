@@ -1,5 +1,6 @@
 import {
   EventDocument,
+  EventsV2ControllerFindSortByEnum,
   EventsV2ControllerFindStatusEnum,
   EventsV2ControllerFindTypeEnum,
 } from "@organizedbookclub/ows-client";
@@ -27,6 +28,12 @@ export const handleSearch: CommandHandler = async (bot, interaction) => {
     const query = interaction.options.getString("query", true);
     const eventType = interaction.options.getString("type");
     const eventStatus = interaction.options.getString("status");
+    const eventSortOrder = interaction.options.getString(
+      "sort",
+      false,
+    ) as EventsV2ControllerFindSortByEnum | null;
+    const sortBy: EventsV2ControllerFindSortByEnum =
+      eventSortOrder ?? "startDateDesc";
 
     const filters = {
       bookSearchQuery: query,
@@ -42,7 +49,7 @@ export const handleSearch: CommandHandler = async (bot, interaction) => {
       bot,
       filters,
       EVENT_LIST_FIELDS,
-      undefined,
+      sortBy,
       1,
       API_PAGE_SIZE,
     );
@@ -77,7 +84,7 @@ export const handleSearch: CommandHandler = async (bot, interaction) => {
           bot,
           filters,
           EVENT_LIST_FIELDS,
-          undefined,
+          sortBy,
           apiPage,
           API_PAGE_SIZE,
         );
