@@ -23,7 +23,6 @@ import {
 } from "../../../utils/dateWindow";
 import { createEventMessageDoc } from "../../../utils/dbUtils";
 import { errorHandler } from "../../../utils/errorHandler";
-import { getNextMonthRange } from "../../../utils/eventUtils";
 import { logger } from "../../../utils/logHandler";
 import { PaginationManager } from "../../../utils/paginationManager";
 import { EngineInstallationClient } from "../client";
@@ -38,6 +37,7 @@ import {
   engineTypeKey,
   formatCalendarDate,
   formatEngineUser,
+  nextMonthRange,
   toEngineStatsWindow,
 } from "../mappings";
 import { EngineEventDetail, EngineLeaderboardEntry } from "../types";
@@ -244,9 +244,7 @@ const handleRequest = engineCommand(
         );
         endDate = toCalendarDate(submit.fields.getTextInputValue(END_FIELD_ID));
       } else {
-        const [start, end] = getNextMonthRange(new Date());
-        startDate = toCalendarDate(start.toDateString());
-        endDate = toCalendarDate(end.toDateString());
+        [startDate, endDate] = nextMonthRange((await client.getClub()).today);
       }
       if (!startDate || !endDate) {
         await submit.editReply(templates.invalidSubmission("Invalid date"));
@@ -266,14 +264,30 @@ const handleRequest = engineCommand(
         },
         interactionActor(submit),
       );
-      await postRequestMessage(bot, client, submit, event, guildConfig);
+      try {
+        await postRequestMessage(bot, client, submit, event, guildConfig);
+      } catch (err) {
+        logger.warn(
+          { err },
+          `Unable to post the request message for ${event.id}`,
+        );
+      }
       await submit.editReply(
         templates.eventRequestSuccess(event.title, event.id),
       );
     } catch (err) {
       const message = engineErrorMessage(err);
-      if (!message) throw err;
-      await submit.editReply(message);
+      await submit.editReply(message ?? errors.SomethingWentWrongError);
+      if (!message) {
+        await errorHandler(
+          bot,
+          "commands > events > request (engine) > modal",
+          err,
+          submit.guild?.name,
+          undefined,
+          submit,
+        );
+      }
     }
   },
 );

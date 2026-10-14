@@ -85,6 +85,19 @@ export function toEngineStatsWindow(
 }
 
 /**
+ * Returns the first and last day of the month after the club's `today`.
+ *
+ * @param today The club-calendar date (`YYYY-MM-DD`).
+ * @returns The start and end calendar dates.
+ */
+export function nextMonthRange(today: string): [string, string] {
+  const [year, month] = today.split("-").map(Number);
+  const start = new Date(Date.UTC(year, month, 1));
+  const end = new Date(Date.UTC(year, month + 1, 0));
+  return [toCalendarDate(start), toCalendarDate(end)];
+}
+
+/**
  * Returns the Discord user id of an engine user, when the engine exposes it
  * (installation callers get `subject` for Discord, contract extension A6).
  *

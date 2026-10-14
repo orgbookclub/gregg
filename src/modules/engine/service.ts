@@ -280,27 +280,27 @@ export class EngineService {
    * Polls the feed of every linked guild once.
    */
   async pollFeeds(): Promise<void> {
-    for (const { client } of await this.linkedGuilds()) {
-      await this.feed.poll(client);
-    }
+    await this.forEachLinkedGuild("feed poll", ({ client }) =>
+      this.feed.poll(client),
+    );
   }
 
   /**
    * Syncs tier roles in every linked guild.
    */
   async syncTierRoles(): Promise<void> {
-    for (const { guild, client } of await this.linkedGuilds()) {
-      await syncGuildTierRoles(this.bot, guild, client);
-    }
+    await this.forEachLinkedGuild("tier role sync", ({ guild, client }) =>
+      syncGuildTierRoles(this.bot, guild, client),
+    );
   }
 
   /**
    * Pushes the role catalogue of every linked guild.
    */
   async pushRoleCatalogs(): Promise<void> {
-    for (const { guild, client } of await this.linkedGuilds()) {
-      await pushRoleCatalog(guild, client);
-    }
+    await this.forEachLinkedGuild("role catalogue push", ({ guild, client }) =>
+      pushRoleCatalog(guild, client),
+    );
   }
 
   /**
@@ -317,6 +317,25 @@ export class EngineService {
     return await refreshEventMessages(this.bot, client, eventId);
   }
 
+  private async forEachLinkedGuild(
+    label: string,
+    run: (linked: {
+      guild: Guild;
+      client: EngineInstallationClient;
+    }) => Promise<unknown>,
+  ): Promise<void> {
+    for (const linked of await this.linkedGuilds()) {
+      try {
+        await run(linked);
+      } catch (error) {
+        logger.warn(
+          { err: error },
+          `Engine ${label} failed for ${linked.guild.id}`,
+        );
+      }
+    }
+  }
+
   private async handleFeedEntries(
     source: FeedSource,
     entries: EngineFeedEntry[],
@@ -330,7 +349,11 @@ export class EngineService {
         logger.warn({ err: error }, `Feed refresh failed for event ${eventId}`);
       }
     }
-    await logStatusChanges(this.bot, client.guildId, summary.statusChanges);
+    try {
+      await logStatusChanges(this.bot, client.guildId, summary.statusChanges);
+    } catch (error) {
+      logger.warn({ err: error }, `Status log failed for ${client.guildId}`);
+    }
   }
 }
 

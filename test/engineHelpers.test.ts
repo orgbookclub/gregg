@@ -15,6 +15,7 @@ import {
 import {
   engineTypeKey,
   formatEngineUser,
+  nextMonthRange,
   toEngineStatsWindow,
 } from "../src/modules/engine/mappings";
 import {
@@ -98,6 +99,21 @@ describe("mappings", () => {
       ),
       { window: "custom", from: "2026-01-01", to: "2026-03-31" },
     );
+  });
+
+  it("computes next month from the club's today", () => {
+    assert.deepEqual(nextMonthRange("2026-10-14"), [
+      "2026-11-01",
+      "2026-11-30",
+    ]);
+    assert.deepEqual(nextMonthRange("2026-12-31"), [
+      "2027-01-01",
+      "2027-01-31",
+    ]);
+    assert.deepEqual(nextMonthRange("2027-01-05"), [
+      "2027-02-01",
+      "2027-02-28",
+    ]);
   });
 
   it("mentions users when the engine exposes the Discord id", () => {
