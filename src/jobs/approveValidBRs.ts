@@ -19,6 +19,7 @@ const jobName = "approveValidBRs";
 const cronTime = "30 7 * * *";
 
 const approveValidBRs: Job = {
+  backends: ["ows"],
   name: jobName,
   cronTime: cronTime,
   callBack: async (bot) => {

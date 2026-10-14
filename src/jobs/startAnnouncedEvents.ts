@@ -17,6 +17,7 @@ const jobName = "startAnnouncedEvents";
 
 const cronTime = "0 6 * * *";
 export const startAnnouncedEvents: Job = {
+  backends: ["ows"],
   name: jobName,
   cronTime: cronTime,
   callBack: async (bot) => {

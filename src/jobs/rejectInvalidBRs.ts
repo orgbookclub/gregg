@@ -17,6 +17,7 @@ const REJECT_BR_FIELDS =
 const jobName = "rejectInvalidBRs";
 const cronTime = "10 23 * * *";
 const rejectInvalidBRs: Job = {
+  backends: ["ows"],
   name: jobName,
   cronTime: cronTime,
   callBack: async (bot) => {

@@ -10,6 +10,7 @@ import {
   EventTypeOptions,
 } from "../config";
 import { CommandHandler, Command } from "../models";
+import { engineUserHandlers } from "../modules/engine/handlers/commands";
 import { addDateWindowOptions } from "../utils/dateWindow";
 import { errorHandler } from "../utils/errorHandler";
 
@@ -83,7 +84,9 @@ export const user: Command = {
   run: async (bot, interaction) => {
     try {
       const subCommand = interaction.options.getSubcommand();
-      const handler = handlers[subCommand];
+      const handler =
+        (bot.engine ? engineUserHandlers[subCommand] : undefined) ??
+        handlers[subCommand];
       await handler(bot, interaction);
     } catch (err) {
       await errorHandler(

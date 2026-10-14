@@ -42,6 +42,12 @@ function parseIntEnv(name: string, fallback: number): number {
 }
 
 function buildMcpClient(bot: Bot): OwsMcpClient | null {
+  if (bot.configs.backend === "engine") {
+    logger.debug(
+      "AI module: BACKEND=engine has no OWS MCP — agent runs tool-less",
+    );
+    return null;
+  }
   const explicit = process.env.OWS_MCP_URL;
   const derived = bot.configs.apiUrl
     ? `${bot.configs.apiUrl.replace(/\/$/, "")}/mcp`

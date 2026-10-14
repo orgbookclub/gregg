@@ -189,3 +189,11 @@ model aiInteractions {
   @@index([sessionId, turnIndex], map: "sessionId_1_turnIndex_1")
   @@index([createdAt], map: "createdAt_1")
 }
+
+model engineFeedCursors {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  installationId String   @unique(map: "installationId_1")
+  guildId        String
+  cursor         String
+  updatedOn      DateTime @db.Date
+}

@@ -25,10 +25,13 @@
     "prebuild": "rimraf ./dist",
     "build": "tsc",
     "postinstall": "prisma generate",
-    "lint": "eslint src --max-warnings 0 && prettier src --check",
-    "lint:fix": "eslint src --max-warnings 0 --fix && prettier src --write",
+    "lint": "eslint src test --max-warnings 0 && prettier src test --check",
+    "lint:fix": "eslint src test --max-warnings 0 --fix && prettier src test --write",
     "start": "node ./dist/index.js",
-    "start:dev": "tsc && node -r dotenv/config ./dist/index.js"
+    "start:dev": "tsc && node -r dotenv/config ./dist/index.js",
+    "pretest": "rimraf ./dist-test && tsc -p tsconfig.test.json",
+    "test": "node --test --test-reporter=spec \"dist-test/test/**/*.test.js\"",
+    "test:engine": "yarn pretest && node --test --test-reporter=spec \"dist-test/test/**/*.integration.js\""
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",

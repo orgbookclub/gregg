@@ -123,6 +123,7 @@ export const labels = {
   // Event participation
   Join: "Join",
   Leave: "Leave",
+  Lead: "Lead",
   // Event lifecycle
   CreateThread: "Create Thread",
   Announce: "Announce",
@@ -160,6 +161,8 @@ export const placeholders = {
  * template literals so the wording stays consistent across call sites.
  */
 export const templates = {
+  engineUnavailable: (what: string) =>
+    `${what} isn't available on this backend yet (BACKEND=${process.env.BACKEND || "ows"}).`,
   /** Generic "command failed to run" reply. */
   commandRunError: (commandName: string) =>
     `Something went wrong while trying to run command ${commandName}`,

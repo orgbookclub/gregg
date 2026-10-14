@@ -15,6 +15,8 @@ import { showQotdPostModalAndPost } from "../../../commands/subcommands/qotd/pos
 import { errors, messages, templates } from "../../../config/constants";
 import { Bot } from "../../../models";
 import { QotdSuggestionStatus } from "../../../models/commands/qotd/QotdSuggestionStatus";
+import { isButtonAvailable } from "../../../modules/engine/backend";
+import { processEngineButtonClick } from "../../../modules/engine/handlers/buttons";
 import {
   buildOpenLibraryWorkUrl,
   OPENLIBRARY_BR_BUTTON_PREFIX,
@@ -45,6 +47,21 @@ import {
  */
 const processButtonClick = async (bot: Bot, interaction: ButtonInteraction) => {
   try {
+    if (!isButtonAvailable(bot.configs.backend, interaction.customId)) {
+      await interaction.reply({
+        content: templates.engineUnavailable("This button"),
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
+    }
+    if (bot.engine && (await processEngineButtonClick(bot, interaction))) {
+      await upsertInteractionUsage(
+        bot,
+        "button",
+        normalizeCustomId(interaction.customId),
+      );
+      return;
+    }
     if (interaction.customId === "bookmark-delete") {
       await handleBookmarkDelete(interaction);
     } else if (
@@ -231,6 +248,10 @@ async function toggleEventInterest(
 async function handleEventActions(interaction: ButtonInteraction, bot: Bot) {
   await interaction.deferReply({ flags: MessageFlags.Ephemeral });
   const [embedType, eventId, customAction] = interaction.customId.split("-");
+  if (customAction !== "interested" && customAction !== "notInterested") {
+    await interaction.editReply(templates.engineUnavailable("This button"));
+    return;
+  }
   const action: InterestAction =
     customAction === "interested" ? "join" : "leave";
 

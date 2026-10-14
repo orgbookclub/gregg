@@ -12,6 +12,7 @@ import {
   EventTypeOptions,
 } from "../config";
 import { Command, CommandHandler } from "../models";
+import { engineEventHandlers } from "../modules/engine/handlers/commands";
 import { addDateWindowOptions } from "../utils/dateWindow";
 import { errorHandler } from "../utils/errorHandler";
 
@@ -232,7 +233,9 @@ export const events: Command = {
   run: async (bot, interaction, guildConfig) => {
     try {
       const subCommand = interaction.options.getSubcommand();
-      const handler = handlers[subCommand];
+      const handler =
+        (bot.engine ? engineEventHandlers[subCommand] : undefined) ??
+        handlers[subCommand];
       await handler(bot, interaction, guildConfig);
     } catch (err) {
       await errorHandler(

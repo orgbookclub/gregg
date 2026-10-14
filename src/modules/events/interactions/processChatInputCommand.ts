@@ -7,6 +7,7 @@ import {
 
 import { templates } from "../../../config/constants";
 import { Bot } from "../../../models";
+import { isCommandAvailable } from "../../../modules/engine/backend";
 import { getGuildConfigFromDb } from "../../../utils/dbUtils";
 import { errorHandler } from "../../../utils/errorHandler";
 
@@ -33,6 +34,18 @@ async function processChatInputCommand(
       return;
     }
 
+    const subcommand = interaction.options.getSubcommand(false);
+    if (
+      !isCommandAvailable(bot.configs.backend, command.data.name, subcommand)
+    ) {
+      await interaction.reply({
+        content: templates.engineUnavailable(
+          `/${[command.data.name, subcommand].filter(Boolean).join(" ")}`,
+        ),
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
+    }
     if (!cooldowns[command.data.name]) {
       cooldowns[command.data.name] = {};
     }

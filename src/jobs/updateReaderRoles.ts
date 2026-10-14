@@ -213,6 +213,7 @@ const jobName = "updateReaderRoles";
 const cronTime = "50 23 * * *";
 
 export const updateReaderRoles: Job = {
+  backends: ["ows"],
   name: jobName,
   cronTime: cronTime,
   callBack: async (bot) => {
