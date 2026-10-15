@@ -53,6 +53,7 @@ export interface EngineMember {
   user: EngineUserSummary;
   role: EngineRole;
   nickname: string | null;
+  source: "web" | "invite" | "integration";
   showOnLeaderboard: boolean;
   joinedAt: string;
 }
@@ -186,6 +187,46 @@ export interface EngineParticipant {
   points: EnginePoints;
 }
 
+export interface EngineUpdateEventRequest {
+  title?: string;
+  description?: string;
+  bookId?: string | null;
+  typeKey?: string;
+  startDate?: string;
+  endDate?: string;
+  expectedVersion: number;
+}
+
+export interface EngineResultEntry {
+  userId: string;
+  completion: EngineCompletion;
+  isLeader?: boolean;
+  readerPoints?: number;
+  leaderPoints?: number;
+  bonusPoints?: number;
+}
+
+export interface EngineBookSearchResult {
+  bookId: string | null;
+  source: "catalog" | "openlibrary";
+  openLibraryWorkId: string | null;
+  title: string;
+  authors: string[];
+  coverUrl: string | null;
+  publishedYear: number | null;
+  isbn13: string | null;
+}
+
+export interface EngineCreateManualBookRequest {
+  title: string;
+  subtitle?: string;
+  authors: string[];
+  pageCount?: number;
+  coverUrl?: string;
+  isbn13?: string;
+  publishedYear?: number;
+}
+
 export interface EngineCreateEventRequest {
   typeKey: string;
   title?: string;
@@ -241,6 +282,12 @@ export interface EngineTypeBreakdown {
 
 export interface EngineMemberStats {
   user: EngineUserSummary;
+  recentEvents: {
+    event: EngineEventListItem;
+    points: EnginePoints;
+    completion: EngineCompletion;
+    isLeader: boolean;
+  }[];
   window: EngineResolvedWindow;
   points: number;
   eventsCompleted: number;

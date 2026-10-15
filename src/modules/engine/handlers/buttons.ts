@@ -2,6 +2,7 @@ import { ButtonInteraction, MessageFlags } from "discord.js";
 
 import { errors, messages, templates } from "../../../config/constants";
 import { Bot } from "../../../models";
+import { OPENLIBRARY_BR_BUTTON_PREFIX } from "../../../utils/bookUtils";
 import { EngineInstallationClient } from "../client";
 import {
   buildEngineEventEmbed,
@@ -12,12 +13,14 @@ import {
 import { engineStatusLabel } from "../mappings";
 import { EngineActor, EngineEventDetail } from "../types";
 
+import { handleEngineBookRequestButton } from "./books";
 import {
   engineErrorMessage,
   interactionActor,
   replyOrEdit,
   requireInstallation,
 } from "./common";
+import { handleEngineParticipantButton } from "./staff";
 import { buildEngineMemberStatsContainer, fetchMemberStats } from "./stats";
 
 type ParticipationAction = "interested" | "notInterested" | "lead";
@@ -232,6 +235,12 @@ export async function processEngineButtonClick(
     await handleTransition(bot, interaction, "rejected");
   } else if (id.startsWith("evt-info-")) {
     await handleInfo(bot, interaction);
+  } else if (id.startsWith("evt-addpts-")) {
+    await handleEngineParticipantButton(bot, interaction, "add");
+  } else if (id.startsWith("evt-rmpts-")) {
+    await handleEngineParticipantButton(bot, interaction, "remove");
+  } else if (id.startsWith(OPENLIBRARY_BR_BUTTON_PREFIX)) {
+    await handleEngineBookRequestButton(bot, interaction);
   } else if (id.startsWith("usr-stats-")) {
     await handleUserStats(bot, interaction);
   } else {

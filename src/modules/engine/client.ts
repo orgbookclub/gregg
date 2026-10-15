@@ -3,8 +3,10 @@ import {
   EngineActor,
   EngineAppTokenResponse,
   EngineBook,
+  EngineBookSearchResult,
   EngineClubContext,
   EngineClubOverview,
+  EngineCreateManualBookRequest,
   EngineCreateEventRequest,
   EngineEventDetail,
   EngineEventListItem,
@@ -20,8 +22,10 @@ import {
   EnginePage,
   EngineParticipant,
   EngineProblem,
+  EngineResultEntry,
   EngineStatsWindowQuery,
   EngineTierAssignment,
+  EngineUpdateEventRequest,
 } from "./types";
 
 type FetchLike = typeof fetch;
@@ -485,6 +489,101 @@ export class EngineInstallationClient {
   }
 
   /**
+   * Lists events with the viewer's participation (`me`) filled in for the
+   * actor, which also makes `mine=true` work.
+   *
+   * @param query The list filters.
+   * @param actor The viewer.
+   * @returns A page of events.
+   */
+  async listEventsAs(
+    query: Record<string, QueryValue>,
+    actor: EngineActor,
+  ): Promise<EnginePage<EngineEventListItem>> {
+    return await this.request("GET", `${this.clubPath()}/events`, {
+      query,
+      actor,
+    });
+  }
+
+  /**
+   * Edits an event as the actor (optimistic concurrency via
+   * `expectedVersion`).
+   *
+   * @param eventId The event id.
+   * @param body The changed fields.
+   * @param actor The actor.
+   * @returns The updated event.
+   */
+  async updateEvent(
+    eventId: string,
+    body: EngineUpdateEventRequest,
+    actor: EngineActor,
+  ): Promise<EngineEventDetail> {
+    return await this.request("PATCH", this.eventPath(eventId), {
+      body,
+      actor,
+    });
+  }
+
+  /**
+   * Records results (completion and points) for members as the actor.
+   *
+   * @param eventId The event id.
+   * @param entries The result entries.
+   * @param actor The actor.
+   * @returns All participants after the upsert.
+   */
+  async recordResults(
+    eventId: string,
+    entries: EngineResultEntry[],
+    actor: EngineActor,
+  ): Promise<EngineParticipant[]> {
+    const page = await this.request<EngineItems<EngineParticipant>>(
+      "POST",
+      `${this.eventPath(eventId)}/results`,
+      { body: { entries }, actor },
+    );
+    return page.items;
+  }
+
+  /**
+   * Searches the book catalogue and Open Library.
+   *
+   * @param q The query.
+   * @param limit The maximum number of results.
+   * @returns The results.
+   */
+  async searchBooks(q: string, limit = 10): Promise<EngineBookSearchResult[]> {
+    const page = await this.request<EngineItems<EngineBookSearchResult>>(
+      "GET",
+      "/v1/books/search",
+      { query: { q, limit } },
+    );
+    return page.items;
+  }
+
+  /**
+   * Fetches a catalogue book.
+   *
+   * @param bookId The book id.
+   * @returns The book.
+   */
+  async getBook(bookId: string): Promise<EngineBook> {
+    return await this.request("GET", `/v1/books/${encodeURIComponent(bookId)}`);
+  }
+
+  /**
+   * Adds a book that isn't on Open Library to the catalogue.
+   *
+   * @param body The book.
+   * @returns The created book.
+   */
+  async createBook(body: EngineCreateManualBookRequest): Promise<EngineBook> {
+    return await this.request("POST", "/v1/books", { body });
+  }
+
+  /**
    * Lists the participants of an event.
    *
    * @param eventId The event id.
@@ -726,6 +825,72 @@ export class EngineInstallationClient {
       if (error instanceof EngineError && error.status === 404) return null;
       throw error;
     }
+  }
+
+  /**
+   * Ensures a Discord user is a club member (an unclaimed user and an
+   * integration membership are created when needed). The actor must be
+   * staff (contract extension A7).
+   *
+   * @param subject The Discord user id.
+   * @param name The Discord username.
+   * @param actor The acting staff member.
+   * @returns The member.
+   */
+  async ensureMemberByDiscordId(
+    subject: string,
+    name: string,
+    actor: EngineActor,
+  ): Promise<EngineMember> {
+    return await this.request(
+      "PUT",
+      `${this.clubPath()}/members/by-identity/discord/${encodeURIComponent(subject)}`,
+      { body: { name }, actor },
+    );
+  }
+
+  /**
+   * Sets another member's interest or leadership as staff (A7).
+   *
+   * @param eventId The event id.
+   * @param userId The member's engine user id.
+   * @param body The flags to set.
+   * @param body.interested Whether the member is interested.
+   * @param body.isLeader Whether the member leads.
+   * @param actor The acting staff member.
+   * @returns All participants after the change.
+   */
+  async updateParticipant(
+    eventId: string,
+    userId: string,
+    body: { interested?: boolean; isLeader?: boolean },
+    actor: EngineActor,
+  ): Promise<EngineParticipant[]> {
+    const page = await this.request<EngineItems<EngineParticipant>>(
+      "PATCH",
+      `${this.eventPath(eventId)}/participants/${encodeURIComponent(userId)}`,
+      { body, actor },
+    );
+    return page.items;
+  }
+
+  /**
+   * Removes a member's participation (including results) as staff (A7).
+   *
+   * @param eventId The event id.
+   * @param userId The member's engine user id.
+   * @param actor The acting staff member.
+   */
+  async removeParticipant(
+    eventId: string,
+    userId: string,
+    actor: EngineActor,
+  ): Promise<void> {
+    await this.request(
+      "DELETE",
+      `${this.eventPath(eventId)}/participants/${encodeURIComponent(userId)}`,
+      { actor },
+    );
   }
 
   /**

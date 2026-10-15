@@ -183,6 +183,40 @@ describe("EngineClient", () => {
     );
   });
 
+  it("calls the A7 staff routes as the actor", async () => {
+    const { client, calls } = makeClient(
+      engineRoutes({
+        "PUT /v1/clubs/club1/members/by-identity/discord/77": () => ({
+          status: 200,
+          body: { user: { id: "u77" } },
+        }),
+        "PATCH /v1/clubs/club1/events/ev1/participants/u77": () => ({
+          status: 200,
+          body: { items: [] },
+        }),
+        "DELETE /v1/clubs/club1/events/ev1/participants/u77": () => ({
+          status: 204,
+        }),
+      }),
+    );
+    const inst = await client.forGuild("guild1");
+    assert.ok(inst);
+    const staff = { subject: "1", roles: ["staff"] };
+    const member = await inst.ensureMemberByDiscordId("77", "newbie", staff);
+    assert.equal(member.user.id, "u77");
+    await inst.updateParticipant("ev1", "u77", { interested: true }, staff);
+    await inst.removeParticipant("ev1", "u77", staff);
+    const [put, patch, del] = calls.filter((c) =>
+      ["PUT", "PATCH", "DELETE"].includes(c.method),
+    );
+    assert.equal(put.body, JSON.stringify({ name: "newbie" }));
+    assert.equal(patch.body, JSON.stringify({ interested: true }));
+    for (const call of [put, patch, del]) {
+      assert.equal(call.headers["X-Actor-Subject"], "1");
+      assert.equal(call.headers["X-Actor-Roles"], "staff");
+    }
+  });
+
   it("maps a 404 member lookup to null", async () => {
     const { client } = makeClient(engineRoutes());
     const inst = await client.forGuild("guild1");

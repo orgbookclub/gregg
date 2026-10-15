@@ -1,3 +1,4 @@
+import { GuildsConfig } from "@prisma/client";
 import {
   ButtonInteraction,
   ChatInputCommandInteraction,
@@ -5,7 +6,9 @@ import {
   ModalSubmitInteraction,
 } from "discord.js";
 
-import { Bot } from "../../../models";
+import { errors } from "../../../config/constants";
+import { Bot, CommandHandler } from "../../../models";
+import { errorHandler } from "../../../utils/errorHandler";
 import { actorFromDiscord } from "../actor";
 import { EngineError, EngineInstallationClient } from "../client";
 import { EngineActor } from "../types";
@@ -93,6 +96,49 @@ export function engineErrorMessage(error: unknown): string | null {
     default:
       return null;
   }
+}
+
+export type EngineHandler = (
+  bot: Bot,
+  interaction: ChatInputCommandInteraction,
+  client: EngineInstallationClient,
+  guildConfig?: GuildsConfig,
+) => Promise<void>;
+
+/**
+ * Wraps an engine handler: resolves the installation, maps expected engine
+ * refusals to replies and reports everything else.
+ *
+ * @param area The breadcrumb for error reports.
+ * @param handler The handler.
+ * @returns The command handler.
+ */
+export function engineCommand(
+  area: string,
+  handler: EngineHandler,
+): CommandHandler {
+  return async (bot, interaction, guildConfig) => {
+    try {
+      const client = await requireInstallation(bot, interaction);
+      if (!client) return;
+      await handler(bot, interaction, client, guildConfig);
+    } catch (err) {
+      const message = engineErrorMessage(err);
+      if (message) {
+        await replyOrEdit(interaction, message);
+        return;
+      }
+      await replyOrEdit(interaction, errors.SomethingWentWrongError);
+      await errorHandler(
+        bot,
+        `commands > ${area}`,
+        err,
+        interaction.guild?.name,
+        undefined,
+        interaction,
+      );
+    }
+  };
 }
 
 export { NOT_LINKED_MESSAGE };

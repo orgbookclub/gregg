@@ -5,11 +5,7 @@ const BACKENDS: Backend[] = ["ows", "engine"];
  * no engine implementation yet. On the engine backend they reply with a
  * notice instead of touching OWS.
  */
-const ENGINE_UNSUPPORTED_COMMANDS: Record<string, "*" | string[]> = {
-  book: "*",
-  events: ["list", "search", "edit", "broadcast", "adduser", "removeuser"],
-  user: ["info", "events"],
-};
+const ENGINE_UNSUPPORTED_COMMANDS: Record<string, "*" | string[]> = {};
 
 /**
  * Button custom-id prefixes that open OWS-only flows.
@@ -18,9 +14,6 @@ const ENGINE_UNSUPPORTED_BUTTON_PREFIXES = [
   "evt-edit-",
   "evt-thread-",
   "evt-announce-",
-  "evt-addpts-",
-  "evt-rmpts-",
-  "book-br-",
 ];
 
 /**

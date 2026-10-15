@@ -203,6 +203,9 @@ async function runRemoveUserFlow(
   }
 }
 
+/**
+ *
+ */
 function getRemoveUserModal(customId: string, eventId: string) {
   const usersSelect = new UserSelectMenuBuilder()
     .setCustomId(USERS_FIELD_ID)
@@ -238,4 +241,4 @@ function getRemoveUserModal(customId: string, eventId: string) {
     );
 }
 
-export { handleRemoveUser, runRemoveUserFlow };
+export { getRemoveUserModal, handleRemoveUser, runRemoveUserFlow };

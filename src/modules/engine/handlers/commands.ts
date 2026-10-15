@@ -1,5 +1,6 @@
 import { GuildsConfig } from "@prisma/client";
 import {
+  ButtonInteraction,
   ChannelType,
   ChatInputCommandInteraction,
   DiscordjsError,
@@ -40,14 +41,12 @@ import {
   nextMonthRange,
   toEngineStatsWindow,
 } from "../mappings";
+import { toCalendarDateInput } from "../staffActions";
 import { EngineEventDetail, EngineLeaderboardEntry } from "../types";
 
-import {
-  engineErrorMessage,
-  interactionActor,
-  replyOrEdit,
-  requireInstallation,
-} from "./common";
+import { engineCommand, engineErrorMessage, interactionActor } from "./common";
+import { engineListHandlers, engineUserExtraHandlers } from "./lists";
+import { engineStaffHandlers } from "./staff";
 import {
   buildEngineLeaderboardContainer,
   buildEngineMemberStatsContainer,
@@ -61,74 +60,28 @@ const START_FIELD_ID = "startDate";
 const END_FIELD_ID = "endDate";
 const REASON_FIELD_ID = "reason";
 const MODAL_TIMEOUT_MS = 5 * 60 * 1000;
+const BOOK_ID_PATTERN = /^[0-9a-f]{24}$/;
 const ISBN_PATTERN = /^(?:\d[\d-]{8,15}[\dXx])$/;
-const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const THREAD_STATUSES = ["approved", "announced", "ongoing"];
 const LEADERBOARD_PAGE_SIZE = 100;
 const LEADERBOARD_MAX_PAGES = 5;
-
-type EngineHandler = (
-  bot: Bot,
-  interaction: ChatInputCommandInteraction,
-  client: EngineInstallationClient,
-  guildConfig?: GuildsConfig,
-) => Promise<void>;
-
-/**
- * Wraps an engine handler: resolves the installation, maps expected engine
- * refusals to replies and reports everything else.
- *
- * @param area The breadcrumb for error reports.
- * @param handler The handler.
- * @returns The command handler.
- */
-function engineCommand(area: string, handler: EngineHandler): CommandHandler {
-  return async (bot, interaction, guildConfig) => {
-    try {
-      const client = await requireInstallation(bot, interaction);
-      if (!client) return;
-      await handler(bot, interaction, client, guildConfig);
-    } catch (err) {
-      const message = engineErrorMessage(err);
-      if (message) {
-        await replyOrEdit(interaction, message);
-        return;
-      }
-      await replyOrEdit(interaction, errors.SomethingWentWrongError);
-      await errorHandler(
-        bot,
-        `commands > ${area}`,
-        err,
-        interaction.guild?.name,
-        undefined,
-        interaction,
-      );
-    }
-  };
-}
-
-function toCalendarDate(raw: string): string | null {
-  const value = raw.trim();
-  if (DATE_PATTERN.test(value)) return value;
-  const ms = Date.parse(value);
-  return Number.isNaN(ms) ? null : new Date(ms).toISOString().slice(0, 10);
-}
 
 function buildRequestModal(
   customId: string,
   typeLabel: string,
   withDates: boolean,
+  prefill?: string,
 ) {
+  const bookInput = new TextInputBuilder()
+    .setCustomId(BOOK_FIELD_ID)
+    .setRequired(true)
+    .setPlaceholder(placeholders.BookLinkExample)
+    .setStyle(TextInputStyle.Short);
+  if (prefill) bookInput.setValue(prefill);
   const labelsList: LabelBuilder[] = [
     new LabelBuilder()
-      .setLabel("Book (Open Library URL or ISBN)")
-      .setTextInputComponent(
-        new TextInputBuilder()
-          .setCustomId(BOOK_FIELD_ID)
-          .setRequired(true)
-          .setPlaceholder(placeholders.BookLinkExample)
-          .setStyle(TextInputStyle.Short),
-      ),
+      .setLabel("Book (Open Library URL, ISBN or book ID)")
+      .setTextInputComponent(bookInput),
   ];
   if (withDates) {
     for (const [id, label] of [
@@ -204,91 +157,13 @@ async function postRequestMessage(
 const handleRequest = engineCommand(
   "events > request (engine)",
   async (bot, interaction, client, guildConfig) => {
-    const owsType = interaction.options.getString("type", true);
-    const typeKey = engineTypeKey(owsType);
-    const withDates = typeKey !== "book-of-the-month";
-    const customId = `${REQUEST_MODAL_ID}${Math.floor(Math.random() * 1e6)}`;
-    await interaction.showModal(
-      buildRequestModal(customId, owsType, withDates),
+    await runEngineRequestFlow(
+      bot,
+      interaction,
+      client,
+      guildConfig,
+      interaction.options.getString("type", true),
     );
-    let submit: ModalSubmitInteraction;
-    try {
-      submit = await interaction.awaitModalSubmit({
-        filter: (i) => i.customId === customId,
-        time: MODAL_TIMEOUT_MS,
-      });
-    } catch (err) {
-      if (err instanceof DiscordjsError) return;
-      throw err;
-    }
-    await submit.deferReply({ flags: MessageFlags.Ephemeral });
-    try {
-      const bookInput = submit.fields.getTextInputValue(BOOK_FIELD_ID).trim();
-      const workId = getOpenLibraryWorkId(bookInput);
-      const isbn = ISBN_PATTERN.test(bookInput)
-        ? bookInput.replace(/-/g, "")
-        : null;
-      if (!workId && !isbn) {
-        await submit.editReply(
-          templates.invalidSubmission(
-            "Use an Open Library work URL or an ISBN",
-          ),
-        );
-        return;
-      }
-      let startDate: string | null;
-      let endDate: string | null;
-      if (withDates) {
-        startDate = toCalendarDate(
-          submit.fields.getTextInputValue(START_FIELD_ID),
-        );
-        endDate = toCalendarDate(submit.fields.getTextInputValue(END_FIELD_ID));
-      } else {
-        [startDate, endDate] = nextMonthRange((await client.getClub()).today);
-      }
-      if (!startDate || !endDate) {
-        await submit.editReply(templates.invalidSubmission("Invalid date"));
-        return;
-      }
-      const book = await client.importBook(
-        workId ? { openLibraryWorkId: workId } : { isbn: isbn ?? undefined },
-      );
-      const event = await client.createEvent(
-        {
-          typeKey,
-          bookId: book.id,
-          description: submit.fields.getTextInputValue(REASON_FIELD_ID),
-          startDate,
-          endDate,
-          leadSelf: true,
-        },
-        interactionActor(submit),
-      );
-      try {
-        await postRequestMessage(bot, client, submit, event, guildConfig);
-      } catch (err) {
-        logger.warn(
-          { err },
-          `Unable to post the request message for ${event.id}`,
-        );
-      }
-      await submit.editReply(
-        templates.eventRequestSuccess(event.title, event.id),
-      );
-    } catch (err) {
-      const message = engineErrorMessage(err);
-      await submit.editReply(message ?? errors.SomethingWentWrongError);
-      if (!message) {
-        await errorHandler(
-          bot,
-          "commands > events > request (engine) > modal",
-          err,
-          submit.guild?.name,
-          undefined,
-          submit,
-        );
-      }
-    }
   },
 );
 
@@ -624,10 +499,122 @@ const handleReaderboard = engineCommand(
 );
 
 /**
+ * Shows the event request modal and creates the event as the actor. Shared by
+ * `/events request` and the "Request Buddy Read" button on `/book info`.
+ *
+ * @param bot The bot instance.
+ * @param interaction The slash command or button interaction.
+ * @param client The installation client.
+ * @param guildConfig The guild config.
+ * @param owsType The OWS event type (e.g. "BuddyRead").
+ * @param prefill An optional book URL, ISBN or catalogue id to pre-fill.
+ */
+export async function runEngineRequestFlow(
+  bot: Bot,
+  interaction: ChatInputCommandInteraction | ButtonInteraction,
+  client: EngineInstallationClient,
+  guildConfig: GuildsConfig | undefined,
+  owsType: string,
+  prefill?: string,
+) {
+  const typeKey = engineTypeKey(owsType);
+  const withDates = typeKey !== "book-of-the-month";
+  const customId = `${REQUEST_MODAL_ID}${Math.floor(Math.random() * 1e6)}`;
+  await interaction.showModal(
+    buildRequestModal(customId, owsType, withDates, prefill),
+  );
+  let submit: ModalSubmitInteraction;
+  try {
+    submit = await interaction.awaitModalSubmit({
+      filter: (i) => i.customId === customId,
+      time: MODAL_TIMEOUT_MS,
+    });
+  } catch (err) {
+    if (err instanceof DiscordjsError) return;
+    throw err;
+  }
+  await submit.deferReply({ flags: MessageFlags.Ephemeral });
+  try {
+    const bookInput = submit.fields.getTextInputValue(BOOK_FIELD_ID).trim();
+    const workId = getOpenLibraryWorkId(bookInput);
+    const isbn = ISBN_PATTERN.test(bookInput)
+      ? bookInput.replace(/-/g, "")
+      : null;
+    const catalogueId = BOOK_ID_PATTERN.test(bookInput) ? bookInput : null;
+    if (!workId && !isbn && !catalogueId) {
+      await submit.editReply(
+        templates.invalidSubmission(
+          "Use an Open Library work URL, an ISBN or a book ID from `/book add`",
+        ),
+      );
+      return;
+    }
+    let startDate: string | null;
+    let endDate: string | null;
+    if (withDates) {
+      startDate = toCalendarDateInput(
+        submit.fields.getTextInputValue(START_FIELD_ID),
+      );
+      endDate = toCalendarDateInput(
+        submit.fields.getTextInputValue(END_FIELD_ID),
+      );
+    } else {
+      [startDate, endDate] = nextMonthRange((await client.getClub()).today);
+    }
+    if (!startDate || !endDate) {
+      await submit.editReply(templates.invalidSubmission("Invalid date"));
+      return;
+    }
+    const book = catalogueId
+      ? await client.getBook(catalogueId)
+      : await client.importBook(
+          workId ? { openLibraryWorkId: workId } : { isbn: isbn ?? undefined },
+        );
+    const event = await client.createEvent(
+      {
+        typeKey,
+        bookId: book.id,
+        description: submit.fields.getTextInputValue(REASON_FIELD_ID),
+        startDate,
+        endDate,
+        leadSelf: true,
+      },
+      interactionActor(submit),
+    );
+    try {
+      await postRequestMessage(bot, client, submit, event, guildConfig);
+    } catch (err) {
+      logger.warn(
+        { err },
+        `Unable to post the request message for ${event.id}`,
+      );
+    }
+    await submit.editReply(
+      templates.eventRequestSuccess(event.title, event.id),
+    );
+  } catch (err) {
+    const message = engineErrorMessage(err);
+    await submit.editReply(message ?? errors.SomethingWentWrongError);
+    if (!message) {
+      await errorHandler(
+        bot,
+        "commands > events > request (engine) > modal",
+        err,
+        submit.guild?.name,
+        undefined,
+        submit,
+      );
+    }
+  }
+}
+
+/**
  * Engine implementations of `/events` subcommands, used instead of the OWS
  * handlers when `BACKEND=engine`.
  */
 export const engineEventHandlers: Record<string, CommandHandler> = {
+  ...engineListHandlers,
+  ...engineStaffHandlers,
   request: handleRequest,
   info: handleInfo,
   createthread: handleCreateThread,
@@ -640,5 +627,6 @@ export const engineEventHandlers: Record<string, CommandHandler> = {
  * Engine implementations of `/user` subcommands.
  */
 export const engineUserHandlers: Record<string, CommandHandler> = {
+  ...engineUserExtraHandlers,
   readerboard: handleReaderboard,
 };

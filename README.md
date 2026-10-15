@@ -42,8 +42,10 @@ ENGINE_TEST_URL=http://localhost:4010 yarn test:engine
 `yarn test:engine` drives the real engine client and Discord sync code with
 in-memory Discord/Prisma fakes: `/link` (claim a link code), role catalogue
 push and role mapping, actor-asserted request/interest/lead/approve, thread
-links, feed-driven embed refresh, member lookup by Discord id, tier role sync
-and revocation. It defaults to the dev seed (`alice@example.com`,
+links, feed-driven embed refresh, member lookup by Discord id, event
+list/search/participant filters, edits, staff participant changes (ensure
+member, participant edits, results, removal), books, tier role sync and
+revocation. It defaults to the dev seed (`alice@example.com`,
 `gregg-dev`); override with `ENGINE_TEST_OWNER_EMAIL`,
 `ENGINE_TEST_OWNER_PASSWORD`, `ENGINE_TEST_CLIENT_ID` and
 `ENGINE_TEST_CLIENT_SECRET`.
@@ -78,14 +80,36 @@ With `BACKEND=engine`:
    (case-insensitive) is used. Set `publicSettings.syncTierRoles` to `false`
    to turn role sync off.
 
-Supported on the engine today: `/link`, `/events request|info|createthread|announce|stats|serverstats`,
-`/user readerboard`, the event Join/Leave/Lead, info, approve/reject and stats
-buttons, plus everything that doesn't use OWS (sprints, QOTD, config, bookmarks,
-`/gregg`; `/gregg ask` runs without OWS MCP tools). The remaining OWS-only
-commands (`/book *`, `/events list|search|edit|broadcast|adduser|removeuser`,
-`/user info|events`) reply with a notice on the engine backend. Engine event
-ids equal the imported OWS ids, so existing Discord message mappings keep
-working. The code lives in `src/modules/engine/`.
+Every slash command works on the engine backend. Event and user commands call
+the engine as the member, so staff-only actions follow the club's role mapping:
+
+- `/events list|search` and `/user events` use the engine's event list
+  (`mine` for yourself, `participant` for another member), with Join/Leave
+  buttons based on your participation.
+- `/events edit` maps name/description/type/dates to an edit with optimistic
+  concurrency, status to a lifecycle transition (only allowed edges), and
+  threads to Discord thread links. `requestedBy` can't be edited on the engine.
+- `/events adduser|removeuser` (and the Add/Remove Points buttons) first ensure
+  the selected Discord users are club members, then:
+  - **Interested:** staff participation edits.
+  - **Leaders:** the leader flag before the event starts; once it is ongoing,
+    leader points via results.
+  - **Readers:** results (completed with points, or `not_completed` with 0
+    points on removal).
+- `/events broadcast` pings the interested members in the event's linked
+  thread. Only the event's leaders and staff can use it.
+- `/user info` shows the member's role, join date, points, rank and tiers.
+- `/book search|info|cover|link` use the engine's catalogue and Open Library
+  search. `/book add` (staff) adds a manual book and replies with its book ID,
+  which `/events request` accepts alongside Open Library URLs and ISBNs. The
+  *Request Buddy Read* button on `/book info` opens the same request form.
+
+Only the Edit, Create Thread and Announce buttons on the event card are still
+OWS-only (use `/events edit|createthread|announce`). Everything that doesn't use
+OWS (sprints, QOTD, config, bookmarks, `/gregg`) works unchanged. `/gregg ask`
+runs without OWS MCP tools. Engine event ids equal the imported OWS ids, so
+existing Discord message mappings keep working. The code lives in
+`src/modules/engine/`.
 
 ## OWS authentication
 

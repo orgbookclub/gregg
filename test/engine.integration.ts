@@ -24,6 +24,11 @@ import {
   pushRoleCatalog,
   syncGuildTierRoles,
 } from "../src/modules/engine/service";
+import {
+  engineListQuery,
+  planEventEdit,
+  planParticipantChange,
+} from "../src/modules/engine/staffActions";
 import { EngineActor } from "../src/modules/engine/types";
 
 const BASE_URL = process.env.ENGINE_TEST_URL;
@@ -394,6 +399,169 @@ describe("Gregg on the engine (integration)", { skip: !BASE_URL }, () => {
     assert.ok(
       board.items.some((e) => formatEngineUser(e.user).startsWith("<@")),
     );
+  });
+
+  it("lists and searches events as the viewer (/events list|search, /user events)", async () => {
+    const listed = await installation.listEventsAs(
+      {
+        ...engineListQuery({ type: "BuddyRead", status: "Approved" }),
+        pageSize: 100,
+      },
+      second,
+    );
+    const row = listed.items.find((item) => item.id === eventId);
+    assert.ok(row, "approved buddy read is listed");
+    assert.equal(row.me?.interested, true);
+    const found = await installation.listEventsAs(
+      engineListQuery({ q: `Gregg IT ${runId}` }),
+      reader,
+    );
+    assert.deepEqual(
+      found.items.map((item) => item.id),
+      [eventId],
+    );
+    const mine = await installation.listEventsAs(
+      engineListQuery({ mine: true }),
+      second,
+    );
+    assert.ok(mine.items.some((item) => item.id === eventId));
+    const member = await installation.findMemberByDiscordId(second.subject);
+    assert.ok(member);
+    const theirs = await installation.listEventsAs(
+      engineListQuery({ participant: member.user.id }),
+      reader,
+    );
+    assert.ok(theirs.items.some((item) => item.id === eventId));
+  });
+
+  it("edits events as staff (/events edit)", async () => {
+    let event = await installation.getEvent(eventId, staff);
+    const rename = planEventEdit("name", `Gregg IT ${runId} (renamed)`, event);
+    assert.equal(rename.kind, "patch");
+    if (rename.kind === "patch") {
+      event = await installation.updateEvent(eventId, rename.body, staff);
+    }
+    assert.equal(event.title, `Gregg IT ${runId} (renamed)`);
+    const status = planEventEdit("status", "Announced", event);
+    assert.deepEqual(status, { kind: "transition", to: "announced" });
+    event = await installation.transition(eventId, "announced", staff);
+    assert.equal(event.status, "announced");
+    await assert.rejects(
+      installation.updateEvent(
+        eventId,
+        { expectedVersion: event.version, title: "x" },
+        reader,
+      ),
+      (error: unknown) => error instanceof EngineError && error.status === 403,
+    );
+  });
+
+  it("adds and removes participants as staff (/events adduser|removeuser)", async () => {
+    const newcomer = `it-new-${runId}`;
+    assert.equal(await installation.findMemberByDiscordId(newcomer), null);
+    await assert.rejects(
+      installation.ensureMemberByDiscordId(newcomer, "Newcomer", reader),
+      (error: unknown) => error instanceof EngineError && error.status === 403,
+    );
+    const member = await installation.ensureMemberByDiscordId(
+      newcomer,
+      "Newcomer",
+      staff,
+    );
+    const target = { discordId: newcomer, userId: member.user.id };
+    let event = await installation.getEvent(eventId, staff);
+    let participants = await installation.listParticipants(eventId);
+    const interest = planParticipantChange(
+      "add",
+      "interested",
+      0,
+      [target],
+      participants,
+      event.status,
+    );
+    for (const patch of interest.patches) {
+      participants = await installation.updateParticipant(
+        eventId,
+        patch.userId,
+        patch.body,
+        staff,
+      );
+    }
+    assert.equal(
+      participants.find((p) => p.user.id === member.user.id)?.interested,
+      true,
+    );
+    const lead = planParticipantChange(
+      "add",
+      "leaders",
+      0,
+      [target],
+      participants,
+      event.status,
+    );
+    assert.equal(lead.patches.length, 1);
+    participants = await installation.updateParticipant(
+      eventId,
+      member.user.id,
+      lead.patches[0].body,
+      staff,
+    );
+    assert.equal(
+      participants.find((p) => p.user.id === member.user.id)?.isLeader,
+      true,
+    );
+
+    event = await installation.transition(eventId, "ongoing", staff);
+    const readers = planParticipantChange(
+      "add",
+      "readers",
+      7,
+      [target],
+      participants,
+      event.status,
+    );
+    participants = await installation.recordResults(
+      eventId,
+      readers.results,
+      staff,
+    );
+    let row = participants.find((p) => p.user.id === member.user.id);
+    assert.equal(row?.completion, "completed");
+    assert.equal(row?.points.reader, 7);
+    assert.equal(row?.isLeader, true);
+
+    const removeReader = planParticipantChange(
+      "remove",
+      "readers",
+      0,
+      [target],
+      participants,
+      event.status,
+    );
+    participants = await installation.recordResults(
+      eventId,
+      removeReader.results,
+      staff,
+    );
+    row = participants.find((p) => p.user.id === member.user.id);
+    assert.equal(row?.completion, "not_completed");
+    assert.equal(row?.points.reader, 0);
+
+    await installation.removeParticipant(eventId, member.user.id, staff);
+    participants = await installation.listParticipants(eventId);
+    assert.ok(!participants.some((p) => p.user.id === member.user.id));
+  });
+
+  it("searches, adds and looks up books (/book)", async () => {
+    await assert.rejects(installation.createBook({ title: "", authors: [] }));
+    const book = await installation.createBook({
+      title: `Gregg Book ${runId}`,
+      authors: ["IT Author"],
+      pageCount: 123,
+    });
+    assert.equal((await installation.getBook(book.id)).pageCount, 123);
+    const results = await installation.searchBooks(`Gregg Book ${runId}`, 5);
+    assert.ok(results.some((r) => r.bookId === book.id));
   });
 
   it("syncs reader tier roles from tier assignments", async () => {

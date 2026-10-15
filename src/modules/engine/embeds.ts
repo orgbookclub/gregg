@@ -224,6 +224,20 @@ export function buildEngineStaffRow(
         .setStyle(ButtonStyle.Danger),
     );
   }
+  if (event.permissions.canRecordResults) {
+    buttons.push(
+      new ButtonBuilder()
+        .setCustomId(`evt-addpts-${event.id}`)
+        .setLabel(labels.AddPoints)
+        .setEmoji({ name: "➕" })
+        .setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder()
+        .setCustomId(`evt-rmpts-${event.id}`)
+        .setLabel(labels.RemovePoints)
+        .setEmoji({ name: "➖" })
+        .setStyle(ButtonStyle.Secondary),
+    );
+  }
   if (buttons.length === 0) return null;
   return new ActionRowBuilder<ButtonBuilder>().addComponents(buttons);
 }
