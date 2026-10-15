@@ -10,6 +10,7 @@ import {
 import {
   discordThreadIds,
   discordThreadLink,
+  replaceDiscordThreads,
   withDiscordLink,
 } from "../src/modules/engine/links";
 import {
@@ -158,6 +159,21 @@ describe("thread links", () => {
       ["#renamed"],
     );
     assert.deepEqual(discordThreadIds(existing), ["1"]);
+    const channel = {
+      platform: "discord",
+      kind: "channel" as const,
+      url: "https://discord.com/channels/g/9",
+      externalId: "9",
+      label: null,
+    };
+    const replaced = replaceDiscordThreads(
+      [...existing, channel],
+      [discordThreadLink("g", { id: "3", name: "t" })],
+    );
+    assert.deepEqual(
+      replaced.map((l) => `${l.kind}:${l.externalId}`),
+      ["channel:9", "thread:3"],
+    );
   });
 });
 

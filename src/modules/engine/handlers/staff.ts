@@ -30,7 +30,7 @@ import { errorHandler } from "../../../utils/errorHandler";
 import { logToWebhook } from "../../../utils/logHandler";
 import { EngineInstallationClient } from "../client";
 import { buildEngineEventEmbed, buildEngineStaffRow } from "../embeds";
-import { discordThreadLink } from "../links";
+import { discordThreadLink, replaceDiscordThreads } from "../links";
 import {
   interestedDiscordIds,
   ParticipantTarget,
@@ -166,7 +166,10 @@ async function setThreadLinks(
       return discordThreadLink(client.guildId, { id, name });
     }),
   );
-  return await client.putLinks(event.id, links);
+  return await client.putLinks(
+    event.id,
+    replaceDiscordThreads(event.externalLinks, links),
+  );
 }
 
 const handleEdit = engineCommand(

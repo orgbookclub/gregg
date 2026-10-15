@@ -59,6 +59,30 @@ export function withDiscordLink(
 }
 
 /**
+ * Computes the Discord links to PUT when replacing an event's threads. The
+ * event's other Discord links (channels, messages, meetings) are kept.
+ *
+ * @param existing The event's current links (all platforms).
+ * @param threads The new thread links.
+ * @returns The Discord links to send.
+ */
+export function replaceDiscordThreads(
+  existing: EngineExternalLink[],
+  threads: EngineExternalLinkInput[],
+): EngineExternalLinkInput[] {
+  const kept: EngineExternalLinkInput[] = existing
+    .filter((item) => item.platform === "discord" && item.kind !== "thread")
+    .map((item) => ({
+      platform: item.platform,
+      kind: item.kind,
+      url: item.url,
+      externalId: item.externalId,
+      label: item.label,
+    }));
+  return [...kept, ...threads];
+}
+
+/**
  * Returns the Discord thread ids linked to an event.
  *
  * @param links The event's links.
