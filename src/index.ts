@@ -7,6 +7,8 @@ import { Bot } from "./models";
 import { SprintManager } from "./models/commands/sprint/SprintManager";
 import { JobManager } from "./models/jobs/JobManager";
 import { createAIAgent } from "./modules/ai";
+import { filterForBackend } from "./modules/engine/backend";
+import { loadEngine } from "./modules/engine/loadEngine";
 import { createServer } from "./server/createServer";
 import { errorHandler } from "./utils/errorHandler";
 import { loadApiClient } from "./utils/loadApiClient";
@@ -50,7 +52,7 @@ void (async () => {
   });
 
   logger.debug("Loading commands...");
-  bot.commands = await loadCommands();
+  bot.commands = filterForBackend(await loadCommands(), bot.configs.backend);
   bot.contexts = await loadContexts();
   if (!bot.commands.length || !bot.contexts.length) {
     logger.error("Failed to import commands");
@@ -72,14 +74,20 @@ void (async () => {
   logger.debug("Attaching event listeners...");
   handleEvents(bot);
 
-  logger.debug("Initializing API Client...");
-  await loadApiClient(bot);
+  bot.engine = null;
+  if (bot.configs.backend === "engine") {
+    logger.debug("Initializing gregg-core engine client...");
+    await loadEngine(bot);
+  } else {
+    logger.debug("Initializing API Client...");
+    await loadApiClient(bot);
+  }
 
   logger.debug("Initializing AI agent...");
   bot.ai = createAIAgent(bot);
 
   logger.debug("Initializing job manager...");
-  const jobs = await loadJobs();
+  const jobs = filterForBackend(await loadJobs(), bot.configs.backend);
   bot.jobManager = new JobManager(bot, jobs);
 
   logger.debug("Connecting to Discord...");

@@ -211,6 +211,9 @@ async function respondToAddUserError(
   }
 }
 
+/**
+ *
+ */
 function parsePoints(raw: string): number | null {
   const trimmed = raw.trim();
   if (trimmed.length === 0) return DEFAULT_POINTS;
@@ -221,6 +224,9 @@ function parsePoints(raw: string): number | null {
   return parsed;
 }
 
+/**
+ *
+ */
 function getAddUserModal(customId: string, eventId: string) {
   const usersSelect = new UserSelectMenuBuilder()
     .setCustomId(USERS_FIELD_ID)
@@ -266,4 +272,12 @@ function getAddUserModal(customId: string, eventId: string) {
     );
 }
 
-export { handleAddUser, runAddUserFlow };
+export {
+  getAddUserModal,
+  handleAddUser,
+  parsePoints,
+  POINTS_FIELD_ID,
+  runAddUserFlow,
+  TYPE_FIELD_ID,
+  USERS_FIELD_ID,
+};

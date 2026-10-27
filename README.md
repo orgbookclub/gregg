@@ -30,7 +30,93 @@ yarn start
 
 ## Test
 
-Currently, there is no test suite for the project.
+```bash
+# unit tests (node:test, compiled with tsconfig.test.json)
+yarn test
+
+# end-to-end against a running gregg-core engine, e.g. a throwaway one:
+#   (in gregg-core) PORT=4010 npm run dev:memory
+ENGINE_TEST_URL=http://localhost:4010 yarn test:engine
+```
+
+`yarn test:engine` drives the real engine client and Discord sync code with
+in-memory Discord/Prisma fakes: `/link` (claim a link code), role catalogue
+push and role mapping, actor-asserted request/interest/lead/approve, thread
+links, feed-driven embed refresh and announcements, member lookup by Discord
+id, event list/search/participant filters, edits, staff participant changes
+(ensure member, participant edits, results, removal), books (catalogue,
+import by source identity, page URL and legacy button id), tier role sync and
+revocation. It defaults to the dev seed (`alice@example.com`,
+`gregg-dev`); override with `ENGINE_TEST_OWNER_EMAIL`,
+`ENGINE_TEST_OWNER_PASSWORD`, `ENGINE_TEST_CLIENT_ID` and
+`ENGINE_TEST_CLIENT_SECRET`.
+
+## Backends (`BACKEND=ows|engine`)
+
+Gregg can run against either backend, which allows a parallel run before
+the cutover:
+
+| | `BACKEND=ows` (default) | `BACKEND=engine` |
+|---|---|---|
+| API | OWS (`API_URL`, `CLIENT_ID`, `CLIENT_SECRET`) | [gregg-core](https://github.com/orgbookclub/gregg-core) (`ENGINE_URL`, `ENGINE_CLIENT_ID`, `ENGINE_CLIENT_SECRET`) |
+| Lifecycle jobs (`approveValidBRs`, `rejectInvalidBRs`, `startAnnouncedEvents`, `endCompletedEvents`) | Run in Gregg | Off. The engine's scheduler owns approval and lifecycle rules |
+| Stats, readerboard, reader roles | Computed by Gregg (`updateReaderRoles`) | Read from the engine (leaderboard, overview, member stats); `syncEngineTierRoles` mirrors engine tier assignments onto Discord roles |
+| Embed refresh | On Gregg's own writes | `pollEngineFeed` follows the club feed every 15 s and re-renders request and announcement messages, so changes made on the web show up in Discord too |
+| Announcements | Posted by `/events announce` | Also posted by `pollEngineFeed` when an event becomes *announced* anywhere else (the engine's announce policy, the web app, or a status edit), unless Gregg already posted one for it |
+
+With `BACKEND=engine`:
+
+1. A club admin creates a Discord link code in the web app (club settings →
+   integrations) and runs **`/link code:<CODE>`** in the server (requires
+   *Manage Server*). Gregg claims the installation, binding the guild to the
+   club, and pushes the server's role catalogue (refreshed hourly).
+2. Admins map Discord roles to club roles (member/moderator/admin) in the web
+   app. Gregg calls the engine **as the Discord member** (`X-Actor-*` headers
+   with their role ids), so the engine decides what each person may do:
+   Join/Leave/Lead buttons, `/events request`, approve/reject, announce and
+   thread creation.
+3. `/events createthread` attaches the Discord thread to the event
+   (`externalLinks`), which the web app shows as *Discuss on Discord*.
+4. Tier → role mapping: `publicSettings.tierRoles[tierId] = roleId` on the
+   installation wins; otherwise a role whose name matches the tier name
+   (case-insensitive) is used. Set `publicSettings.syncTierRoles` to `false`
+   to turn role sync off.
+
+Every slash command works on the engine backend. Event and user commands call
+the engine as the member, so staff-only actions follow the club's role mapping:
+
+- `/events list|search` and `/user events` use the engine's event list
+  (`mine` for yourself, `participant` for another member), with Join/Leave
+  buttons based on your participation.
+- `/events edit` maps name/description/type/dates to an edit with optimistic
+  concurrency, status to a lifecycle transition (only allowed edges), and
+  threads to Discord thread links. `requestedBy` can't be edited on the engine.
+- `/events adduser|removeuser` (and the Add/Remove Points buttons) first ensure
+  the selected Discord users are club members, then:
+  - **Interested:** staff participation edits.
+  - **Leaders:** the leader flag before the event starts; once it is ongoing,
+    leader points via results.
+  - **Readers:** results (completed with points, or `not_completed` with 0
+    points on removal).
+- `/events broadcast` pings the interested members in the event's linked
+  thread. Only the event's leaders and staff can use it.
+- `/user info` shows the member's role, join date, points, rank and tiers.
+- `/book search|info|cover|link` use the engine's catalogue, then its book
+  sources (Goodreads, StoryGraph, Open Library, in the engine's priority
+  order). `/book info|cover|link` and `/events request` accept a Goodreads,
+  StoryGraph or Open Library book page URL, an ISBN, an Open Library work id,
+  or a catalogue book ID (shown in search results and by `/book add`, which
+  adds a manual book for staff). The *Request Buddy Read* button on
+  `/book info` opens the same request form; buttons posted before the switch
+  (Open Library work ids) keep working.
+- The event card's Edit (status, dates, threads), Create Thread and Announce
+  buttons open the same modals as on OWS, with permissions from the engine.
+
+Everything that doesn't use
+OWS (sprints, QOTD, config, bookmarks, `/gregg`) works unchanged. `/gregg ask`
+runs without OWS MCP tools. Engine event ids equal the imported OWS ids, so
+existing Discord message mappings keep working. The code lives in
+`src/modules/engine/`.
 
 ## OWS authentication
 

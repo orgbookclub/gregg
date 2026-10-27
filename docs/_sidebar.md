@@ -8,6 +8,7 @@
   - [Misc](commands/gregg.md)
   - [Config](commands/config.md)
   - [Bookmark](commands/bookmark.md)
+  - [Link](commands/link.md)
 - Guides
   - [Reading Events](guides/events-guide.md)
   - [Reading Sprints](guides/sprint-guide.md)

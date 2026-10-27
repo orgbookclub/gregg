@@ -20,6 +20,7 @@ const jobName = "endCompletedEvents";
 
 const cronTime = "40 23 * * *";
 const endCompletedEvents: Job = {
+  backends: ["ows"],
   name: jobName,
   cronTime: cronTime,
   callBack: async (bot) => {

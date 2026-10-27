@@ -14,3 +14,5 @@ All commands listed below can be used after typing `/config` in the chat bar on 
 | editfeatures                                                  | Opens a modal pre-filled with the current feature settings (today: minimum participant count for the auto-approve / auto-reject Buddy Read jobs). Designed to be extended with additional fields as new ones are added to `GuildsConfig`                                                                                                                                                                                |
 
 ?\> All `/config` mutations are logged to the configured `logWebhookUrl` as a diff embed (who changed it, what field, old → new).
+
+?> With `BACKEND=engine`, reader roles come from the club's reader tiers in the web app instead of `setreaderrole` (see [Link](commands/link.md)).

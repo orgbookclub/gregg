@@ -5,6 +5,7 @@ import {
 } from "discord.js";
 
 import { CommandHandler, Command } from "../models";
+import { engineBookHandlers } from "../modules/engine/handlers/books";
 import { errorHandler } from "../utils/errorHandler";
 
 import {
@@ -157,7 +158,10 @@ export const book: Command = {
   run: async (bot, interaction, guildConfig) => {
     try {
       const subCommand = interaction.options.getSubcommand();
-      const handler = handlers[subCommand];
+      const handler =
+        (bot.engine
+          ? (engineBookHandlers as Record<string, CommandHandler>)[subCommand]
+          : undefined) ?? handlers[subCommand];
       await handler(bot, interaction, guildConfig);
     } catch (err) {
       await errorHandler(
