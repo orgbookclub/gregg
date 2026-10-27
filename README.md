@@ -34,17 +34,18 @@ yarn start
 # unit tests (node:test, compiled with tsconfig.test.json)
 yarn test
 
-# end-to-end against a running ows-next engine, e.g. a throwaway one:
-#   (in ows-next) PORT=4010 npm run dev:memory
+# end-to-end against a running gregg-core engine, e.g. a throwaway one:
+#   (in gregg-core) PORT=4010 npm run dev:memory
 ENGINE_TEST_URL=http://localhost:4010 yarn test:engine
 ```
 
 `yarn test:engine` drives the real engine client and Discord sync code with
 in-memory Discord/Prisma fakes: `/link` (claim a link code), role catalogue
 push and role mapping, actor-asserted request/interest/lead/approve, thread
-links, feed-driven embed refresh, member lookup by Discord id, event
-list/search/participant filters, edits, staff participant changes (ensure
-member, participant edits, results, removal), books, tier role sync and
+links, feed-driven embed refresh and announcements, member lookup by Discord
+id, event list/search/participant filters, edits, staff participant changes
+(ensure member, participant edits, results, removal), books (catalogue,
+import by source identity, page URL and legacy button id), tier role sync and
 revocation. It defaults to the dev seed (`alice@example.com`,
 `gregg-dev`); override with `ENGINE_TEST_OWNER_EMAIL`,
 `ENGINE_TEST_OWNER_PASSWORD`, `ENGINE_TEST_CLIENT_ID` and
@@ -57,10 +58,11 @@ the cutover:
 
 | | `BACKEND=ows` (default) | `BACKEND=engine` |
 |---|---|---|
-| API | OWS (`API_URL`, `CLIENT_ID`, `CLIENT_SECRET`) | [ows-next](https://github.com/orgbookclub/ows-next) (`ENGINE_URL`, `ENGINE_CLIENT_ID`, `ENGINE_CLIENT_SECRET`) |
+| API | OWS (`API_URL`, `CLIENT_ID`, `CLIENT_SECRET`) | [gregg-core](https://github.com/orgbookclub/gregg-core) (`ENGINE_URL`, `ENGINE_CLIENT_ID`, `ENGINE_CLIENT_SECRET`) |
 | Lifecycle jobs (`approveValidBRs`, `rejectInvalidBRs`, `startAnnouncedEvents`, `endCompletedEvents`) | Run in Gregg | Off. The engine's scheduler owns approval and lifecycle rules |
 | Stats, readerboard, reader roles | Computed by Gregg (`updateReaderRoles`) | Read from the engine (leaderboard, overview, member stats); `syncEngineTierRoles` mirrors engine tier assignments onto Discord roles |
 | Embed refresh | On Gregg's own writes | `pollEngineFeed` follows the club feed every 15 s and re-renders request and announcement messages, so changes made on the web show up in Discord too |
+| Announcements | Posted by `/events announce` | Also posted by `pollEngineFeed` when an event becomes *announced* anywhere else (the engine's announce policy, the web app, or a status edit), unless Gregg already posted one for it |
 
 With `BACKEND=engine`:
 
@@ -99,13 +101,18 @@ the engine as the member, so staff-only actions follow the club's role mapping:
 - `/events broadcast` pings the interested members in the event's linked
   thread. Only the event's leaders and staff can use it.
 - `/user info` shows the member's role, join date, points, rank and tiers.
-- `/book search|info|cover|link` use the engine's catalogue and Open Library
-  search. `/book add` (staff) adds a manual book and replies with its book ID,
-  which `/events request` accepts alongside Open Library URLs and ISBNs. The
-  *Request Buddy Read* button on `/book info` opens the same request form.
+- `/book search|info|cover|link` use the engine's catalogue, then its book
+  sources (Goodreads, StoryGraph, Open Library, in the engine's priority
+  order). `/book info|cover|link` and `/events request` accept a Goodreads,
+  StoryGraph or Open Library book page URL, an ISBN, an Open Library work id,
+  or a catalogue book ID (shown in search results and by `/book add`, which
+  adds a manual book for staff). The *Request Buddy Read* button on
+  `/book info` opens the same request form; buttons posted before the switch
+  (Open Library work ids) keep working.
+- The event card's Edit (status, dates, threads), Create Thread and Announce
+  buttons open the same modals as on OWS, with permissions from the engine.
 
-Only the Edit, Create Thread and Announce buttons on the event card are still
-OWS-only (use `/events edit|createthread|announce`). Everything that doesn't use
+Everything that doesn't use
 OWS (sprints, QOTD, config, bookmarks, `/gregg`) works unchanged. `/gregg ask`
 runs without OWS MCP tools. Engine event ids equal the imported OWS ids, so
 existing Discord message mappings keep working. The code lives in

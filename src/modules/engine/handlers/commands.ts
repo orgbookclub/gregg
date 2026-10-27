@@ -6,7 +6,6 @@ import {
   DiscordjsError,
   ForumChannel,
   LabelBuilder,
-  Message,
   MessageFlags,
   ModalBuilder,
   ModalSubmitInteraction,
@@ -17,7 +16,6 @@ import {
 
 import { errors, placeholders, templates } from "../../../config/constants";
 import { Bot, CommandHandler } from "../../../models";
-import { getOpenLibraryWorkId } from "../../../utils/bookUtils";
 import {
   formatWindowTitle,
   resolveDateWindow,
@@ -26,18 +24,22 @@ import { createEventMessageDoc } from "../../../utils/dbUtils";
 import { errorHandler } from "../../../utils/errorHandler";
 import { logger } from "../../../utils/logHandler";
 import { PaginationManager } from "../../../utils/paginationManager";
+import {
+  configuredForum,
+  createEngineForumThread,
+  postEngineAnnouncement,
+  withAnnouncementLock,
+} from "../announcements";
+import { parseBookReference } from "../books";
 import { EngineInstallationClient } from "../client";
 import {
   buildEngineEventEmbed,
   buildEngineParticipationRow,
   buildEngineStaffRow,
-  engineThreadTitle,
 } from "../embeds";
-import { discordThreadIds, discordThreadLink, withDiscordLink } from "../links";
+import { discordThreadLink, withDiscordLink } from "../links";
 import {
   engineTypeKey,
-  formatCalendarDate,
-  formatEngineUser,
   nextMonthRange,
   toEngineStatsWindow,
 } from "../mappings";
@@ -60,8 +62,7 @@ const START_FIELD_ID = "startDate";
 const END_FIELD_ID = "endDate";
 const REASON_FIELD_ID = "reason";
 const MODAL_TIMEOUT_MS = 5 * 60 * 1000;
-const BOOK_ID_PATTERN = /^[0-9a-f]{24}$/;
-const ISBN_PATTERN = /^(?:\d[\d-]{8,15}[\dXx])$/;
+const BOOK_PLACEHOLDER = "https://www.goodreads.com/book/show/5907";
 const THREAD_STATUSES = ["approved", "announced", "ongoing"];
 const LEADERBOARD_PAGE_SIZE = 100;
 const LEADERBOARD_MAX_PAGES = 5;
@@ -75,12 +76,12 @@ function buildRequestModal(
   const bookInput = new TextInputBuilder()
     .setCustomId(BOOK_FIELD_ID)
     .setRequired(true)
-    .setPlaceholder(placeholders.BookLinkExample)
+    .setPlaceholder(BOOK_PLACEHOLDER)
     .setStyle(TextInputStyle.Short);
   if (prefill) bookInput.setValue(prefill);
   const labelsList: LabelBuilder[] = [
     new LabelBuilder()
-      .setLabel("Book (Open Library URL, ISBN or book ID)")
+      .setLabel("Book (book page URL, ISBN or book ID)")
       .setTextInputComponent(bookInput),
   ];
   if (withDates) {
@@ -189,33 +190,6 @@ const handleInfo = engineCommand(
   },
 );
 
-function threadStarterContent(
-  event: EngineEventDetail,
-  leaders: string[],
-): string {
-  let content = `### From ${formatCalendarDate(event.startDate)} to ${formatCalendarDate(event.endDate)}`;
-  if (leaders.length > 0) content += ` | Leader(s): ${leaders.join(", ")}`;
-  if (event.book?.coverUrl) content += `\n**Cover**: ${event.book.coverUrl}`;
-  content += `\n\n**ID**: \`${event.id}\``;
-  return content;
-}
-
-async function configuredForum(
-  bot: Bot,
-  typeKey: string,
-  guildConfig?: GuildsConfig,
-): Promise<ForumChannel | null> {
-  const channelId =
-    typeKey === "buddy-read"
-      ? guildConfig?.brForumChannel
-      : typeKey === "book-of-the-month"
-        ? guildConfig?.mrForumChannel
-        : undefined;
-  if (!channelId) return null;
-  const channel = await bot.channels.fetch(channelId).catch(() => null);
-  return channel?.type === ChannelType.GuildForum ? channel : null;
-}
-
 const handleCreateThread = engineCommand(
   "events > createThread (engine)",
   async (bot, interaction, client, guildConfig) => {
@@ -236,8 +210,6 @@ const handleCreateThread = engineCommand(
       );
       return;
     }
-    let threadId: string;
-    let threadName: string;
     if (channel && channel.type === ChannelType.PublicThread) {
       const participants = await client.listParticipants(id);
       await channel.send({
@@ -251,74 +223,40 @@ const handleCreateThread = engineCommand(
         ],
       });
       if (title) await channel.edit({ name: title });
-      threadId = channel.id;
-      threadName = title ?? channel.name;
-    } else {
-      const forum =
-        (channel as ForumChannel | null) ??
-        (await configuredForum(bot, event.type.key, guildConfig));
-      if (!forum) {
-        await interaction.editReply(
-          "Unable to find a configured/inputted forum channel!",
-        );
-        return;
-      }
-      const participants = await client.listParticipants(id);
-      const leaders = participants
-        .filter((p) => p.isLeader)
-        .map((p) => formatEngineUser(p.user));
-      const ongoingTag = forum.availableTags.find(
-        (tag) => tag.name === "ongoing",
+      await client.putLinks(
+        event.id,
+        withDiscordLink(
+          event.externalLinks,
+          discordThreadLink(client.guildId, {
+            id: channel.id,
+            name: title ?? channel.name,
+          }),
+        ),
       );
-      const post = await forum.threads.create({
-        name: title ?? engineThreadTitle(event),
-        message: { content: threadStarterContent(event, leaders) },
-        appliedTags: ongoingTag ? [ongoingTag.id] : [],
-      });
-      const starter = await post.fetchStarterMessage();
-      if (starter) {
-        await starter.pin();
-        await createEventMessageDoc(
-          bot,
-          client.guildId,
-          event.id,
-          starter,
-          "eventThreadStarterMessage",
-        );
-      }
-      threadId = post.id;
-      threadName = post.name;
+      await interaction.editReply(
+        templates.threadCreated(channel.id, event.id),
+      );
+      return;
     }
-    await client.putLinks(
-      event.id,
-      withDiscordLink(
-        event.externalLinks,
-        discordThreadLink(client.guildId, { id: threadId, name: threadName }),
-      ),
+    const forum =
+      (channel as ForumChannel | null) ??
+      (await configuredForum(bot, event.type.key, guildConfig));
+    if (!forum) {
+      await interaction.editReply(
+        "Unable to find a configured/inputted forum channel!",
+      );
+      return;
+    }
+    const threadId = await createEngineForumThread(
+      bot,
+      client,
+      event,
+      forum,
+      title,
     );
     await interaction.editReply(templates.threadCreated(threadId, event.id));
   },
 );
-
-async function linkAnnouncementInThreads(
-  bot: Bot,
-  event: EngineEventDetail,
-  announcement: Message,
-) {
-  for (const threadId of discordThreadIds(event.externalLinks)) {
-    try {
-      const thread = await bot.channels.fetch(threadId);
-      if (thread?.isSendable()) {
-        await thread.send(`**Announcement**: ${announcement.url}`);
-      }
-    } catch (error) {
-      logger.warn(
-        { err: error },
-        `Unable to post announcement link in ${threadId}`,
-      );
-    }
-  }
-}
 
 const handleAnnounce = engineCommand(
   "events > announce (engine)",
@@ -346,36 +284,20 @@ const handleAnnounce = engineCommand(
       );
       return;
     }
-    const event = await client.transition(id, "announced", actor);
-    const participants = await client.listParticipants(id);
-    const threads = discordThreadIds(event.externalLinks);
-    const ping = guildConfig?.serverEventsRole
-      ? `<@&${guildConfig.serverEventsRole}> `
-      : "";
-    const message = await channel.send({
-      content:
-        `${ping}New ${event.type.name}! Please click on the Join ✅ button if you'd like to be pinged for discussions.` +
-        (threads.length > 0
-          ? `\nDiscussion will take place in ${threads.map((t) => `<#${t}>`).join(", ")}`
-          : ""),
-      embeds: [
-        buildEngineEventEmbed(
-          event,
-          participants,
-          "announcement",
+    const { event, message } = await withAnnouncementLock(id, async () => {
+      const announced = await client.transition(id, "announced", actor);
+      return {
+        event: announced,
+        message: await postEngineAnnouncement(
+          bot,
+          client,
+          announced,
+          channel,
+          guildConfig,
           interaction.guild?.iconURL(),
         ),
-      ],
-      components: [buildEngineParticipationRow(event.id, "ea")],
+      };
     });
-    await createEventMessageDoc(
-      bot,
-      client.guildId,
-      event.id,
-      message,
-      "Announcement",
-    );
-    await linkAnnouncementInThreads(bot, event, message);
     await interaction.editReply(
       `Announced event \`${event.id}\` in ${message.url} and marked it **Announced**.`,
     );
@@ -536,15 +458,11 @@ export async function runEngineRequestFlow(
   await submit.deferReply({ flags: MessageFlags.Ephemeral });
   try {
     const bookInput = submit.fields.getTextInputValue(BOOK_FIELD_ID).trim();
-    const workId = getOpenLibraryWorkId(bookInput);
-    const isbn = ISBN_PATTERN.test(bookInput)
-      ? bookInput.replace(/-/g, "")
-      : null;
-    const catalogueId = BOOK_ID_PATTERN.test(bookInput) ? bookInput : null;
-    if (!workId && !isbn && !catalogueId) {
+    const reference = parseBookReference(bookInput);
+    if (!reference) {
       await submit.editReply(
         templates.invalidSubmission(
-          "Use an Open Library work URL, an ISBN or a book ID from `/book add`",
+          "Use a Goodreads, StoryGraph or Open Library book URL, an ISBN, or a book ID from `/book search` or `/book add`",
         ),
       );
       return;
@@ -565,11 +483,10 @@ export async function runEngineRequestFlow(
       await submit.editReply(templates.invalidSubmission("Invalid date"));
       return;
     }
-    const book = catalogueId
-      ? await client.getBook(catalogueId)
-      : await client.importBook(
-          workId ? { openLibraryWorkId: workId } : { isbn: isbn ?? undefined },
-        );
+    const book =
+      reference.kind === "catalog"
+        ? await client.getBook(reference.bookId)
+        : await client.importBook(reference.ref);
     const event = await client.createEvent(
       {
         typeKey,

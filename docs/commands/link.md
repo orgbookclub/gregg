@@ -1,6 +1,6 @@
 # Link (Server admins, engine backend only)
 
-Links this Discord server to a club on the ows-next engine. Only available when Gregg runs with `BACKEND=engine`.
+Links this Discord server to a club on the gregg-core engine. Only available when Gregg runs with `BACKEND=engine`.
 
 ## Commands
 

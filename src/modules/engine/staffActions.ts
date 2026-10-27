@@ -291,3 +291,108 @@ export function interestedDiscordIds(
 export function primaryThreadId(event: EngineEventDetail): string | null {
   return discordThreadIds(event.externalLinks)[0] ?? null;
 }
+
+/**
+ * What the Edit modal on an event card submits.
+ */
+export interface CardEditInput {
+  status: string;
+  startDate: string;
+  endDate: string;
+  threadIds: string[];
+}
+
+/**
+ * What an Edit modal submission turns into on the engine. Each part is null
+ * when that part is unchanged; apply the patch, then the links, then the
+ * transition.
+ */
+export type CardEditPlan =
+  | {
+      kind: "changes";
+      patch: EngineUpdateEventRequest | null;
+      threadIds: string[] | null;
+      transition: EngineEventStatus | null;
+    }
+  | { kind: "error"; message: string };
+
+/**
+ * Plans the event card's Edit modal (status, dates and threads) against the
+ * engine. Threads are compared with the ones the modal was pre-filled with,
+ * so linked threads Discord can no longer resolve are only dropped when
+ * staff actually change the selection.
+ *
+ * @param event The event as shown in the modal.
+ * @param shownThreadIds The thread ids the modal was pre-filled with.
+ * @param input The submission.
+ * @returns The plan.
+ */
+export function planCardEdit(
+  event: EngineEventDetail,
+  shownThreadIds: string[],
+  input: CardEditInput,
+): CardEditPlan {
+  const startDate = toCalendarDateInput(input.startDate);
+  const endDate = toCalendarDateInput(input.endDate);
+  if (!startDate || !endDate) {
+    return { kind: "error", message: "Invalid date. Use YYYY-MM-DD." };
+  }
+  if (endDate < startDate) {
+    return {
+      kind: "error",
+      message: "The end date can't be before the start date.",
+    };
+  }
+  const status = input.status as EngineEventStatus;
+  let transition: EngineEventStatus | null = null;
+  if (status !== event.status) {
+    if (!event.allowedTransitions.includes(status)) {
+      return {
+        kind: "error",
+        message: `Can't move this event from **${event.status}** to **${input.status}**.`,
+      };
+    }
+    transition = status;
+  }
+  const datesChanged =
+    startDate !== event.startDate || endDate !== event.endDate;
+  if (datesChanged && !event.permissions.canEdit) {
+    return {
+      kind: "error",
+      message: "You don't have permission to change this event's dates.",
+    };
+  }
+  const shown = [...new Set(shownThreadIds)].sort();
+  const selected = [...new Set(input.threadIds)].sort();
+  const threadsChanged =
+    shown.length !== selected.length ||
+    shown.some((id, index) => id !== selected[index]);
+  if (threadsChanged && !event.permissions.canSetLinks) {
+    return {
+      kind: "error",
+      message: "You don't have permission to change this event's threads.",
+    };
+  }
+  return {
+    kind: "changes",
+    patch: datesChanged
+      ? { expectedVersion: event.version, startDate, endDate }
+      : null,
+    threadIds: threadsChanged ? selected : null,
+    transition,
+  };
+}
+
+/**
+ * Whether the actor can do anything with the event card's Edit modal.
+ *
+ * @param event The event as seen by the actor.
+ * @returns True when dates, threads or the status can be changed.
+ */
+export function canEditFromCard(event: EngineEventDetail): boolean {
+  return (
+    event.permissions.canEdit ||
+    event.permissions.canSetLinks ||
+    event.allowedTransitions.length > 0
+  );
+}

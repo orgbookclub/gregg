@@ -5,6 +5,7 @@ import { Bot } from "../../models";
 import { getGuildConfigFromDb } from "../../utils/dbUtils";
 import { logToWebhook, logger } from "../../utils/logHandler";
 
+import { announceFromFeed } from "./announcements";
 import { EngineClient, EngineError, EngineInstallationClient } from "./client";
 import {
   buildEngineEventEmbed,
@@ -347,6 +348,21 @@ export class EngineService {
         await refreshEventMessages(this.bot, client, eventId);
       } catch (error) {
         logger.warn({ err: error }, `Feed refresh failed for event ${eventId}`);
+      }
+    }
+    const announced = new Set(
+      summary.statusChanges
+        .filter((change) => change.to === "announced")
+        .map((change) => change.eventId),
+    );
+    for (const eventId of announced) {
+      try {
+        await announceFromFeed(this.bot, client, eventId);
+      } catch (error) {
+        logger.warn(
+          { err: error },
+          `Feed announcement failed for event ${eventId}`,
+        );
       }
     }
     try {

@@ -92,7 +92,7 @@ describe("backend switch", () => {
     );
   });
 
-  it("serves every command on the engine and gates OWS-only buttons", () => {
+  it("serves every command and button on the engine", () => {
     for (const [command, sub] of [
       ["events", "edit"],
       ["events", "list"],
@@ -104,7 +104,9 @@ describe("backend switch", () => {
     ]) {
       assert.equal(isCommandAvailable("engine", command, sub), true);
     }
-    assert.equal(isButtonAvailable("engine", "evt-edit-abc"), false);
+    for (const id of ["evt-edit-abc", "evt-thread-abc", "evt-announce-abc"]) {
+      assert.equal(isButtonAvailable("engine", id), true);
+    }
     assert.equal(isButtonAvailable("engine", "evt-addpts-abc"), true);
     assert.equal(isButtonAvailable("engine", "book-br-OL1W"), true);
     assert.equal(isButtonAvailable("engine", "er-abc-lead"), true);

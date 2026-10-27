@@ -5,6 +5,8 @@ import { engineParticipantButton } from "../src/modules/engine/listView";
 import {
   engineListQuery,
   interestedDiscordIds,
+  canEditFromCard,
+  planCardEdit,
   planEventEdit,
   planParticipantChange,
   primaryThreadId,
@@ -321,6 +323,119 @@ describe("list helpers", () => {
     assert.equal(
       id({ ...base, type: { ...base.type, key: "other" } }),
       undefined,
+    );
+  });
+});
+
+describe("card edit planning", () => {
+  const card = {
+    id: "ev1",
+    status: "approved",
+    version: 4,
+    startDate: "2026-11-01",
+    endDate: "2026-11-15",
+    allowedTransitions: ["announced", "cancelled"],
+    permissions: { canEdit: true, canSetLinks: true },
+    externalLinks: [],
+  } as unknown as EngineEventDetail;
+  const unchanged = {
+    status: "approved",
+    startDate: "2026-11-01",
+    endDate: "2026-11-15",
+    threadIds: ["111", "222"],
+  };
+
+  it("changes nothing when the modal is submitted as shown", () => {
+    assert.deepEqual(planCardEdit(card, ["222", "111"], unchanged), {
+      kind: "changes",
+      patch: null,
+      threadIds: null,
+      transition: null,
+    });
+  });
+
+  it("patches dates with the shown version, then links and transitions", () => {
+    assert.deepEqual(
+      planCardEdit(card, ["111"], {
+        status: "announced",
+        startDate: "2026-11-02",
+        endDate: "2026-11-15",
+        threadIds: ["333"],
+      }),
+      {
+        kind: "changes",
+        patch: {
+          expectedVersion: 4,
+          startDate: "2026-11-02",
+          endDate: "2026-11-15",
+        },
+        threadIds: ["333"],
+        transition: "announced",
+      },
+    );
+  });
+
+  it("refuses invalid dates, disallowed transitions and missing permissions", () => {
+    const kind = (plan: ReturnType<typeof planCardEdit>) => plan.kind;
+    assert.equal(
+      kind(
+        planCardEdit(card, [], {
+          ...unchanged,
+          threadIds: [],
+          startDate: "nope",
+        }),
+      ),
+      "error",
+    );
+    assert.equal(
+      kind(
+        planCardEdit(card, [], {
+          ...unchanged,
+          threadIds: [],
+          endDate: "2026-10-01",
+        }),
+      ),
+      "error",
+    );
+    assert.equal(
+      kind(
+        planCardEdit(card, [], {
+          ...unchanged,
+          threadIds: [],
+          status: "completed",
+        }),
+      ),
+      "error",
+    );
+    const reader = {
+      ...card,
+      permissions: { canEdit: false, canSetLinks: false },
+    } as unknown as EngineEventDetail;
+    assert.equal(
+      kind(planCardEdit(reader, [], { ...unchanged, threadIds: ["1"] })),
+      "error",
+    );
+    assert.equal(
+      kind(
+        planCardEdit(reader, [], {
+          ...unchanged,
+          threadIds: [],
+          startDate: "2026-11-03",
+        }),
+      ),
+      "error",
+    );
+  });
+
+  it("offers the modal only to members who can change something", () => {
+    assert.equal(canEditFromCard(card), true);
+    assert.equal(
+      canEditFromCard({
+        ...card,
+        allowedTransitions: [],
+        permissions: { canEdit: false, canSetLinks: false },
+      } as unknown as EngineEventDetail),
+      false,
     );
   });
 });

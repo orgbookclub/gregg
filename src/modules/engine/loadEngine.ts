@@ -22,7 +22,7 @@ export const loadEngine = async (bot: Bot) => {
   bot.engine = new EngineService(bot, client);
   try {
     await client.getAppToken();
-    logger.info(`Connected to the ows-next engine at ${client.baseUrl}`);
+    logger.info(`Connected to the gregg-core engine at ${client.baseUrl}`);
   } catch (err) {
     await errorHandler(bot, "index > loadEngine", err);
   }

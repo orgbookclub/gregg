@@ -12,6 +12,7 @@ import {
   EngineEventListItem,
   EngineExternalLinkInput,
   EngineFeedPage,
+  EngineImportBookRequest,
   EngineInstallation,
   EngineInstallationSettings,
   EngineInstallationTokenResponse,
@@ -108,7 +109,7 @@ export interface EngineClientOptions {
 }
 
 /**
- * App-level client for the ows-next engine. Holds the app token (client
+ * App-level client for the gregg-core engine. Holds the app token (client
  * credentials), claims installations, and hands out per-guild
  * {@link EngineInstallationClient}s with cached installation tokens.
  */
@@ -548,7 +549,8 @@ export class EngineInstallationClient {
   }
 
   /**
-   * Searches the book catalogue and Open Library.
+   * Searches the book catalogue, then the first book source (Goodreads,
+   * StoryGraph, Open Library) that has hits.
    *
    * @param q The query.
    * @param limit The maximum number of results.
@@ -574,7 +576,7 @@ export class EngineInstallationClient {
   }
 
   /**
-   * Adds a book that isn't on Open Library to the catalogue.
+   * Adds a book that no book source knows to the catalogue.
    *
    * @param body The book.
    * @returns The created book.
@@ -894,17 +896,14 @@ export class EngineInstallationClient {
   }
 
   /**
-   * Imports a book from Open Library (idempotent).
+   * Imports a book from a book source (Goodreads, StoryGraph, Open Library)
+   * by source id, book page URL or ISBN. Idempotent: a known identity returns
+   * its catalogue book.
    *
-   * @param ref The Open Library work id or ISBN.
-   * @param ref.openLibraryWorkId The Open Library work id.
-   * @param ref.isbn The ISBN.
+   * @param ref The source id, URL or ISBN.
    * @returns The catalogue book.
    */
-  async importBook(ref: {
-    openLibraryWorkId?: string;
-    isbn?: string;
-  }): Promise<EngineBook> {
+  async importBook(ref: EngineImportBookRequest): Promise<EngineBook> {
     return await this.request("POST", "/v1/books/import", { body: ref });
   }
 

@@ -10,15 +10,11 @@ const ENGINE_UNSUPPORTED_COMMANDS: Record<string, "*" | string[]> = {};
 /**
  * Button custom-id prefixes that open OWS-only flows.
  */
-const ENGINE_UNSUPPORTED_BUTTON_PREFIXES = [
-  "evt-edit-",
-  "evt-thread-",
-  "evt-announce-",
-];
+const ENGINE_UNSUPPORTED_BUTTON_PREFIXES: string[] = [];
 
 /**
  * Which backend Gregg talks to. `ows` is the legacy OWS API (Gregg runs the
- * lifecycle jobs and computes stats); `engine` is ows-next (the engine owns
+ * lifecycle jobs and computes stats); `engine` is gregg-core (the engine owns
  * those rules and Gregg is a thin client).
  */
 export type Backend = "ows" | "engine";

@@ -14,6 +14,7 @@ import { engineStatusLabel } from "../mappings";
 import { EngineActor, EngineEventDetail } from "../types";
 
 import { handleEngineBookRequestButton } from "./books";
+import { handleEngineCardButton } from "./cardButtons";
 import {
   engineErrorMessage,
   interactionActor,
@@ -244,7 +245,7 @@ export async function processEngineButtonClick(
   } else if (id.startsWith("usr-stats-")) {
     await handleUserStats(bot, interaction);
   } else {
-    return false;
+    return await handleEngineCardButton(bot, interaction);
   }
   return true;
 }

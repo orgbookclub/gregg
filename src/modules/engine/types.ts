@@ -1,6 +1,6 @@
 /**
- * The subset of the ows-next v1 API contract that Gregg uses. The normative
- * source is `ows-next/docs/api-contract.ts`; keep these shapes structurally
+ * The subset of the gregg-core v1 API contract that Gregg uses. The normative
+ * source is `gregg-core/docs/api-contract.ts`; keep these shapes structurally
  * compatible with it.
  */
 
@@ -110,13 +110,33 @@ export interface EngineBookSummary {
   pageCount: number | null;
 }
 
+export type EngineBookSourceId = "goodreads" | "storygraph" | "openlibrary";
+
+export interface EngineBookExternalId {
+  source: EngineBookSourceId;
+  id: string;
+  url: string;
+}
+
 export interface EngineBook extends EngineBookSummary {
   subtitle: string | null;
   isbn13: string | null;
-  openLibraryWorkId: string | null;
   publishedYear: number | null;
-  source: "openlibrary" | "manual";
+  description: string | null;
+  genres: string[];
+  series: { name: string; position: string | null } | null;
+  source: EngineBookSourceId | "manual";
+  externalIds: EngineBookExternalId[];
 }
+
+/**
+ * `POST /books/import`: exactly one of `source` + `externalId`, `url`, or
+ * `isbn`.
+ */
+export type EngineImportBookRequest =
+  | { source: EngineBookSourceId; externalId: string }
+  | { url: string }
+  | { isbn: string };
 
 export interface EngineExternalLink {
   platform: string;
@@ -208,11 +228,13 @@ export interface EngineResultEntry {
 
 export interface EngineBookSearchResult {
   bookId: string | null;
-  source: "catalog" | "openlibrary";
-  openLibraryWorkId: string | null;
+  source: "catalog" | EngineBookSourceId;
+  externalId: string | null;
+  url: string | null;
   title: string;
   authors: string[];
   coverUrl: string | null;
+  pageCount: number | null;
   publishedYear: number | null;
   isbn13: string | null;
 }
@@ -225,6 +247,8 @@ export interface EngineCreateManualBookRequest {
   coverUrl?: string;
   isbn13?: string;
   publishedYear?: number;
+  description?: string;
+  genres?: string[];
 }
 
 export interface EngineCreateEventRequest {

@@ -76,7 +76,7 @@ void (async () => {
 
   bot.engine = null;
   if (bot.configs.backend === "engine") {
-    logger.debug("Initializing ows-next engine client...");
+    logger.debug("Initializing gregg-core engine client...");
     await loadEngine(bot);
   } else {
     logger.debug("Initializing API Client...");

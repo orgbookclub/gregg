@@ -55,6 +55,15 @@ const MAX_POINTS = 100;
 
 type StaffInteraction = ChatInputCommandInteraction | ButtonInteraction;
 
+/**
+ * Loads an event as the actor and builds its info card with the staff row.
+ *
+ * @param client The installation client.
+ * @param eventId The event id.
+ * @param actor The actor.
+ * @param iconUrl The guild icon for the embed.
+ * @returns The event and the message payload.
+ */
 async function eventCard(
   client: EngineInstallationClient,
   eventId: string,
@@ -152,6 +161,16 @@ async function resolveTargets(
   );
 }
 
+/**
+ * Replaces an event's Discord thread links, keeping links from other
+ * platforms and other Discord links.
+ *
+ * @param bot The bot instance.
+ * @param client The installation client.
+ * @param event The event.
+ * @param threadIds The thread ids to link.
+ * @returns The updated event.
+ */
 async function setThreadLinks(
   bot: Bot,
   client: EngineInstallationClient,
@@ -488,3 +507,5 @@ export const engineStaffHandlers = {
   adduser: handleAddUser,
   removeuser: handleRemoveUser,
 };
+
+export { awaitModal, eventCard, failSubmit, setThreadLinks };

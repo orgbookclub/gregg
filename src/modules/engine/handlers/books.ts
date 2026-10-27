@@ -13,14 +13,16 @@ import {
 
 import { errors, labels } from "../../../config/constants";
 import { Bot } from "../../../models";
-import {
-  buildOpenLibraryWorkUrl,
-  getOpenLibraryWorkId,
-  OPENLIBRARY_BR_BUTTON_PREFIX,
-} from "../../../utils/bookUtils";
 import { getGuildConfigFromDb } from "../../../utils/dbUtils";
+import {
+  bookAsSearchResult,
+  bookRequestButtonId,
+  bookRequestPrefill,
+  bookSourceLabel,
+  parseBookReference,
+} from "../books";
 import { EngineInstallationClient } from "../client";
-import { EngineBookSearchResult } from "../types";
+import { EngineBook, EngineBookSearchResult } from "../types";
 
 import { runEngineRequestFlow } from "./commands";
 import {
@@ -31,47 +33,48 @@ import {
   requireInstallation,
 } from "./common";
 
-const ISBN_PATTERN = /^(?:\d[\d-]{8,15}[\dXx])$/;
-
-function resultUrl(result: EngineBookSearchResult): string | null {
-  return result.openLibraryWorkId
-    ? buildOpenLibraryWorkUrl(result.openLibraryWorkId)
-    : null;
-}
-
 function resultLine(result: EngineBookSearchResult, index: number): string {
-  const url = resultUrl(result);
-  const title = url ? `[${result.title}](${url})` : result.title;
+  const title = result.url ? `[${result.title}](${result.url})` : result.title;
   const authors = result.authors.slice(0, 3).join(", ");
   const year = result.publishedYear ? ` (${result.publishedYear})` : "";
-  return `\`${index + 1}\` ${title}${year}${authors ? ` — *${authors}*` : ""}`;
+  const where = result.bookId
+    ? ` · \`${result.bookId}\``
+    : result.source !== "catalog"
+      ? ` · ${bookSourceLabel(result.source)}`
+      : "";
+  return `\`${index + 1}\` ${title}${year}${authors ? ` — *${authors}*` : ""}${where}`;
 }
 
-async function firstResult(
+interface ResolvedBook {
+  result: EngineBookSearchResult;
+  book: EngineBook | null;
+}
+
+/**
+ * Resolves a `/book` query: a catalogue id, ISBN or book page URL is looked
+ * up (imported when new); anything else is the top search hit. Catalogue
+ * books carry their full details.
+ *
+ * @param client The installation client.
+ * @param query The query.
+ * @returns The book, or null when nothing matches.
+ */
+async function resolveBook(
   client: EngineInstallationClient,
   query: string,
-): Promise<EngineBookSearchResult | null> {
-  const workId = getOpenLibraryWorkId(query);
-  const isbn = ISBN_PATTERN.test(query.trim())
-    ? query.trim().replace(/-/g, "")
-    : null;
-  if (workId || isbn) {
-    const book = await client.importBook(
-      workId ? { openLibraryWorkId: workId } : { isbn: isbn ?? undefined },
-    );
-    return {
-      bookId: book.id,
-      source: "catalog",
-      openLibraryWorkId: book.openLibraryWorkId,
-      title: book.title,
-      authors: book.authors,
-      coverUrl: book.coverUrl,
-      publishedYear: book.publishedYear,
-      isbn13: book.isbn13,
-    };
+): Promise<ResolvedBook | null> {
+  const reference = parseBookReference(query);
+  if (reference) {
+    const book =
+      reference.kind === "catalog"
+        ? await client.getBook(reference.bookId)
+        : await client.importBook(reference.ref);
+    return { result: bookAsSearchResult(book), book };
   }
   const [result] = await client.searchBooks(query, 1);
-  return result ?? null;
+  if (!result) return null;
+  const book = result.bookId ? await client.getBook(result.bookId) : null;
+  return { result: book ? bookAsSearchResult(book) : result, book };
 }
 
 const handleSearch = engineCommand(
@@ -110,20 +113,17 @@ const handleInfo = engineCommand(
     await interaction.deferReply(
       ephemeral ? { flags: MessageFlags.Ephemeral } : {},
     );
-    const result = await firstResult(
+    const resolved = await resolveBook(
       client,
       interaction.options.getString("query", true),
     );
-    if (!result) {
+    if (!resolved) {
       await interaction.editReply(errors.NoBooksFoundError);
       return;
     }
-    const pageCount = result.bookId
-      ? (await client.getBook(result.bookId)).pageCount
-      : null;
     await interaction.editReply({
       flags: MessageFlags.IsComponentsV2,
-      components: buildEngineBookComponents(result, pageCount),
+      components: buildEngineBookComponents(resolved.result, resolved.book),
     });
   },
 );
@@ -135,13 +135,13 @@ const handleCover = engineCommand(
     await interaction.deferReply(
       ephemeral ? { flags: MessageFlags.Ephemeral } : {},
     );
-    const result = await firstResult(
+    const resolved = await resolveBook(
       client,
       interaction.options.getString("query", true),
     );
     await interaction.editReply(
-      result?.coverUrl
-        ? { content: result.coverUrl }
+      resolved?.result.coverUrl
+        ? { content: resolved.result.coverUrl }
         : errors.NoBooksFoundError,
     );
   },
@@ -154,11 +154,11 @@ const handleLink = engineCommand(
     await interaction.deferReply(
       ephemeral ? { flags: MessageFlags.Ephemeral } : {},
     );
-    const result = await firstResult(
+    const resolved = await resolveBook(
       client,
       interaction.options.getString("query", true),
     );
-    const url = result ? resultUrl(result) : null;
+    const url = resolved?.result.url ?? null;
     await interaction.editReply(
       url ? { content: hideLinkEmbed(url) } : errors.NoBooksFoundError,
     );
@@ -194,28 +194,38 @@ const handleAdd = engineCommand(
 );
 
 /**
- * Builds the `/book info` components for an engine search result: details
- * with the cover, plus a "Request Buddy Read" button for Open Library books.
+ * Builds the `/book info` components for an engine book: details with the
+ * cover, plus a "Request Buddy Read" button for catalogue books and books
+ * found at a book source.
  *
  * @param result The book.
- * @param pageCount The page count, when known.
+ * @param book The catalogue book's details, when it is in the catalogue.
  * @returns The message components.
  */
 export function buildEngineBookComponents(
   result: EngineBookSearchResult,
-  pageCount: number | null,
+  book: EngineBook | null,
 ) {
-  const url = resultUrl(result);
+  const url = result.url;
   const lines = [`### ${url ? `[${result.title}](${url})` : result.title}`];
   if (result.authors.length > 0) {
     lines.push(`-# by ${result.authors.slice(0, 3).join(", ")}`);
   }
+  if (book?.series) {
+    lines.push(
+      `-# ${book.series.name}${book.series.position ? ` #${book.series.position}` : ""}`,
+    );
+  }
+  const pageCount = book?.pageCount ?? result.pageCount;
   const meta = [
     pageCount ? `📄 ${pageCount}` : "",
     result.publishedYear ? `🗓️ ${result.publishedYear}` : "",
     result.isbn13 ? `ISBN ${result.isbn13}` : "",
   ].filter((part) => part.length > 0);
   if (meta.length > 0) lines.push(`-# ${meta.join("  •  ")}`);
+  if (book && book.genres.length > 0) {
+    lines.push(`-# ${book.genres.slice(0, 5).join(", ")}`);
+  }
   if (result.bookId) lines.push(`-# Book ID: \`${result.bookId}\``);
   const text = new TextDisplayBuilder().setContent(lines.join("\n"));
   const container = new ContainerBuilder();
@@ -231,13 +241,12 @@ export function buildEngineBookComponents(
   const components: (ContainerBuilder | ActionRowBuilder<ButtonBuilder>)[] = [
     container,
   ];
-  if (result.openLibraryWorkId) {
+  const requestId = bookRequestButtonId(result);
+  if (requestId) {
     components.push(
       new ActionRowBuilder<ButtonBuilder>().addComponents(
         new ButtonBuilder()
-          .setCustomId(
-            `${OPENLIBRARY_BR_BUTTON_PREFIX}${result.openLibraryWorkId}`,
-          )
+          .setCustomId(requestId)
           .setLabel(labels.RequestBuddyRead)
           .setEmoji({ name: "👥" })
           .setStyle(ButtonStyle.Primary),
@@ -261,16 +270,14 @@ export async function handleEngineBookRequestButton(
   if (!client || !interaction.guildId) return;
   try {
     const guildConfig = await getGuildConfigFromDb(bot, interaction.guildId);
-    const workId = interaction.customId.slice(
-      OPENLIBRARY_BR_BUTTON_PREFIX.length,
-    );
+    const prefill = bookRequestPrefill(interaction.customId);
     await runEngineRequestFlow(
       bot,
       interaction,
       client,
       guildConfig ?? undefined,
       "BuddyRead",
-      buildOpenLibraryWorkUrl(workId),
+      prefill ?? undefined,
     );
   } catch (err) {
     const message = engineErrorMessage(err);

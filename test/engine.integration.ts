@@ -1,6 +1,6 @@
 /**
- * End-to-end check of Gregg's engine integration against a running ows-next
- * engine (e.g. `PORT=4010 npm run dev:memory` in ows-next). Discord and
+ * End-to-end check of Gregg's engine integration against a running
+ * gregg-core engine (e.g. `PORT=4010 npm run dev:memory` in gregg-core). Discord and
  * Prisma are replaced by in-memory fakes; everything else is the real code.
  *
  *   ENGINE_TEST_URL=http://localhost:4010 yarn test:engine.
@@ -9,6 +9,11 @@ import assert from "node:assert/strict";
 import { after, before, describe, it } from "node:test";
 
 import { Bot } from "../src/models";
+import { withAnnouncementLock } from "../src/modules/engine/announcements";
+import {
+  bookRequestPrefill,
+  parseBookReference,
+} from "../src/modules/engine/books";
 import {
   EngineClient,
   EngineError,
@@ -101,6 +106,23 @@ describe("Gregg on the engine (integration)", { skip: !BASE_URL }, () => {
   const edits: EditedMessage[] = [];
   const cursors = new Map<string, string>();
   const eventMessages: Record<string, unknown>[] = [];
+  const announcementChannelId = `announcements-${runId}`;
+  const sent: { channelId: string; content?: string }[] = [];
+  let guildConfig: Record<string, unknown> | null = null;
+  const announcementChannel = {
+    id: announcementChannelId,
+    isTextBased: (): boolean => true,
+    isSendable: (): boolean => true,
+    send: (payload: { content?: string }) => {
+      sent.push({ channelId: announcementChannelId, content: payload.content });
+      return Promise.resolve({
+        id: `sent-${sent.length}`,
+        url: `https://discord.com/channels/${guildId}/${announcementChannelId}/sent-${sent.length}`,
+        channel: { id: announcementChannelId },
+        createdAt: new Date(),
+      });
+    },
+  };
   const guildRoles = new Map(
     [
       fakeRole(guildId, "@everyone", 0),
@@ -130,11 +152,16 @@ describe("Gregg on the engine (integration)", { skip: !BASE_URL }, () => {
   const bot = {
     guilds: { cache: new Map([[guildId, guild]]) },
     channels: {
-      fetch: () =>
-        Promise.resolve({
-          isTextBased: () => true,
-          messages: { fetch: () => Promise.resolve(message) },
-        }),
+      fetch: (id: string) =>
+        Promise.resolve(
+          id === announcementChannelId
+            ? announcementChannel
+            : {
+                isTextBased: (): boolean => true,
+                isSendable: (): boolean => false,
+                messages: { fetch: () => Promise.resolve(message) },
+              },
+        ),
     },
     db: {
       eventMessages: {
@@ -149,6 +176,23 @@ describe("Gregg on the engine (integration)", { skip: !BASE_URL }, () => {
                 doc.eventId === where.eventId && doc.guildId === where.guildId,
             ),
           ),
+        findFirst: ({
+          where,
+        }: {
+          where: { eventId: string; guildId: string; type: string };
+        }) =>
+          Promise.resolve(
+            eventMessages.find(
+              (doc) =>
+                doc.eventId === where.eventId &&
+                doc.guildId === where.guildId &&
+                doc.type === where.type,
+            ) ?? null,
+          ),
+        create: ({ data }: { data: Record<string, unknown> }) => {
+          eventMessages.push(data);
+          return Promise.resolve(data);
+        },
       },
       engineFeedCursors: {
         findUnique: ({ where }: { where: { installationId: string } }) => {
@@ -164,7 +208,10 @@ describe("Gregg on the engine (integration)", { skip: !BASE_URL }, () => {
           return Promise.resolve();
         },
       },
-      guilds: { findUnique: () => Promise.resolve(null) },
+      guilds: {
+        findUnique: () =>
+          Promise.resolve(guildConfig ? { config: guildConfig } : null),
+      },
     },
   } as unknown as Bot;
 
@@ -562,6 +609,125 @@ describe("Gregg on the engine (integration)", { skip: !BASE_URL }, () => {
     assert.equal((await installation.getBook(book.id)).pageCount, 123);
     const results = await installation.searchBooks(`Gregg Book ${runId}`, 5);
     assert.ok(results.some((r) => r.bookId === book.id));
+  });
+
+  it("imports books by source identity, page URL and legacy button id (/book, /events request)", async () => {
+    const [hit] = (await installation.searchBooks("The Hobbit", 5)).filter(
+      (r) => r.bookId,
+    );
+    assert.ok(hit?.bookId, "the demo catalogue has The Hobbit");
+    const catalogued = await installation.getBook(hit.bookId);
+    const identity = catalogued.externalIds[0];
+    assert.ok(identity, "the catalogue book has a source identity");
+    const bySource = await installation.importBook({
+      source: identity.source,
+      externalId: identity.id,
+    });
+    assert.equal(bySource.id, catalogued.id);
+    const fromUrl = parseBookReference(identity.url);
+    assert.equal(fromUrl?.kind, "import");
+    if (fromUrl?.kind !== "import") return;
+    assert.equal(
+      (await installation.importBook(fromUrl.ref)).id,
+      catalogued.id,
+    );
+    if (identity.source === "openlibrary") {
+      const legacy = bookRequestPrefill(`book-br-${identity.id}`);
+      const reference = legacy ? parseBookReference(legacy) : null;
+      assert.equal(reference?.kind, "import");
+      if (reference?.kind === "import") {
+        assert.equal(
+          (await installation.importBook(reference.ref)).id,
+          catalogued.id,
+        );
+      }
+    }
+    await assert.rejects(
+      installation.importBook({
+        openLibraryWorkId: identity.id,
+      } as never),
+      (error: unknown) => error instanceof EngineError && error.status === 400,
+      "the removed openLibraryWorkId field is refused",
+    );
+  });
+
+  it("posts the Discord announcement when an event is announced outside Discord", async () => {
+    guildConfig = { eventAnnouncementChannel: announcementChannelId };
+    try {
+      const start = new Date(Date.now() + 70 * 86_400_000)
+        .toISOString()
+        .slice(0, 10);
+      const end = new Date(Date.now() + 84 * 86_400_000)
+        .toISOString()
+        .slice(0, 10);
+      const createApproved = async (title: string) =>
+        await installation.createEvent(
+          {
+            typeKey: "buddy-read",
+            title,
+            startDate: start,
+            endDate: end,
+            status: "approved",
+          },
+          staff,
+        );
+      const pollUntil = async (done: () => boolean, ms: number) => {
+        const deadline = Date.now() + ms;
+        while (Date.now() < deadline) {
+          await service.pollFeeds();
+          if (done()) return true;
+          await new Promise((resolve) => setTimeout(resolve, 500));
+        }
+        return done();
+      };
+      const announcementsFor = (id: string) =>
+        eventMessages.filter(
+          (doc) => doc.eventId === id && doc.type === "Announcement",
+        );
+
+      const web = await createApproved(`Gregg IT web announce ${runId}`);
+      await ownerCall(
+        ownerToken,
+        "POST",
+        `/v1/clubs/${clubId}/events/${web.id}/transitions`,
+        { to: "announced" },
+      );
+      assert.ok(
+        await pollUntil(() => announcementsFor(web.id).length > 0, 20_000),
+        "the feed posted the announcement",
+      );
+      const posted = sent.length;
+      assert.match(sent.at(-1)?.content ?? "", /New Buddy Read/);
+      await new Promise((resolve) => setTimeout(resolve, 2_500));
+      await service.pollFeeds();
+      assert.equal(sent.length, posted, "redelivery doesn't post twice");
+      assert.equal(announcementsFor(web.id).length, 1);
+
+      const discord = await createApproved(
+        `Gregg IT Discord announce ${runId}`,
+      );
+      await withAnnouncementLock(discord.id, async () => {
+        await installation.transition(discord.id, "announced", staff);
+        await new Promise((resolve) => setTimeout(resolve, 2_500));
+        await service.pollFeeds();
+        assert.equal(
+          announcementsFor(discord.id).length,
+          0,
+          "no feed post while /events announce is posting",
+        );
+        eventMessages.push({
+          guildId,
+          eventId: discord.id,
+          channelId: announcementChannelId,
+          messageId: "manual",
+          type: "Announcement",
+        });
+      });
+      await service.pollFeeds();
+      assert.equal(announcementsFor(discord.id).length, 1);
+    } finally {
+      guildConfig = null;
+    }
   });
 
   it("syncs reader tier roles from tier assignments", async () => {

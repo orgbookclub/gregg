@@ -29,6 +29,7 @@ const TERMINAL_STATUSES: EngineEventStatus[] = [
 ];
 
 const MAX_LISTED_USERS = 40;
+const MAX_ROW_BUTTONS = 5;
 
 function userList(participants: EngineParticipant[]): string {
   const shown = participants
@@ -206,6 +207,19 @@ export function buildEngineStaffRow(
   event: EngineEventDetail,
 ): ActionRowBuilder<ButtonBuilder> | null {
   const buttons: ButtonBuilder[] = [];
+  if (
+    event.permissions.canEdit ||
+    event.permissions.canSetLinks ||
+    event.allowedTransitions.length > 0
+  ) {
+    buttons.push(
+      new ButtonBuilder()
+        .setCustomId(`evt-edit-${event.id}`)
+        .setLabel(labels.Edit)
+        .setEmoji({ name: "✏️" })
+        .setStyle(ButtonStyle.Secondary),
+    );
+  }
   if (event.allowedTransitions.includes("approved")) {
     buttons.push(
       new ButtonBuilder()
@@ -224,6 +238,27 @@ export function buildEngineStaffRow(
         .setStyle(ButtonStyle.Danger),
     );
   }
+  if (
+    event.permissions.canSetLinks &&
+    ["approved", "announced", "ongoing"].includes(event.status)
+  ) {
+    buttons.push(
+      new ButtonBuilder()
+        .setCustomId(`evt-thread-${event.id}`)
+        .setLabel(labels.CreateThread)
+        .setEmoji({ name: "🧵" })
+        .setStyle(ButtonStyle.Secondary),
+    );
+  }
+  if (event.allowedTransitions.includes("announced")) {
+    buttons.push(
+      new ButtonBuilder()
+        .setCustomId(`evt-announce-${event.id}`)
+        .setLabel(labels.Announce)
+        .setEmoji({ name: "📢" })
+        .setStyle(ButtonStyle.Primary),
+    );
+  }
   if (event.permissions.canRecordResults) {
     buttons.push(
       new ButtonBuilder()
@@ -239,5 +274,7 @@ export function buildEngineStaffRow(
     );
   }
   if (buttons.length === 0) return null;
-  return new ActionRowBuilder<ButtonBuilder>().addComponents(buttons);
+  return new ActionRowBuilder<ButtonBuilder>().addComponents(
+    buttons.slice(0, MAX_ROW_BUTTONS),
+  );
 }

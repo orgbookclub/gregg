@@ -329,11 +329,36 @@ describe("embeds", () => {
     assert.ok(row.components.every((c) => c.disabled));
   });
 
-  it("shows staff buttons only for transitions the engine allows", () => {
-    assert.equal(buildEngineStaffRow(event)?.toJSON().components.length, 2);
+  it("shows staff buttons only for what the engine allows", () => {
+    const ids = (e: EngineEventDetail) =>
+      buildEngineStaffRow(e)
+        ?.toJSON()
+        .components.map((c) => ("custom_id" in c ? c.custom_id : ""));
+    assert.deepEqual(ids(event), [
+      "evt-edit-ev1",
+      "evt-approve-ev1",
+      "evt-reject-ev1",
+    ]);
     assert.equal(
       buildEngineStaffRow({ ...event, allowedTransitions: [] }),
       null,
     );
+    const approved = {
+      ...event,
+      status: "approved",
+      allowedTransitions: ["announced", "cancelled"],
+      permissions: {
+        canEdit: true,
+        canSetLinks: true,
+        canRecordResults: true,
+      } as EngineEventDetail["permissions"],
+    } as EngineEventDetail;
+    assert.deepEqual(ids(approved), [
+      "evt-edit-ev1",
+      "evt-thread-ev1",
+      "evt-announce-ev1",
+      "evt-addpts-ev1",
+      "evt-rmpts-ev1",
+    ]);
   });
 });
